@@ -1,3 +1,5 @@
+package model.map;
+
 public class Position {
     private int x;  // kolom
     private int y;  // baris
