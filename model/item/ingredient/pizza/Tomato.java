@@ -1,6 +1,5 @@
 package model.item.ingredient.pizza;
 
-import model.item.Item;
 import model.enums.IngredientState;
 
 public class Tomato extends Item {

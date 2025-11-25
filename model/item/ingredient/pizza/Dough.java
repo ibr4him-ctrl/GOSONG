@@ -1,9 +1,9 @@
 package model.item.ingredient.pizza;
 
-import model.item.Item;
 import model.enums.IngredientState;
+import model.item.item;
 
-public class Dough extends Item {
+public class Dough extends item {
     private IngredientState state;
     private boolean isCooked;
     private boolean isBurned;
@@ -48,7 +48,6 @@ public class Dough extends Item {
         return isBurned;
     }
 
-    @Override
     public String toString() {
         String status = "";
         if (isBurned) {
