@@ -3,6 +3,7 @@ package model.item.ingredient.pizza;
 
 import model.enums.IngredientState;
 import model.item.Item;
+import model.item.Item.ItemType;
 
 public class Dough extends Item {
     private IngredientState state;
@@ -10,7 +11,7 @@ public class Dough extends Item {
     private boolean isBurned;
 
     public Dough() {
-        super("Dough", ItemType.INGREDIENT, ItemLocation.COUNTER);
+        super("Dough", model.item.Item.ItemType.INGREDIENT, model.item.Item.ItemLocation.COUNTER);
         this.state = IngredientState.UNCHOPPED; // Awalnya adonan belum dipotong
         this.isCooked = false;
         this.isBurned = false;
