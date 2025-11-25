@@ -4,21 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Dish extends Item {
-    private String name;
-    private List<Preparable> components;
     
-    public Dish() {
+    private List<Preparable> components;
+    public Dish(String name, ItemLocation location) {
+        super(name, ItemType.DISH, location); 
         this.components = new ArrayList<>();
     }
-    
-    // Method setName berada di sini
-    public String getName() {
-        return name;
-    }
-    
-    public void setName(String name) {
-        this.name = name;
-    }
+    // ----------------------------------------------------
     
     public List<Preparable> getComponents() {
         return components;
@@ -36,9 +28,7 @@ public class Dish extends Item {
         this.components.clear();
     }
     
-    // Validasi: dish tidak valid jika tidak ada dalam resep
     public boolean isValid() {
-        // Implementasi validasi berdasarkan resep
-        return name != null && !components.isEmpty();
+        return getName() != null && !components.isEmpty();
     }
 }

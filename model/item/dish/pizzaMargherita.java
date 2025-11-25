@@ -1,11 +1,15 @@
 package model.dish;
 
+<<<<<<< HEAD
 import model.ingredient.pizza.Cheese;
 import model.ingredient.pizza.Dough;
 import model.ingredient.pizza.Tomato;
 import model.item.Dish;
 
 public class PizzaMargherita extends Dish {
+=======
+public class pizzaMargherita {
+>>>>>>> 4a05a7e78a36f05ac9538c33f0f45371c4d3f6b8
     
     public PizzaMargherita() {
         super();
