@@ -1,5 +1,5 @@
 package model.station;
 
-public class assemblyStation extends station{
+public class AssemblyStation extends Station{
     public void interact(Chef chef);
 }

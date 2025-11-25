@@ -1,5 +1,5 @@
 package model.station;
 
-public class ingredientStorage extends station{
+public class IngredientStorage extends Station{
     public void interact(Chef chef);
 }

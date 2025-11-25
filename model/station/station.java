@@ -1,6 +1,6 @@
 package model.station;
 
-public abstract class station {
+public abstract class Station {
     protected ;//Positionposition
     protected ;//Item placedItem;
 

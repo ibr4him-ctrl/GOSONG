@@ -5,7 +5,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.JPanel;
 
-import src.GUI.keyHandler; 
+import src.GUI.KeyHandler; 
 
 public class GamePanel extends JPanel implements Runnable {
     // SCREEN SETTINGS 
@@ -19,7 +19,7 @@ public class GamePanel extends JPanel implements Runnable {
     final int screenWidth = tileSize * maxScreenCol; //768 pixels 
     final int screenHeight = tileSize * maxScreenRow; //576 pixels 
 
-    keyHandler keyH = new keyHandler(); 
+    KeyHandler keyH = new KeyHandler(); 
     Thread gameThread; 
     
     int playerX = 100; 

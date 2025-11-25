@@ -1,5 +1,5 @@
 package model.chef;
 
-public class chef {
+public class Chef {
     
 }

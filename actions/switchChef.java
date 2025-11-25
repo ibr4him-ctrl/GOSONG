@@ -1,5 +1,5 @@
 package actions;
 
-public class switchChef {
+public class SwitchChef {
     
 }

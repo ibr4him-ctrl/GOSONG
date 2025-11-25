@@ -1,5 +1,5 @@
 package util;
 
-public class fileHandler {
+public class FileHandler {
     
 }

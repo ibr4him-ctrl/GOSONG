@@ -1,5 +1,5 @@
 package actions.useStation;
 
-public class servingAction {
+public class ServingAction {
     
 }

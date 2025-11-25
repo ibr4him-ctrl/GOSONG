@@ -1,5 +1,5 @@
 package actions.useStation;
 
-public class washingAction {
+public class WashingAction {
     
 }
