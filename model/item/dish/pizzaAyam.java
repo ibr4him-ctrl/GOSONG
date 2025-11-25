@@ -1,5 +1,5 @@
 package model.item.dish;
 
-public class PizzaAyam {
+public class pizzaAyam {
     
 }

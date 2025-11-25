@@ -1,5 +1,5 @@
 package model.item.utensils;
 
-public class Oven {
+public class oven {
     
 }

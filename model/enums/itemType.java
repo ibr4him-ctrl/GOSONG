@@ -1,5 +1,5 @@
 package model.enums;
 
-public enum ItemType {
+public enum itemType {
     INGREDIENT, PLATE, KITCHEN_UTENSIL, TILE
 }

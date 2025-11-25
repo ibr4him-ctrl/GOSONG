@@ -1,5 +1,5 @@
 package actions;
 
-public class PickUpDrop {
+public class pickUpDrop {
     
 }
