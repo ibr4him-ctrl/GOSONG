@@ -1,5 +1,5 @@
 package model.map;
 
-public class GameMap {
+public class gameMap {
     
 }
