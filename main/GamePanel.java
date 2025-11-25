@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 
 import java.awt.Color;
@@ -95,3 +96,15 @@ public class GamePanel extends JPanel implements Runnable {
 
     }
 }
+=======
+package main;
+
+public class GamePanel {
+
+    public void startGameThread() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'startGameThread'");
+    }
+
+}
+>>>>>>> 540d5a34d8a4e8801ddf19f88ee8039acfb1e7e2
