@@ -1,6 +1,20 @@
 package model.item;
 
 public class Item {
+    public enum ItemType {
+        INGREDIENT,
+        UTENSIL,
+        DISH
+    }
+
+    public enum ItemLocation {
+        COUNTER,
+        STOVE,
+        CUTTING_BOARD,
+        PLATE,
+        INVENTORY,
+        FLOOR
+    }
     private String name;
     private ItemType type;
     private ItemLocation location;

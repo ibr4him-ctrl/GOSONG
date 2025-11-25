@@ -1,18 +1,20 @@
 package model.item.ingredient.pizza;
 
-import model.enums.IngredientState;
-import model.item.item;
 
-public class Sausage extends item {
+import model.enums.IngredientState;
+import model.item.Item;
+
+public class Sausage extends Item {
     private IngredientState state;
     private boolean isCooked;
     private boolean isBurned;
 
     public Sausage() {
-        super("Sausage");
+        super("Sausage", ItemType.INGREDIENT, ItemLocation.COUNTER);
         this.state = IngredientState.UNCHOPPED; // Awalnya sosis belum dipotong
         this.isCooked = false;
         this.isBurned = false;
+        this.setEdible(true); // Set sosis bisa dimakan
     }
 
     public void chop() {

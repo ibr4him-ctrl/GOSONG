@@ -1,6 +1,6 @@
 package model.enums;
 
-public enum ingredientState {
+public enum IngredientState {
     CHOPPED,    // Bahan sudah dipotong
     UNCHOPPED   // Bahan belum dipotong
 }
