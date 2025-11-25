@@ -1,6 +1,8 @@
 package model.item.ingredient.pizza;
 
+
 import model.enums.IngredientState;
+import model.item.Item;
 
 public class Tomato extends Item {
     private IngredientState state;
@@ -8,10 +10,11 @@ public class Tomato extends Item {
     private boolean isBurned;
 
     public Tomato() {
-        super("Tomato");
+        super("Tomato", ItemType.INGREDIENT, ItemLocation.COUNTER);
         this.state = IngredientState.UNCHOPPED; // Awalnya tomat belum dipotong
         this.isCooked = false;
         this.isBurned = false;
+        this.setEdible(true); // Set tomat bisa dimakan
     }
 
     public void chop() {
