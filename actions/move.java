@@ -1,9 +1,9 @@
-package controller;
+package actions;
 import java.awt.event.KeyEvent; 
 import java.awt.event.KeyListener; 
 
 
-public class KeyHandler implements KeyListener{
+public class move implements KeyListener{
     public boolean upPressed, downPressed, rightPressed, leftPressed; 
     @Override 
     public void keyTyped(KeyEvent e){
