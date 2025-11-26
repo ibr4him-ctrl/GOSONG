@@ -1,5 +1,5 @@
 package model.enums;
 
-public enum stationType {
+public enum StationType {
     NONE, WASHING_STATION, COOKING_STATION, INGREDIENT_STORAGE, PLATING
 }
