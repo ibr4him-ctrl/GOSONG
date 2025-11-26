@@ -6,8 +6,6 @@ import model.item.dish.pizzaMargherita;
 import model.item.dish.pizzaAyam;
 import model.item.dish.pizzaSosis;
 import model.item.Dish;
-import model.item.ItemType;
-import model.item.ItemLocation;
 
 public class oven extends Item {
     private DoughFinalMixed dough; // Adonan yang sedang dimasak
