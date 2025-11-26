@@ -3,6 +3,11 @@ package model.item.ingredient.pizza;
 import model.item.Item;
 import model.item.Item.ItemLocation;
 import model.item.Item.ItemType;
+import model.item.ingredient.pizza.Dough;
+import model.item.ingredient.pizza.Cheese;
+import model.item.ingredient.pizza.Chicken;
+import model.item.ingredient.pizza.Sausage;
+import model.item.ingredient.pizza.Tomato;
 
 public class DoughFinalMixed extends Item {
     public enum DoughState {

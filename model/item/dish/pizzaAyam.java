@@ -1,17 +1,12 @@
-package model.dish;
+package model.item.dish;
 
-<<<<<<< HEAD
-import model.ingredient.pizza.Cheese;
-import model.ingredient.pizza.Chicken;
-import model.ingredient.pizza.Dough;
 import model.item.Dish;
+import model.item.ingredient.pizza.*;
+import model.item.ingredient.Ingredient;
 
-public class PizzaAyam extends Dish {
-=======
-public class pizzaAyam {
->>>>>>> 4a05a7e78a36f05ac9538c33f0f45371c4d3f6b8
+public class pizzaAyam extends Dish {
     
-    public PizzaAyam() {
+    public pizzaAyam() {
         super();
         setName("Pizza Ayam");
         initializeComponents();
@@ -39,17 +34,17 @@ public class pizzaAyam {
         for (var component : getComponents()) {
             if (component instanceof Dough) {
                 hasDough = true;
-                if (((Dough) component).getState() != model.ingredient.Ingredient.State.COOKED) {
+                if (((Dough) component).getState() != Ingredient.State.COOKED) {
                     return false;
                 }
             } else if (component instanceof Cheese) {
                 hasCheese = true;
-                if (((Cheese) component).getState() != model.ingredient.Ingredient.State.COOKED) {
+                if (((Cheese) component).getState() != Ingredient.State.COOKED) {
                     return false;
                 }
             } else if (component instanceof Chicken) {
                 hasChicken = true;
-                if (((Chicken) component).getState() != model.ingredient.Ingredient.State.COOKED) {
+                if (((Chicken) component).getState() != Ingredient.State.COOKED) {
                     return false;
                 }
             }

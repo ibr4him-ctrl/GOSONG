@@ -1,8 +1,13 @@
 package model.item.utensils;
 
 import model.item.Item;
-import model.item.ingredient.pizza.Dough;
-import model.item.ingredient.pizza.DoughFinalMixed;
+import model.item.ingredient.pizza.*;
+import model.item.dish.pizzaMargherita;
+import model.item.dish.pizzaAyam;
+import model.item.dish.pizzaSosis;
+import model.item.Dish;
+import model.item.ItemType;
+import model.item.ItemLocation;
 
 public class oven extends Item {
     private DoughFinalMixed dough; // Adonan yang sedang dimasak
@@ -10,6 +15,7 @@ public class oven extends Item {
     private boolean isCooking; // Status sedang memasak
     private static final int DEFAULT_COOKING_TIME = 5; // Waktu standar memasak
     private boolean isBurned; // Status apakah makanan gosong
+    private Dish cookedDish; // Hasil masakan yang sudah matang
 
     public oven() {
         super("Oven", Item.ItemType.UTENSIL, Item.ItemLocation.COUNTER);
@@ -50,36 +56,59 @@ public class oven extends Item {
         }
     }
 
-    // Menyelesaikan pemanggangan
+    // Menyelesaikan proses pemanggangan
     private void finishCooking() {
-        if (Dough != null) {
-            // Menentukan kualitas hasil pemanggangan berdasarkan kualitas adonan dan waktu memasak
-            int quality = Dough.getQuality();
-            
-            // Jika waktu memasak melebihi batas, makanan menjadi gosong
-            if (cookingTime < -2) {
-                isBurned = true;
-                Dough = new Item("Burned Bread", Item.ItemType.DISH, Item.ItemLocation.COUNTER);
-                Dough.setEdible(false); // Makanan gosong tidak bisa dimakan
-            } else {
-                // Buat makanan matang berdasarkan kualitas adonan
-                String foodName = quality > 70 ? "Perfect Bread" : 
-                                quality > 40 ? "Bread" : "Burnt Bread";
-                dough = new Item(foodName, Item.ItemType.DISH, Item.ItemLocation.COUNTER);
-                dough.setEdible(quality > 40); // Hanya bisa dimakan jika kualitas cukup
-                isBurned = quality <= 40;
-            }
-            isCooking = false;
+        isCooking = false;
+        
+        // Cek bahan-bahan untuk menentukan jenis pizza
+        if (dough == null) {
+            isBurned = true;
+            return;
         }
+        
+        try {
+            // Cek resep pizza berdasarkan bahan yang ada
+            if (dough.getCheese() != null && dough.getTomato() != null && 
+                dough.getChicken() == null && dough.getSausage() == null) {
+                // Resep Pizza Margherita: Dough + Cheese + Tomato
+                cookedDish = new pizzaMargherita();
+            } else if (dough.getCheese() != null && dough.getChicken() != null) {
+                // Resep Pizza Ayam: Dough + Cheese + Chicken
+                cookedDish = new pizzaAyam();
+            } else if (dough.getCheese() != null && dough.getSausage() != null) {
+                // Resep Pizza Sosis: Dough + Cheese + Sausage
+                cookedDish = new pizzaSosis();
+            } else {
+                // Jika bahan tidak sesuai resep manapun, hasilnya gosong
+                isBurned = true;
+            }
+        } catch (Exception e) {
+            System.err.println("Error creating pizza: " + e.getMessage());
+            isBurned = true;
+        }
+        
+        // Reset dough setelah dimasak
+        dough = null;
     }
 
-    // Mengambil makanan yang sudah matang
-    public Item takeFood() {
-        if (dough != null && !isCooking) {
-            Item cookedFood = dough;
-            dough = null;
-            return cookedFood;
+    // Mengambil hasil masakan dari oven
+    public Item takeOut() {
+        if (isCooking) {
+            return null; // Masih dimasak
         }
+        
+        if (isBurned) {
+            isBurned = false;
+            cookedDish = null;
+            return null; // Makanan gosong, tidak bisa diambil
+        }
+        
+        if (cookedDish != null) {
+            Dish result = cookedDish;
+            cookedDish = null;
+            return result;
+        }
+        
         return null;
     }
 
@@ -101,6 +130,6 @@ public class oven extends Item {
     }
     
     public boolean hasFinishedCooking() {
-        return !isCooking && dough != null && !(dough instanceof DoughFinalMixed);
+        return !isCooking && (cookedDish != null || isBurned);
     }
 }

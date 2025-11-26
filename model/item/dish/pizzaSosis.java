@@ -1,13 +1,12 @@
-package dish;
+package model.item.dish;
 
-import ingredient.pizza.Cheese;
-import ingredient.pizza.Dough;
-import ingredient.pizza.Sausage;
-import item.Dish;
+import model.item.Dish;
+import model.item.ingredient.pizza.*;
+import model.item.ingredient.Ingredient;
 
-public class PizzaSosis extends Dish {
+public class pizzaSosis extends Dish {
     
-    public PizzaSosis() {
+    public pizzaSosis() {
         super();
         setName("Pizza Sosis");
         initializeComponents();
@@ -27,16 +26,30 @@ public class PizzaSosis extends Dish {
             return false;
         }
         
-        // Semua komponen harus sudah dimasak (COOKED)
+        // Cek apakah semua ingredient ada dan dalam state COOKED
+        boolean hasDough = false;
+        boolean hasCheese = false;
+        boolean hasSausage = false;
+        
         for (var component : getComponents()) {
-            if (component instanceof ingredient.Ingredient) {
-                ingredient.Ingredient ing = (ingredient.Ingredient) component;
-                if (ing.getState() != ingredient.Ingredient.State.COOKED) {
+            if (component instanceof Dough) {
+                hasDough = true;
+                if (((Dough) component).getState() != Ingredient.State.COOKED) {
+                    return false;
+                }
+            } else if (component instanceof Cheese) {
+                hasCheese = true;
+                if (((Cheese) component).getState() != Ingredient.State.COOKED) {
+                    return false;
+                }
+            } else if (component instanceof Sausage) {
+                hasSausage = true;
+                if (((Sausage) component).getState() != Ingredient.State.COOKED) {
                     return false;
                 }
             }
         }
         
-        return super.isValid();
+        return hasDough && hasCheese && hasSausage;
     }
 }
