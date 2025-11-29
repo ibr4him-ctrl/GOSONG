@@ -1,64 +1,14 @@
-package model.item.ingredient.pizza;
+package model.item.ingredient.pizza; 
 
+import model.enums.ItemLocation; 
+import model.item.ingredient.Ingredient;
 
-import model.enums.IngredientState;
-import model.item.Item;
-import model.item.Item.ItemType;
-
-
-public class Sausage extends Item {
-    private IngredientState state;
-    private boolean isCooked;
-    private boolean isBurned;
-
-    public Sausage() {
-        super("Sausage", model.item.Item.ItemType.INGREDIENT, model.item.Item.ItemLocation.COUNTER);
-        this.state = IngredientState.UNCHOPPED; // Awalnya sosis belum dipotong
-        this.isCooked = false;
-        this.isBurned = false;
-        this.setEdible(true); // Set sosis bisa dimakan
+public class Sausage extends Ingredient{
+    public Sausage(){
+        this(ItemLocation.INGREDIENT_STORAGE); 
     }
 
-    public void chop() {
-        if (state == IngredientState.UNCHOPPED) {
-            state = IngredientState.CHOPPED;
-        }
-    }
-
-    public void cook() {
-        if (!isBurned) {
-            if (isCooked) {
-                isBurned = true;
-                isCooked = false;
-            } else {
-                isCooked = true;
-            }
-        }
-    }
-
-    public IngredientState getState() {
-        return state;
-    }
-
-    public boolean isChopped() {
-        return state == IngredientState.CHOPPED;
-    }
-
-    public boolean isCooked() {
-        return isCooked && !isBurned;
-    }
-
-    public boolean isBurned() {
-        return isBurned;
-    }
-
-    public String toString() {
-        String status = "";
-        if (isBurned) {
-            status = "burned ";
-        } else if (isCooked) {
-            status = "cooked ";
-        }
-        return status + (state == IngredientState.CHOPPED ? "chopped " : "") + super.toString();
+    public Sausage(ItemLocation location){
+        super("Sausage", location); 
     }
 }

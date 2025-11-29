@@ -1,133 +1,178 @@
 package model.item.utensils;
 
-import model.item.Item;
-import model.item.ingredient.pizza.*;
-import model.item.dish.pizzaMargherita;
-import model.item.dish.pizzaAyam;
-import model.item.dish.pizzaSosis;
-import model.item.Dish;
+import java.util.ArrayList; 
+import java.util.Collections; 
+import java.util.List; 
 
-public class oven extends Item {
-    private DoughFinalMixed dough; // Adonan yang sedang dimasak
-    private int cookingTime; // Waktu memasak tersisa
-    private boolean isCooking; // Status sedang memasak
-    private static final int DEFAULT_COOKING_TIME = 5; // Waktu standar memasak
-    private boolean isBurned; // Status apakah makanan gosong
-    private Dish cookedDish; // Hasil masakan yang sudah matang
+import model.enums.IngredientState; 
+import model.enums.ItemLocation;
+import model.enums.ItemType; 
+import model.interfaces.CookingDevice;
+import model.item.Item; 
+import model.item.Preparable; 
+import model.item.ingredient.Ingredient;
 
-    public oven() {
-        super("Oven", Item.ItemType.UTENSIL, Item.ItemLocation.COUNTER);
-        this.dough = null;
-        this.cookingTime = 0;
-        this.isCooking = false;
+public class Oven extends Item implements CookingDevice{
+    //kapaitas maksimum ingredient yang bisa dipanggang 
+    
+    private final int maxCapacity; 
+    
+
+    // Isi oven sekarang (bisa ingredient pizza)
+    private final List<Preparable> contents; 
+
+    //Status masak 
+    private boolean cooking; 
+    private double cookTimeSeconds; 
+    private boolean burned; 
+
+
+    //waktu referensi 
+    private static final double COOK_TIME_DONE = 12.0; 
+    private static final double COOK_TIME_BURNED = 24.0; 
+
+    public Oven(){
+        this(ItemLocation.KITCHEN_UTENSILS, 4); 
     }
 
-    // Memasukkan adonan ke dalam oven
-    public boolean insertDough(DoughFinalMixed dough) {
-        if (dough == null || dough.getState() != DoughFinalMixed.DoughState.READY_TO_BAKE) {
-            return false; // Bukan adonan yang valid atau belum siap dipanggang
-        }
-        if (this.dough == null && !isCooking) {
-            this.dough = dough;
-            return true;
-        }
-        return false;
+    public Oven(ItemLocation location, int maxCapacity){
+        super("Oven", ItemType.KITCHEN_UTENSIL,location); 
+        this.maxCapacity = maxCapacity; 
+        this.contents = new ArrayList<>(); 
+        this.cooking = false;             //lagi masak atau tidak 
+        this.cookTimeSeconds = 0.0; 
+        this.burned = false; 
+
+        setClean(true); 
+        setEdible(false); 
     }
 
-    // Memulai proses pemanggangan
-    public boolean startCooking() {
-        if (dough != null && !isCooking) {
-            this.cookingTime = DEFAULT_COOKING_TIME;
-            this.isCooking = true;
-            return true;
-        }
-        return false;
+
+    //Cooking Device 
+    public boolean isPortable(){
+        return false; 
     }
 
-    // Update status pemanggangan
-    public void update() {
-        if (isCooking && cookingTime > 0) {
-            cookingTime--;
-            if (cookingTime <= 0) {
-                finishCooking();
+    @Override
+    public int capacity(){
+        return maxCapacity; 
+    }
+
+    @Override
+    //Ini lebih ke validasi apa yang boleh masuk 
+    public boolean canAccept(Preparable ingredient){
+        if (ingredient == null){return false;}
+
+        if(!(ingredient instanceof Ingredient)) return false; 
+
+        if (cooking) return false; 
+
+        if (contents.size() >= maxCapacity) return false; 
+
+        Ingredient ing = (Ingredient) ingredient; 
+        IngredientState state = ing.getState(); 
+
+        return state == IngredientState.CHOPPED; 
+    }
+
+    @Override
+    // Masuk ke ingredient ke oven 
+    public void addIngredient(Preparable ingredient){
+        if (!canAccept(ingredient)){
+            throw new IllegalStateException("Oven tidak dapat menerimaa ingredient ini"); 
+        }
+        contents.add(ingredient); 
+    }
+
+    @Override
+    // Ini mulai masak 
+    public void startCooking(){
+        if (contents.isEmpty()){
+            throw new IllegalStateException("Oven kosong, tidak bisa mulai memasak"); 
+        }
+
+        cooking = true; 
+        cookTimeSeconds = 0.0; 
+        burned = false; 
+    }
+
+    public void update(double deltaSeconds){
+        if (!cooking) return; 
+
+        cookTimeSeconds += deltaSeconds; 
+
+        if (cookTimeSeconds >= COOK_TIME_BURNED){
+            for (Preparable p : contents){
+                if (p instanceof Ingredient){
+                    ((Ingredient) p).burn(); 
+                }
+            }
+            burned = true; 
+            cooking = false;
+     
+        }else if (cookTimeSeconds >= COOK_TIME_DONE){
+            for (Preparable p : contents){
+                if (p instanceof Ingredient){
+                    Ingredient ing = (Ingredient) p; 
+                    if (ing.getState() != IngredientState.BURNED && ing.getState() != IngredientState.COOKED){
+                        ing.cook();
+                    }
+                }
             }
         }
     }
 
-    // Menyelesaikan proses pemanggangan
-    private void finishCooking() {
-        isCooking = false;
-        
-        // Cek bahan-bahan untuk menentukan jenis pizza
-        if (dough == null) {
-            isBurned = true;
-            return;
-        }
-        
-        try {
-            // Cek resep pizza berdasarkan bahan yang ada
-            if (dough.getCheese() != null && dough.getTomato() != null && 
-                dough.getChicken() == null && dough.getSausage() == null) {
-                // Resep Pizza Margherita: Dough + Cheese + Tomato
-                cookedDish = new pizzaMargherita();
-            } else if (dough.getCheese() != null && dough.getChicken() != null) {
-                // Resep Pizza Ayam: Dough + Cheese + Chicken
-                cookedDish = new pizzaAyam();
-            } else if (dough.getCheese() != null && dough.getSausage() != null) {
-                // Resep Pizza Sosis: Dough + Cheese + Sausage
-                cookedDish = new pizzaSosis();
-            } else {
-                // Jika bahan tidak sesuai resep manapun, hasilnya gosong
-                isBurned = true;
-            }
-        } catch (Exception e) {
-            System.err.println("Error creating pizza: " + e.getMessage());
-            isBurned = true;
-        }
-        
-        // Reset dough setelah dimasak
-        dough = null;
-    }
-
-    // Mengambil hasil masakan dari oven
-    public Item takeOut() {
-        if (isCooking) {
-            return null; // Masih dimasak
-        }
-        
-        if (isBurned) {
-            isBurned = false;
-            cookedDish = null;
-            return null; // Makanan gosong, tidak bisa diambil
-        }
-        
-        if (cookedDish != null) {
-            Dish result = cookedDish;
-            cookedDish = null;
-            return result;
-        }
-        
-        return null;
-    }
-
-    // Getter untuk status
+    //More helper
     public boolean isCooking() {
-        return isCooking;
+        return cooking;
     }
 
-    public DoughFinalMixed getCurrentDough() {
-        return dough;
-    }
-
-    public int getRemainingTime() {
-        return cookingTime;
-    }
-    
     public boolean isBurned() {
-        return isBurned;
+        return burned;
     }
+
+    public double getCookTimeSeconds() {
+        return cookTimeSeconds;
+    }
+
+    public boolean isEmpty() {
+        return contents.isEmpty();
+    }
+
+    public List<Preparable> getContents() {
+        return Collections.unmodifiableList(contents);
+    }
+
+    // Mengeluarkan seluruh isi oven setelah proses memakai selesai 
+    // Harus dipanggil ketika oven TIDAK sedang memasak
+
+    public List<Preparable> takeOutAll(){
+        if (cooking){
+            throw new IllegalStateException("Oven masih memasak"); 
+        }
+
+        List<Preparable> result = new ArrayList<>(contents); 
+        contents.clear(); 
+        burned = false; 
+        cookTimeSeconds = 0.0; 
+        return result; 
+    }
+
+    public void clearContents(){
+        contents.clear(); 
+        cooking = false; 
+        burned = false; 
+        cookTimeSeconds = 0.0; 
+    }
+
+    @Override
+    public String toString(){
+        return "Oven(" + 
+        "contents=" + contents.size() + 
+        ", cooking=" + cooking + 
+        ", burned=" + burned + 
+        ", cookTime=" + cookTimeSeconds + ")";
+    }
+
     
-    public boolean hasFinishedCooking() {
-        return !isCooking && (cookedDish != null || isBurned);
-    }
 }

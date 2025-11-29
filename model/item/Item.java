@@ -1,20 +1,9 @@
 package model.item;
 
-public class Item {
-    public enum ItemType {
-        INGREDIENT,
-        UTENSIL,
-        DISH
-    }
+import model.enums.ItemLocation; 
+import model.enums.ItemType; 
 
-    public enum ItemLocation {
-        COUNTER,
-        STOVE,
-        CUTTING_BOARD,
-        PLATE,
-        INVENTORY,
-        FLOOR
-    }
+public abstract class Item {
     private String name;
     private ItemType type;
     private ItemLocation location;
@@ -61,5 +50,17 @@ public class Item {
     
     public void setClean(boolean clean) { 
         this.isClean = clean; 
+    }
+    public void markDirty(){
+        this.isClean = false; 
+    }
+    public void wash(){
+        this.isClean = true; 
+    }
+    public String toString(){
+        return String.format(
+            "%s{name='%s', type=%s, location=%s, edible=%s, clean=%s}",
+            getClass().getSimpleName(), name, type, location, isEdible, isClean
+        );
     }
 }

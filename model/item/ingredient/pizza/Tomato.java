@@ -1,65 +1,15 @@
 package model.item.ingredient.pizza;
 
 
-import model.enums.IngredientState;
-import model.item.Item;
-import model.item.Item.ItemType;
+import model.enums.ItemLocation; 
+import model.item.ingredient.Ingredient;
 
-
-public class Tomato extends Item {
-    private IngredientState state;
-    private boolean isCooked;
-    private boolean isBurned;
-
-    public Tomato() {
-        super("Tomato", Item.ItemType.INGREDIENT, Item.ItemLocation.COUNTER);
-        this.state = IngredientState.UNCHOPPED; // Awalnya tomat belum dipotong
-        this.isCooked = false;
-        this.isBurned = false;
-        this.setEdible(true); // Set tomat bisa dimakan
+public class Tomato extends Ingredient{
+    public Tomato(){
+        this(ItemLocation.INGREDIENT_STORAGE); 
     }
 
-    public void chop() {
-        if (state == IngredientState.UNCHOPPED) {
-            state = IngredientState.CHOPPED;
-        }
-    }
-
-    public void cook() {
-        if (!isBurned) {
-            if (isCooked) {
-                isBurned = true;
-                isCooked = false;
-            } else {
-                isCooked = true;
-            }
-        }
-    }
-
-    public IngredientState getState() {
-        return state;
-    }
-
-    public boolean isChopped() {
-        return state == IngredientState.CHOPPED;
-    }
-
-    public boolean isCooked() {
-        return isCooked && !isBurned;
-    }
-
-    public boolean isBurned() {
-        return isBurned;
-    }
-
-    @Override
-    public String toString() {
-        String status = "";
-        if (isBurned) {
-            status = "burned ";
-        } else if (isCooked) {
-            status = "cooked ";
-        }
-        return status + (state == IngredientState.CHOPPED ? "chopped " : "") + super.toString();
+    public Tomato(ItemLocation location){
+        super("Tomato",location); 
     }
 }

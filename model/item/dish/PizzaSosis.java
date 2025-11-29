@@ -1,55 +1,21 @@
-package model.item.dish;
+package model.item.dish; 
 
-import model.item.Dish;
-import model.item.ingredient.pizza.*;
-import model.item.ingredient.Ingredient;
+import java.util.List;
+import model.enums.ItemLocation;
+import model.item.Dish; 
+import model.item.Preparable; 
 
-public class pizzaSosis extends Dish {
-    
-    public pizzaSosis() {
-        super();
-        setName("Pizza Sosis");
-        initializeComponents();
+public class PizzaSosis extends Dish{
+    public PizzaSosis(ItemLocation location){
+        super("Pizza Margherita", location); 
     }
-    
-    private void initializeComponents() {
-        // Pizza Sosis terdiri dari: Dough, Cheese, Sausage
-        addComponent(new Dough());
-        addComponent(new Cheese());
-        addComponent(new Sausage());
-    }
-    
-    @Override
-    public boolean isValid() {
-        // Validasi bahwa semua komponen ada dan dalam state yang benar
-        if (getComponents().size() != 3) {
-            return false;
-        }
-        
-        // Cek apakah semua ingredient ada dan dalam state COOKED
-        boolean hasDough = false;
-        boolean hasCheese = false;
-        boolean hasSausage = false;
-        
-        for (var component : getComponents()) {
-            if (component instanceof Dough) {
-                hasDough = true;
-                if (((Dough) component).getState() != Ingredient.State.COOKED) {
-                    return false;
-                }
-            } else if (component instanceof Cheese) {
-                hasCheese = true;
-                if (((Cheese) component).getState() != Ingredient.State.COOKED) {
-                    return false;
-                }
-            } else if (component instanceof Sausage) {
-                hasSausage = true;
-                if (((Sausage) component).getState() != Ingredient.State.COOKED) {
-                    return false;
-                }
+
+    public PizzaSosis(ItemLocation location, List<Preparable> components){
+        this(location); 
+        if (components != null){
+            for (Preparable p : components){
+                addComponent(p);
             }
         }
-        
-        return hasDough && hasCheese && hasSausage;
     }
 }
