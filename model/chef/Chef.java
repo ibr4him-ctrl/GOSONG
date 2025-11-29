@@ -60,7 +60,7 @@ public class Chef {
         return busy; 
     }
 
-    public void setBusy(){
+    public void setBusy(boolean busy){
         this.busy = busy; 
     }
     public boolean pickUpItem(Item item) {
