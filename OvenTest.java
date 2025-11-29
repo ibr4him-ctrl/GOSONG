@@ -1,6 +1,9 @@
 import java.util.List;
 import model.enums.ItemLocation;
+import model.enums.PizzaType;
+import model.item.Dish;
 import model.item.Preparable;
+import model.item.dish.PizzaRecipeChecker;
 import model.item.ingredient.pizza.Cheese;
 import model.item.ingredient.pizza.Dough;
 import model.item.ingredient.pizza.Tomato;
@@ -9,43 +12,57 @@ import model.item.utensils.Oven;
 public class OvenTest {
     public static void main(String[] args) {
 
-        Oven oven = new Oven();  // pakai default constructor kamu
+        // 1) Bikin oven
+        Oven oven = new Oven();
 
-        // Bikin bahan (sesuaikan constructor Dough/Tomato/Cheese kamu ya)
+        // 2) Bikin bahan Pizza Margherita: Dough + Tomato + Cheese
         Dough dough   = new Dough(ItemLocation.INGREDIENT_STORAGE);
         Tomato tomato = new Tomato(ItemLocation.INGREDIENT_STORAGE);
         Cheese cheese = new Cheese(ItemLocation.INGREDIENT_STORAGE);
 
-        // Harus CHOPPED dulu supaya canAccept() = true
+        // harus CHOPPED supaya canAccept() = true
         dough.chop();
         tomato.chop();
         cheese.chop();
 
-        // Masukin ke oven
+        System.out.println("Before cooking:");
+        System.out.println("  Dough  = " + dough.getState());
+        System.out.println("  Tomato = " + tomato.getState());
+        System.out.println("  Cheese = " + cheese.getState());
+
+        // 3) Masukkan ke oven
         oven.addIngredient(dough);
         oven.addIngredient(tomato);
         oven.addIngredient(cheese);
 
         oven.startCooking();
 
-        // Simulasi 12 detik
+        // 4) Simulasi 12 detik
         for (int t = 1; t <= 12; t++) {
             oven.update(1.0);
-            System.out.println("Tick " + t + " | cooking=" + oven.isCooking() + " | time=" + oven.getCookTimeSeconds());
+            System.out.println("Tick " + t + " | cooking=" + oven.isCooking()
+                    + " | time=" + oven.getCookTimeSeconds());
         }
 
-        // Setelah matang (>= 12 detik) → ambil semua isi
+        // 5) Ambil semua isi oven
         List<Preparable> hasil = oven.takeOutAll();
 
-        System.out.println("\nSetelah keluar dari oven:");
+        System.out.println("\nAfter cooking:");
         for (Preparable p : hasil) {
-            if (p instanceof Dough d) {
-                System.out.println("Dough state  = " + d.getState());
-            } else if (p instanceof Tomato t) {
-                System.out.println("Tomato state = " + t.getState());
-            } else if (p instanceof Cheese c) {
-                System.out.println("Cheese state = " + c.getState());
-            }
+            System.out.println("  " + p.getClass().getSimpleName());
+        }
+
+        // 6) Deteksi jenis pizza
+        PizzaType type = PizzaRecipeChecker.detectPizza(hasil);
+        System.out.println("\nDetected type = " + type);
+
+        // 7) Buat Dish pizza-nya
+        Dish dish = PizzaRecipeChecker.createPizzaDish(type, hasil);
+        if (dish != null) {
+            System.out.println("Dish name        = " + dish.getName());
+            System.out.println("Components count = " + dish.getComponents().size());
+        } else {
+            System.out.println("Dish is null (resep tidak cocok).");
         }
     }
 }
