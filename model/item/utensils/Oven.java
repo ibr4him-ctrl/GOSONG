@@ -165,6 +165,33 @@ public class Oven extends Item implements CookingDevice{
         cookTimeSeconds = 0.0; 
     }
 
+    // walaupun udah 12 detik, nilai tetap 1.0 meski bisa gosong di 24s 
+
+    public double getProgressRatio(){
+        if (!cooking && cookTimeSeconds == 0.0) return 0.0; 
+        if (COOK_TIME_DONE <= 0) return 0.0; 
+        double ratio = cookTimeSeconds / COOK_TIME_DONE; 
+        return Math.min(1.0, ratio); 
+    }
+
+    public int getProgressPercent(){
+        return (int) Math.round(getProgressRation() * 100.0); 
+    }
+    public String getProgressBar(int width){
+        double ratio = getProgressRatio(); 
+        int filled = (int) Math.round(ratio*width); 
+        if (filled > width) filled = width; 
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append('['); 
+        for (int i = 0; i < width; i++){
+            sb.append(i < filled ? '#' : '-'); 
+        }
+        sb.append("] ").append(getProgressPercent()).append('%'); 
+        return sb.toString(); 
+    }
+
     @Override
     public String toString(){
         return "Oven(" + 
