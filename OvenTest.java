@@ -38,7 +38,7 @@ public class OvenTest {
         oven.startCooking();
 
         // 4) Simulasi 12 detik
-        for (int t = 1; t <= 12; t++) {
+        for (int t = 1; t <= 20; t++) {
             oven.update(1.0);
             System.out.println("Tick " + t + " | cooking=" + oven.isCooking()
                     + " | time=" + oven.getCookTimeSeconds());
