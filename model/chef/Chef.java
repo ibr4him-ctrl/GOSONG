@@ -5,6 +5,7 @@ import model.map.Position;
 public class Chef {
     private Position position; 
     private Item heldItem; 
+    private boolean busy; 
     
     public Chef(Position startPosition){
         this.position = new Position (startPosition); 
@@ -38,5 +39,9 @@ public class Chef {
             this.position.setX(x);
             this.position.setY(y);
         }
+    }
+
+    public boolean isBusy(){
+        return busy; 
     }
 }
