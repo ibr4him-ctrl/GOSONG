@@ -1,10 +1,13 @@
 package model.chef;
 
 import model.item.Item; 
+import model.map.Position; 
 public class Chef {
+    private Position position; 
     private Item heldItem; 
-
-    public Chef(){
+    
+    public Chef(Position startPosition){
+        this.position = new Position (startPosition); 
         this.heldItem = null; 
     }
 
@@ -18,5 +21,22 @@ public class Chef {
 
     public void setHeldItem(Item item){
         this.heldItem = item; 
+    }
+    
+    //Posisi chef di map 
+    public Position getPosition(){
+        return position; 
+    }
+    public void setPosition(Position pos){
+        this.position = new Position(pos); 
+    }
+
+    public void setPosition(int x, int y) {
+        if (this.position == null) {
+            this.position = new Position(x, y);
+        } else {
+            this.position.setX(x);
+            this.position.setY(y);
+        }
     }
 }
