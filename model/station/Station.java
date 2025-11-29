@@ -9,9 +9,9 @@ public abstract class Station {
     protected String stationType;
     protected Item itemOnStation;
     
-    public Station(String type) {
-        //this.posX = x;
-        //this.posY = y;
+    public Station(int x, int y, String type) {
+        this.posX = x;
+        this.posY = y;
         this.stationType = type;
         this.itemOnStation = null;
     }

@@ -1,5 +1,12 @@
 package model.enums;
 
 public enum StationType {
-    NONE, WASHING_STATION, COOKING_STATION, INGREDIENT_STORAGE, PLATING
+    CUTTING,                   //C 
+    COOKING,                   //R
+    ASSEMBLY,                  //A
+    WASHING,                   //W
+    SERVING,                   //S
+    INGREDIENT_STORAGE,        //I
+    PLATE_STORAGE,             //P
+    TRASH                      //T
 }
