@@ -15,14 +15,6 @@ public abstract class Station {
         this.stationType = type;
         this.itemOnStation = null;
     }
-
-    //ini buat ngecek kalo chef udah deket sama station ato blom
-    // public boolean isAdjacentTo(Chef chef) {
-       //int chefX = chef.getPosition().getX();
-        //int chefY = chef.getPosition().getY();
-        //int deltaX = Math.abs(chefX - posX); //cek arah
-        //int deltaY = Math.abs(chefY - posY);
-        //return (deltaX == 1 && deltaY == 0) || (deltaX == 0 && deltaY == 1);}
     
     public abstract boolean interact(Chef chef);
     public abstract String getSymbol();
@@ -45,6 +37,14 @@ public abstract class Station {
         return itemOnStation == null;
     }
     
+    public boolean isAdjacentTo(Chef chef) { 
+        int chefX = chef.getPosition().getX(); 
+        int chefY = chef.getPosition().getY(); 
+        int deltaX = Math.abs(chefX - posX);  
+        int deltaY = Math.abs(chefY - posY); 
+        return (deltaX == 1 && deltaY == 0) || (deltaX == 0 && deltaY == 1);
+    }
+    
     public String getStatusDisplay() {
         StringBuilder sb = new StringBuilder();
         sb.append("=== ").append(stationType.toUpperCase()).append(" ===\n");
@@ -58,15 +58,13 @@ public abstract class Station {
         return sb.toString();
     }
     
-    //public boolean canBeUsed(Chef chef) {
-    //   return isAdjacentTo(chef);
-    //}
+    public int getPosX() {
+        return posX;
+    }
     
-    //public int getPosX() {
-        //return posX;}
-    
-    //public int getPosY() {
-      //  return posY;}
+    public int getPosY() {
+        return posY;
+    }
     
     public String getStationType() {
         return stationType;
