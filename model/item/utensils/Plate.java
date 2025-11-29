@@ -1,5 +1,5 @@
 package model.item.utensils;
 
-public class plate {
+public class Plate {
     
 }
