@@ -1,11 +1,13 @@
 package model.map.tile;
 
 import model.map.Position;
+import model.item.Item;
 
 public class Tile {
 
     private final Position position;
     private final TileType type;
+    private Item item;
 
     public Tile(Position position, TileType type) {
         if (position == null) {
@@ -17,6 +19,15 @@ public class Tile {
 
         this.position = position;
         this.type = type;
+        this.item = null;
+    }
+
+    public Item getItem() {
+        return this.item;
+    }
+
+    public void setItem(Item item) {
+        this.item = item;
     }
 
     public Position getPosition() {

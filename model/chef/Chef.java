@@ -23,6 +23,10 @@ public class Chef {
         this.heldItem = initialItem; 
     }
 
+    public ChefInventory getInventory() {
+        return inventory;
+    }
+
     public String getName() { 
         return name; 
     }
@@ -54,6 +58,10 @@ public class Chef {
 
     public boolean isActive() { 
         return isActive; 
+    }
+
+    public void setActive(boolean active) {
+        this.isActive = active;
     }
 
     public boolean isBusy(){
