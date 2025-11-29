@@ -48,6 +48,7 @@ public class Oven extends Item implements CookingDevice{
 
 
     //Cooking Device 
+    @Override
     public boolean isPortable(){
         return false; 
     }
@@ -71,7 +72,7 @@ public class Oven extends Item implements CookingDevice{
         Ingredient ing = (Ingredient) ingredient; 
         IngredientState state = ing.getState(); 
 
-        return state == IngredientState.CHOPPED; 
+        return ing.canBeCooked(); 
     }
 
     @Override
@@ -169,7 +170,6 @@ public class Oven extends Item implements CookingDevice{
 
     public double getProgressRatio(){
         if (!cooking && cookTimeSeconds == 0.0) return 0.0; 
-        if (COOK_TIME_DONE <= 0) return 0.0; 
         double ratio = cookTimeSeconds / COOK_TIME_DONE; 
         return Math.min(1.0, ratio); 
     }
@@ -200,6 +200,4 @@ public class Oven extends Item implements CookingDevice{
         ", burned=" + burned + 
         ", cookTime=" + cookTimeSeconds + ")";
     }
-
-    
 }
