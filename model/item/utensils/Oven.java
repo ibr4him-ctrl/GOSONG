@@ -175,7 +175,7 @@ public class Oven extends Item implements CookingDevice{
     }
 
     public int getProgressPercent(){
-        return (int) Math.round(getProgressRation() * 100.0); 
+        return (int) Math.round(getProgressRatio() * 100.0); 
     }
     public String getProgressBar(int width){
         double ratio = getProgressRatio(); 
