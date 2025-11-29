@@ -6,22 +6,25 @@ public class Chef {
     private Position position; 
     private Item heldItem; 
     private boolean busy; 
-    
+    private String name;
+    private ChefInventory inventory;
+    private boolean isActive;
+
     public Chef(Position startPosition){
         this.position = new Position (startPosition); 
         this.heldItem = null; 
+        this.name = name;
+        this.inventory = new ChefInventory();
+        this.isActive = true;
+        this.busy = false;
     }
 
     public Chef(Item initialItem){
         this.heldItem = initialItem; 
     }
 
-    public Item getHeldItem(){
-        return heldItem; 
-    }
-
-    public void setHeldItem(Item item){
-        this.heldItem = item; 
+    public String getName() { 
+        return name; 
     }
     
     //Posisi chef di map 
@@ -41,6 +44,18 @@ public class Chef {
         }
     }
 
+    public Item getHeldItem() {
+        return inventory.getHeldItem();
+    }
+    
+    public void setHeldItem(Item item){
+        this.heldItem = item; 
+    }
+
+    public boolean isActive() { 
+        return isActive; 
+    }
+
     public boolean isBusy(){
         return busy; 
     }
@@ -48,4 +63,23 @@ public class Chef {
     public void setBusy(){
         this.busy = busy; 
     }
+    public boolean pickUpItem(Item item) {
+        return inventory.addItem(item);
+    }
+    
+    public Item dropItem() {
+        return inventory.removeItem();
+    }
+    
+    public boolean hasItem() {
+        return inventory.hasItem();
+    }
+
+    @Override
+    public String toString() {
+        String itemStatus = hasItem() ? getHeldItem().toString() : "Empty Handed";
+        return String.format("Chef %s at %s | Status: %s", name, position, itemStatus);
+    }
 }
+
+
