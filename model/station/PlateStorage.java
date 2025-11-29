@@ -5,13 +5,15 @@ import java.util.Deque;
 
 import model.chef.Chef;
 import model.item.Item;
+import model.enums.ItemType;
 
 public class PlateStorage extends Station {
 
-    private final Deque<Item> stack = new ArrayDeque<>();
+    private final Deque<Item> platestack; 
 
     public PlateStorage(int x, int y) {
         super(x, y, "PlateStorage");
+        this.platestack = new ArrayDeque<>(); 
     }
 
     @Override
@@ -20,42 +22,45 @@ public class PlateStorage extends Station {
     }
 
     public void pushInitialCleanPlate(Item plate) {
+        if (plate == null) return; 
+        if (plate.getItemType() != ItemType.PLATE) return; 
         plate.setClean(true);
-        stack.push(plate);
+        platestack.push(plate);
     }
 
     public void pushDirtyPlate(Item plate) {
+        if (plate == null) return; 
+        if (plate.getItemType() != ItemType.PLATE) return; 
         plate.setClean(false);
-        stack.push(plate);
+        platestack.push(plate);
     }
 
     @Override
     public boolean interact(Chef chef) {
+
+        if (!isAdjacentTo(chef)) return false; 
+
         Item hand = chef.getHeldItem();
 
         if (hand != null) {
             return false;
         }
 
-        if (stack.isEmpty()) return false;
+        if (platestack.isEmpty()) return false;
 
-        if (!stack.peek().isClean()) {
+        if (!platestack.peek().isClean()) {
             Deque<Item> dirtyStack = new ArrayDeque<>();
-            while (!stack.isEmpty() && !stack.peek().isClean()) {
-                dirtyStack.push(stack.pop());
+            while (!platestack.isEmpty() && !platestack.peek().isClean()) {
+                dirtyStack.push(platestack.pop());
             }
             Item oneDirty = dirtyStack.pop();
             chef.setHeldItem(oneDirty);
-            while (!dirtyStack.isEmpty()) stack.push(dirtyStack.pop());
+            while (!dirtyStack.isEmpty()) platestack.push(dirtyStack.pop());
             return true;
         }
-
-        if (stack.peek().isClean()) {
-            Item clean = stack.pop();
-            chef.setHeldItem(clean);
-            return true;
-        }
-
-        return false;
+        // Kalau top bersih → ambil satu piring bersih
+        Item clean = platestack.pop();
+        chef.setHeldItem(clean);
+        return true;
     }
 }

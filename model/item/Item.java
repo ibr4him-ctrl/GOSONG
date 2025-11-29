@@ -40,6 +40,10 @@ public abstract class Item {
     }
     
     // Setters
+    public ItemType getItemType() {
+        return type;
+    }
+    
     public void setLocation(ItemLocation location) { 
         this.location = location; 
     }
