@@ -1,5 +1,5 @@
 
-package controller;
+package actions;
 
 import model.chef.Chef;
 import model.map.tile.Tile;
