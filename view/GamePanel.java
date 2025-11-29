@@ -23,13 +23,10 @@ public class GamePanel extends JPanel implements Runnable {
     private KeyHandler keyH = new KeyHandler(); 
     private Thread gameThread; 
     
-    // Player 1 properties (WASD controls)
-    private int player1X; 
-    private int player1Y;
-    
-    // Player 2 properties (Arrow keys)
-    private int player2X;
-    private int player2Y;
+    // Player properties
+    private int player1X, player1Y;  // Player 1 position
+    private int player2X, player2Y;  // Player 2 position
+    private boolean isPlayer1Active = true;  // Tracks which player is active
     
     // Map properties
     private int mapOffsetX = 0;
@@ -70,7 +67,10 @@ public class GamePanel extends JPanel implements Runnable {
 
         this.addKeyListener(keyH);
         this.setFocusable(true);
-        this.requestFocusInWindow(); 
+        this.requestFocusInWindow();
+        
+        // Disable focus traversal keys to allow TAB to be used for player switching
+        this.setFocusTraversalKeysEnabled(false);
     }
 
     public void startGameThread(){
@@ -104,11 +104,29 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    private void updatePlayer1() {
-        int newX = player1X;
-        int newY = player1Y;
+    private boolean wasTabPressed = false;
+    
+    private void updateActivePlayer() {
+        // Toggle active player when TAB is pressed and was not pressed in the previous frame
+        if (keyH.tabPressed && !wasTabPressed) {
+            isPlayer1Active = !isPlayer1Active;
+            System.out.println("Switched to Player " + (isPlayer1Active ? "1" : "2"));
+        }
+        wasTabPressed = keyH.tabPressed;
         
-        // Player 1 controls (WASD)
+        // Always update the currently active player
+        if (isPlayer1Active) {
+            updatePlayer(player1X, player1Y, true);
+        } else {
+            updatePlayer(player2X, player2Y, false);
+        }
+    }
+    
+    private void updatePlayer(int x, int y, boolean isPlayer1) {
+        int newX = x;
+        int newY = y;
+        
+        // Movement controls (WASD for both players)
         if (keyH.wPressed) {
             newY -= PLAYER_SPEED;
         }
@@ -122,35 +140,15 @@ public class GamePanel extends JPanel implements Runnable {
             newX += PLAYER_SPEED;
         }
         
-        // Check if new position is valid
+        // Check if new position is valid and update the correct player
         if (isValidPosition(newX, newY)) {
-            player1X = newX;
-            player1Y = newY;
-        }
-    }
-    
-    private void updatePlayer2() {
-        int newX = player2X;
-        int newY = player2Y;
-        
-        // Player 2 controls (Arrow keys)
-        if (keyH.upPressed) {
-            newY -= PLAYER_SPEED;
-        }
-        if (keyH.downPressed) {
-            newY += PLAYER_SPEED;
-        }
-        if (keyH.leftPressed) {
-            newX -= PLAYER_SPEED;
-        }
-        if (keyH.rightPressed) {
-            newX += PLAYER_SPEED;
-        }
-        
-        // Check if new position is valid
-        if (isValidPosition(newX, newY)) {
-            player2X = newX;
-            player2Y = newY;
+            if (isPlayer1) {
+                player1X = newX;
+                player1Y = newY;
+            } else {
+                player2X = newX;
+                player2Y = newY;
+            }
         }
     }
     
@@ -164,8 +162,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
     
     public void update(){
-        updatePlayer1();
-        updatePlayer2();
+        updateActivePlayer();
     }
 
     public void paintComponent(Graphics g) {
@@ -230,17 +227,30 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
         
-        // Draw player 1 (Blue)
-        g2.setColor(Color.BLUE);
+        // Draw player 1 (Blue, with highlight if active)
+        if (isPlayer1Active) {
+            g2.setColor(new Color(100, 200, 255)); // Brighter blue for active player
+        } else {
+            g2.setColor(Color.BLUE);
+        }
         g2.fillRect(player1X - mapOffsetX, player1Y - mapOffsetY, TILE_SIZE, TILE_SIZE);
         g2.setColor(Color.BLACK);
         g2.drawRect(player1X - mapOffsetX, player1Y - mapOffsetY, TILE_SIZE, TILE_SIZE);
         
-        // Draw player 2 (Red)
-        g2.setColor(Color.RED);
+        // Draw player 2 (Red, with highlight if active)
+        if (!isPlayer1Active) {
+            g2.setColor(new Color(255, 100, 100)); // Brighter red for active player
+        } else {
+            g2.setColor(Color.RED);
+        }
         g2.fillRect(player2X - mapOffsetX, player2Y - mapOffsetY, TILE_SIZE, TILE_SIZE);
         g2.setColor(Color.BLACK);
         g2.drawRect(player2X - mapOffsetX, player2Y - mapOffsetY, TILE_SIZE, TILE_SIZE);
+        
+        // Draw which player is active
+        g2.setColor(Color.WHITE);
+        g2.drawString("Active: Player " + (isPlayer1Active ? "1 (WASD)" : "2 (WASD)"), 10, 20);
+        g2.drawString("Press TAB to switch players", 10, 40);
         
         g2.dispose();
     }
