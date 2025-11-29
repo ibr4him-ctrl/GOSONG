@@ -4,9 +4,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Order {
     public enum PizzaType {
-        MARGHERITA("Pizza Margherita", 3, 100, 90),
-        SOSIS("Pizza Sosis", 4, 150, 105),
-        AYAM("Pizza Ayam", 4, 150, 105);
+        MARGHERITA("Pizza Margherita", 3, 120, 90),
+        SOSIS("Pizza Sosis", 4, 120, 105),
+        AYAM("Pizza Ayam", 4, 120, 105);
         
         private final String displayName;
         private final int ingredientCount;
