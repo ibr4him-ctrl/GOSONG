@@ -11,9 +11,9 @@ public class Chef {
     private boolean isActive;
 
     public Chef(Position startPosition){
-        this.position = new Position (startPosition); 
+        this.position = new Position(startPosition); 
         this.heldItem = null; 
-        this.name = name;
+        this.name = "Chef"; // Default name
         this.inventory = new ChefInventory();
         this.isActive = true;
         this.busy = false;
@@ -29,6 +29,10 @@ public class Chef {
 
     public String getName() { 
         return name; 
+    }
+    
+    public void setName(String name) {
+        this.name = name;
     }
     
     //Posisi chef di map 
