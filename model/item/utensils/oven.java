@@ -1,14 +1,13 @@
 package model.item.utensils;
 
-import java.util.ArrayList; 
-import java.util.Collections; 
-import java.util.List; 
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import model.enums.IngredientState; 
 import model.enums.ItemLocation;
 import model.enums.ItemType; 
 import model.interfaces.CookingDevice;
-import model.item.Item; 
+import model.item.Item;
 import model.item.Preparable; 
 import model.item.ingredient.Ingredient;
 
@@ -147,12 +146,13 @@ public class Oven extends Item implements CookingDevice{
     // Harus dipanggil ketika oven TIDAK sedang memasak
 
     public List<Preparable> takeOutAll(){
-        if (cooking){
+        if (cooking && cookTimeSeconds < COOK_TIME_DONE){
             throw new IllegalStateException("Oven masih memasak"); 
         }
 
         List<Preparable> result = new ArrayList<>(contents); 
         contents.clear(); 
+        cooking = false; 
         burned = false; 
         cookTimeSeconds = 0.0; 
         return result; 
