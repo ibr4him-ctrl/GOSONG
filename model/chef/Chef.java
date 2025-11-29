@@ -44,4 +44,8 @@ public class Chef {
     public boolean isBusy(){
         return busy; 
     }
+
+    public void setBusy(){
+        this.busy = busy; 
+    }
 }
