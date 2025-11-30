@@ -4,6 +4,7 @@ import model.chef.Chef;
 import model.item.Item;
 import model.item.Preparable;
 import model.item.ingredient.Ingredient;
+import model.item.utensils.Oven;
 import model.item.utensils.Plate;
 
 public class AssemblyStation extends Station {
@@ -36,7 +37,7 @@ public class AssemblyStation extends Station {
             itemOnStation = hand;
             chef.setHeldItem(null);
             
-            System.out.println("📍 Chef " + chef.getName() + " meletakkan " + 
+            System.out.println("Chef " + chef.getName() + " meletakkan " + 
                              itemOnStation.getName() + " di assembly station");
             return true;
         }
@@ -44,6 +45,31 @@ public class AssemblyStation extends Station {
         if (hand instanceof Plate plate && itemOnStation instanceof Ingredient ing) {
             return performPlating(chef, plate, ing, true);
         }
+
+        // 1. PLATE DI TANGAN + INGREDIENT DI MEJA (Sudah ada di kodemu)
+        if (hand instanceof Plate plate && itemOnStation instanceof Ingredient ing) {
+            return performPlating(chef, plate, ing, true);
+        }
+        
+        // 2. INGREDIENT DI TANGAN + PLATE DI MEJA (Sudah ada di kodemu)
+        if (hand instanceof Ingredient ing && itemOnStation instanceof Plate plate) {
+            return performPlating(chef, plate, ing, false);
+        }
+
+        // --- TAMBAHAN UNTUK SPEK KITCHEN UTENSILS ---
+        
+        // 3. UTENSIL (Oven) DI TANGAN + PLATE DI MEJA
+        // "Ingredient di dalam kitchen utensils di tangan dan piring bersih di [A]"
+        // if (hand instanceof Oven oven && itemOnStation instanceof Plate plate) {
+        //     // Ambil hasil masakan dari Oven
+        //     if (!oven.isCooking() && !oven.getContents().isEmpty()) {
+        //         // Asumsi Oven punya method getResult() atau kita ambil contentnya
+        //         // Logika ini harus menyesuaikan cara kamu mengambil item dari Oven
+        //         // Contoh:
+        //         // Ingredient cookedResult = oven.takeResult(); 
+        //         // return performPlating(chef, plate, cookedResult, false);
+        //     }
+        // }
         
         if (hand instanceof Ingredient ing && itemOnStation instanceof Plate plate) {
             return performPlating(chef, plate, ing, false);
