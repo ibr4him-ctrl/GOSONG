@@ -12,7 +12,7 @@ public class SwitchChef{
      */
     public boolean execute(KeyHandler keyH) {
         // Cek tombol B (sesuai spesifikasi) atau TAB (opsional)
-        boolean isPressed = keyH.bPressed || keyH.tabPressed;
+        boolean isPressed =  keyH.tabPressed;// || keyH.bPressed  keyH.tabPressed;
 
         if (isPressed && !wasPressed) {
             wasPressed = true;

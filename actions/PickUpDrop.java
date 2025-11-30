@@ -27,7 +27,7 @@ public class PickUpDrop implements Action {
         }
 
         // Cek Cooking Station (Oven)
-        // Dalam konteks Oven kamu: Piring bersih tidak bisa dimasukkan ke Oven (hanya Pizza mentah yang bisa).
+        // (hanya Pizza mentah yang bisa).
         if (station instanceof CookingStation) {
             if (hand instanceof Plate) {
                  CookingStation cs = (CookingStation) station;
