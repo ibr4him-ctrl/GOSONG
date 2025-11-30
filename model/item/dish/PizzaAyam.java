@@ -7,7 +7,7 @@ import model.item.Preparable;
 
 public class PizzaAyam extends Dish{
     public PizzaAyam(ItemLocation location){
-        super("Pizza Margherita", location); 
+        super(model.item.dish.Order.PizzaType.AYAM, location); 
     }
 
     public PizzaAyam(ItemLocation location, List<Preparable> components){
