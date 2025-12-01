@@ -5,16 +5,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.enums.ItemLocation; 
-import model.enums.ItemType; 
+import model.enums.ItemType;
+import model.item.dish.Order;
+import model.item.dish.Order.PizzaType;
 
 public class Dish extends Item {
-    
+    private final PizzaType type;
     private List<Preparable> components;
     
-    public Dish(String name, ItemLocation location) {
-        super(name, ItemType.DISH, location); 
+    
+    public Dish(PizzaType type, ItemLocation location) {
+        super(type.getDisplayName(), ItemType.DISH, location); 
+        this.type = type;
         this.components = new ArrayList<>();
         setEdible(true); 
+    }
+    public PizzaType getPizzaType() {
+        return type;
     }
     // ----------------------------------------------------
     
