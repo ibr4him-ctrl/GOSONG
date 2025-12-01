@@ -1,4 +1,4 @@
-package actions;
+package controller;
 
 import model.chef.Chef;
 import model.item.Item;

@@ -3,7 +3,7 @@ package actions.useStation;
 import model.chef.Chef;
 import model.station.CuttingStation;
 import model.station.Station;
-import actions.Action;
+import controller.Action;
 
 public class CuttingAction implements Action {
 

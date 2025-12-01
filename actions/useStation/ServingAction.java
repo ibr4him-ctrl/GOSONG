@@ -2,7 +2,7 @@ package actions.useStation;
 import model.chef.Chef;
 import model.station.ServingCounter;
 import model.station.Station;
-import actions.Action;
+import controller.Action;
 
 public class ServingAction implements Action {
 

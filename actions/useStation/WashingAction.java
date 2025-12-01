@@ -3,7 +3,7 @@ package actions.useStation;
 import model.chef.Chef;
 import model.station.Station;
 import model.station.WashingStation;
-import actions.Action;
+import controller.Action;
 
 public class WashingAction implements Action {
      // Fungsi: 

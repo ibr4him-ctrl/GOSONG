@@ -3,7 +3,7 @@ package actions.useStation;
 import model.chef.Chef;
 import model.station.Station;
 import model.station.TrashStation;
-import actions.Action;
+import controller.Action;
 
 public class TrashAction implements Action {
      //Fungsi: Membuang item di tangan, atau mengosongkan isi piring/alat masak.
