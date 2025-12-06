@@ -1,4 +1,5 @@
 package view;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -6,11 +7,10 @@ import java.awt.Graphics2D;
 import javax.swing.JPanel;
 import model.chef.Chef;
 import model.map.PizzaMap;
-import model.map.tile.TileType;
-import src.GUI.KeyHandler; 
+import src.GUI.KeyHandler;
 
 public class GamePanel extends JPanel implements Runnable {
-    
+
     // setting layar 
     private static final int ORIGINAL_TILE_SIZE = 16;
     private static final int SCALE = 3; 
@@ -30,24 +30,25 @@ public class GamePanel extends JPanel implements Runnable {
     private Chef chef2;  // Chef 2
     private boolean isPlayer1Active = true;  
     
-    // Map properties
+    // Map properties (kalau nanti mau scrolling)
     private int mapOffsetX = 0;
     private int mapOffsetY = 0;
-    private static final int PLAYER_SPEED = 4;
 
+    // pergerakan: 1 tile per langkah, pakai cooldown
+    private static final long MOVE_COOLDOWN_NS = 150_000_000L; // 150 ms
+    private long lastMoveTimeChef1 = 0L;
+    private long lastMoveTimeChef2 = 0L;
 
     public GamePanel(){
 
         pizzaMap = new PizzaMap();
         
         if (pizzaMap.getSpawnPoints().size() >= 2) {
-            // Chef 1 di spawn point pertama
             int chef1X = pizzaMap.getSpawnPoints().get(0).getX();
             int chef1Y = pizzaMap.getSpawnPoints().get(0).getY();
             chef1 = new Chef(new model.map.Position(chef1X, chef1Y));
             chef1.setName("Chef 1");
             
-            // Chef 2 di spawn point kedua
             int chef2X = pizzaMap.getSpawnPoints().get(1).getX();
             int chef2Y = pizzaMap.getSpawnPoints().get(1).getY();
             chef2 = new Chef(new model.map.Position(chef2X, chef2Y));
@@ -75,30 +76,26 @@ public class GamePanel extends JPanel implements Runnable {
 
         this.addKeyListener(keyH);
         this.setFocusable(true);
-        this.requestFocusInWindow();
-        
         this.setFocusTraversalKeysEnabled(false);
     }
 
     public void startGameThread(){
         gameThread = new Thread (this);
         gameThread.start();
-
     }
 
     @Override
     public void run(){ 
-        double drawInterval = 1000000000 / 60; 
+        double drawInterval = 1000000000.0 / 60.0; 
         double nextDrawTime = System.nanoTime() + drawInterval; 
         while (gameThread != null){ 
 
             update(); 
-
             repaint(); 
 
             try {
                 double remainingTime = nextDrawTime - System.nanoTime(); 
-                remainingTime = remainingTime / 1000000; 
+                remainingTime = remainingTime / 1_000_000.0; 
 
                 if (remainingTime < 0) remainingTime = 0; 
                 Thread.sleep((long) remainingTime);
@@ -111,8 +108,13 @@ public class GamePanel extends JPanel implements Runnable {
 
     private boolean wasTabPressed = false;
     
+    public void update(){
+        updateActivePlayer();
+    }
+
     private void updateActivePlayer() {
 
+        // handle switch chef
         if (keyH.tabPressed && !wasTabPressed) {
             isPlayer1Active = !isPlayer1Active;
             System.out.println("Switched to " + (isPlayer1Active ? chef1.getName() : chef2.getName()));
@@ -120,57 +122,69 @@ public class GamePanel extends JPanel implements Runnable {
         wasTabPressed = keyH.tabPressed;
         
         if (isPlayer1Active) {
-            updateChef(chef1);
+            updateChef(chef1, true);
         } else {
-            updateChef(chef2);
+            updateChef(chef2, false);
         }
     }
-    
-    private void updateChef(Chef chef) {
-        int currentX = chef.getPosition().getX() * TILE_SIZE;
-        int currentY = chef.getPosition().getY() * TILE_SIZE;
-        int newX = currentX;
-        int newY = currentY;
-        
+
+    /**
+     * Gerak 1 tile per langkah, dengan cooldown supaya nggak ngebut.
+     */
+    private void updateChef(Chef chef, boolean isFirstChef) {
+        long now = System.nanoTime();
+        long lastMoveTime = isFirstChef ? lastMoveTimeChef1 : lastMoveTimeChef2;
+
+        // batasi gerakan biar nggak tiap frame loncat
+        if (now - lastMoveTime < MOVE_COOLDOWN_NS) {
+            return;
+        }
+
+        int tileX = chef.getPosition().getX();
+        int tileY = chef.getPosition().getY();
+
+        int newTileX = tileX;
+        int newTileY = tileY;
+
+        // prioritas 1 arah dulu (biar nggak diagonal aneh2)
         if (keyH.wPressed) {
-            newY -= PLAYER_SPEED;
+            newTileY--;
+        } else if (keyH.sPressed) {
+            newTileY++;
+        } else if (keyH.aPressed) {
+            newTileX--;
+        } else if (keyH.dPressed) {
+            newTileX++;
         }
-        if (keyH.sPressed) {
-            newY += PLAYER_SPEED;
+
+        // kalau nggak ada tombol gerak ditekan, jangan update apa2
+        if (newTileX == tileX && newTileY == tileY) {
+            return;
         }
-        if (keyH.aPressed) {
-            newX -= PLAYER_SPEED;
-        }
-        if (keyH.dPressed) {
-            newX += PLAYER_SPEED;
-        }
-        
-        int newTileX = newX / TILE_SIZE;
-        int newTileY = newY / TILE_SIZE;
-        
-        if (isValidPosition(newX, newY) && 
-            (newTileX != chef.getPosition().getX() || newTileY != chef.getPosition().getY())) {
+
+        if (isValidTile(newTileX, newTileY)) {
             chef.setPosition(newTileX, newTileY);
+            // update lastMoveTime buat chef aktif
+            if (isFirstChef) {
+                lastMoveTimeChef1 = now;
+            } else {
+                lastMoveTimeChef2 = now;
+            }
         }
     }
-    
-    private boolean isValidPosition(int x, int y) {
-        int tileX = x / TILE_SIZE;
-        int tileY = y / TILE_SIZE;
-        
+
+    private boolean isValidTile(int tileX, int tileY) {
         return tileX >= 0 && tileX < PizzaMap.WIDTH &&
                tileY >= 0 && tileY < PizzaMap.HEIGHT &&
                pizzaMap.isWalkable(tileX, tileY);
     }
-    
-    public void update(){
-        updateActivePlayer();
-    }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         
+        // gambar map
         for (int y = 0; y < PizzaMap.HEIGHT; y++) {
             for (int x = 0; x < PizzaMap.WIDTH; x++) {
                 int screenX = x * TILE_SIZE - mapOffsetX;
@@ -225,6 +239,7 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
         
+        // gambar chef 1
         int chef1X = chef1.getPosition().getX() * TILE_SIZE - mapOffsetX;
         int chef1Y = chef1.getPosition().getY() * TILE_SIZE - mapOffsetY;
         
@@ -237,6 +252,7 @@ public class GamePanel extends JPanel implements Runnable {
         g2.setColor(Color.BLACK);
         g2.drawRect(chef1X, chef1Y, TILE_SIZE, TILE_SIZE);
         
+        // gambar chef 2
         int chef2X = chef2.getPosition().getX() * TILE_SIZE - mapOffsetX;
         int chef2Y = chef2.getPosition().getY() * TILE_SIZE - mapOffsetY;
         
