@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import model.chef.Chef;
 import model.map.PizzaMap;
 import src.GUI.KeyHandler;
+import view.PlayerSprite.Direction;
 
 public class GamePanel extends JPanel implements Runnable {
 
@@ -28,7 +29,11 @@ public class GamePanel extends JPanel implements Runnable {
     // Chef
     private Chef chef1;  // Chef 1
     private Chef chef2;  // Chef 2
-    private boolean isPlayer1Active = true;  
+    private boolean isPlayer1Active = true; 
+    
+    // Sprite
+    private PlayerSprite chef1Sprite;
+    private PlayerSprite chef2Sprite;
     
     // Map properties (kalau nanti mau scrolling)
     private int mapOffsetX = 0;
@@ -69,6 +74,10 @@ public class GamePanel extends JPanel implements Runnable {
             chef2 = new Chef(new model.map.Position(5, 2));
             chef2.setName("Chef 2");
         }
+
+        chef1Sprite = new PlayerSprite();
+        chef2Sprite = new PlayerSprite();
+
         
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         this.setBackground(Color.black);
@@ -137,6 +146,8 @@ public class GamePanel extends JPanel implements Runnable {
 
         // batasi gerakan biar nggak tiap frame loncat
         if (now - lastMoveTime < MOVE_COOLDOWN_NS) {
+            if (isFirstChef) chef1Sprite.updateAnimation(isAnyMoveKeyPressed());
+            else             chef2Sprite.updateAnimation(isAnyMoveKeyPressed());
             return;
         }
 
@@ -146,19 +157,39 @@ public class GamePanel extends JPanel implements Runnable {
         int newTileX = tileX;
         int newTileY = tileY;
 
+        boolean moving = false; 
+
         // prioritas 1 arah dulu (biar nggak diagonal aneh2)
         if (keyH.wPressed) {
             newTileY--;
+            moving = true;
+            if (isFirstChef) chef1Sprite.setDirection(Direction.NORTH);
+            else             chef2Sprite.setDirection(Direction.NORTH);
         } else if (keyH.sPressed) {
             newTileY++;
+            moving = true;
+            if (isFirstChef) chef1Sprite.setDirection(Direction.SOUTH);
+            else             chef2Sprite.setDirection(Direction.SOUTH);
         } else if (keyH.aPressed) {
             newTileX--;
+            moving = true;
+            if (isFirstChef) chef1Sprite.setDirection(Direction.WEST);
+            else             chef2Sprite.setDirection(Direction.WEST);
         } else if (keyH.dPressed) {
             newTileX++;
+            moving = true;
+            if (isFirstChef) chef1Sprite.setDirection(Direction.EAST);
+            else             chef2Sprite.setDirection(Direction.EAST);
         }
 
-        // kalau nggak ada tombol gerak ditekan, jangan update apa2
-        if (newTileX == tileX && newTileY == tileY) {
+        if (isFirstChef) {
+            chef1Sprite.updateAnimation(moving);
+        } else {
+            chef2Sprite.updateAnimation(moving);
+        }
+
+        if (!moving) {
+            // nggak ada tombol gerak → jangan pindah tile
             return;
         }
 
@@ -171,6 +202,9 @@ public class GamePanel extends JPanel implements Runnable {
                 lastMoveTimeChef2 = now;
             }
         }
+    }
+    private boolean isAnyMoveKeyPressed() {
+        return keyH.wPressed || keyH.sPressed || keyH.aPressed || keyH.dPressed;
     }
 
     private boolean isValidTile(int tileX, int tileY) {
@@ -243,27 +277,12 @@ public class GamePanel extends JPanel implements Runnable {
         int chef1X = chef1.getPosition().getX() * TILE_SIZE - mapOffsetX;
         int chef1Y = chef1.getPosition().getY() * TILE_SIZE - mapOffsetY;
         
-        if (isPlayer1Active) {
-            g2.setColor(new Color(100, 200, 255));
-        } else {
-            g2.setColor(Color.BLUE);
-        }
-        g2.fillRect(chef1X, chef1Y, TILE_SIZE, TILE_SIZE);
-        g2.setColor(Color.BLACK);
-        g2.drawRect(chef1X, chef1Y, TILE_SIZE, TILE_SIZE);
+        chef1Sprite.draw(g2, chef1X, chef1Y, TILE_SIZE, isPlayer1Active);
         
         // gambar chef 2
         int chef2X = chef2.getPosition().getX() * TILE_SIZE - mapOffsetX;
         int chef2Y = chef2.getPosition().getY() * TILE_SIZE - mapOffsetY;
-        
-        if (!isPlayer1Active) {
-            g2.setColor(new Color(255, 100, 100));
-        } else {
-            g2.setColor(Color.RED);
-        }
-        g2.fillRect(chef2X, chef2Y, TILE_SIZE, TILE_SIZE);
-        g2.setColor(Color.BLACK);
-        g2.drawRect(chef2X, chef2Y, TILE_SIZE, TILE_SIZE);
+        chef2Sprite.draw(g2, chef2X, chef2Y, TILE_SIZE, !isPlayer1Active);
         
         g2.setColor(Color.WHITE);
         g2.drawString("Active: " + (isPlayer1Active ? chef1.getName() : chef2.getName()) + " (WASD)", 10, 20);
