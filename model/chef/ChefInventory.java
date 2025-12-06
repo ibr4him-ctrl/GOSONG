@@ -35,6 +35,9 @@ public class ChefInventory {
         return heldItem;
     }
     
+    public void setHeldItem(Item item) {
+        this.heldItem = item;
+    }
     // Method untuk clear inventory
     public void clear() {
         heldItem = null;
