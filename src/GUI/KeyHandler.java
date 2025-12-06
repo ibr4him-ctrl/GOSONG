@@ -7,6 +7,11 @@ public class KeyHandler implements KeyListener {
     public boolean wPressed, sPressed, aPressed, dPressed;
     // Toggle key to switch between players
     public boolean tabPressed;
+    
+    //action keys 
+    public boolean cPressed; //ini utk pickup / drop 
+    public boolean vPressed; //ini utk use station 
+
     @Override 
     public void keyTyped(KeyEvent e){
 
@@ -29,7 +34,13 @@ public class KeyHandler implements KeyListener {
         else if (code == KeyEvent.VK_TAB) {
             tabPressed = true;
         }
+        else if (code == KeyEvent.VK_C) {
+            cPressed = true;
+        } else if (code == KeyEvent.VK_V) {
+            vPressed = true;
+        }
     }
+
     @Override
     public void keyReleased(KeyEvent e) {
         int code = e.getKeyCode();
@@ -48,6 +59,12 @@ public class KeyHandler implements KeyListener {
         else if (code == KeyEvent.VK_TAB) {
             tabPressed = false;
         }
+        else if (code == KeyEvent.VK_C) {
+            cPressed = false;
+        } else if (code == KeyEvent.VK_V) {
+            vPressed = false;
+        }
+
     }
 
 }

@@ -57,7 +57,7 @@ public class Chef {
     }
     
     public void setHeldItem(Item item){
-        this.heldItem = item; 
+        inventory.setHeldItem(item); 
     }
 
     public boolean isActive() { 
@@ -76,7 +76,9 @@ public class Chef {
         this.busy = busy; 
     }
     public boolean pickUpItem(Item item) {
-        return inventory.addItem(item);
+        if (heldItem != null) return false; // sudah pegang sesuatu
+        heldItem = item;
+        return true;
     }
     
     public Item dropItem() {

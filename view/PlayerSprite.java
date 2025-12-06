@@ -52,16 +52,16 @@ public class PlayerSprite {
             File file = new File(path);
             
             if (!file.exists()) {
-                System.out.println("❌ File not found: " + file.getAbsolutePath());
+                System.out.println("File not found: " + file.getAbsolutePath());
                 return null;
             }
             
             BufferedImage img = ImageIO.read(file);
-            System.out.println("✅ Loaded: " + filename);
+            System.out.println("yayyyyy Loaded: " + filename);
             return img;
             
         } catch (IOException e) {
-            System.out.println("❌ Error loading " + filename + ": " + e.getMessage());
+            System.out.println("Error loading " + filename + ": " + e.getMessage());
             return null;
         }
     }
@@ -81,6 +81,9 @@ public class PlayerSprite {
 
     public void setDirection(Direction direction) {
         this.direction = direction;
+    }
+    public Direction getDirection() {
+        return direction;
     }
 
     /**
