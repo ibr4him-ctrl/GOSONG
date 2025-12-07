@@ -42,16 +42,34 @@ public class CookingStation extends Station {
         // 1) OVEN SUDAH SIAP & CHEF PEGANG PLATE → KELUARKAN PIZZA
         // =========================
         if (oven.isReadyToTakeOut() && hand instanceof Plate) {
-            System.out.println("[CookingStation] Mengeluarkan isi oven...");
 
+            Plate plate = (Plate)hand; 
+
+            
+            if (!plate.isClean()) {
+                System.out.println("[CookingStation] Plate kotor, gak boleh buat plating pizza matang.");
+                return false;
+            }
+
+            System.out.println("[CookingStation] Mengeluarkan isi oven...");
             List<Preparable> cooked = oven.takeOutAll();  // aman: >= COOK_TIME_DONE
+            
+            //deteksi jenis pizza dari kombinasi cooked 
 
             PizzaType type = PizzaRecipeChecker.detectPizza(cooked);
+
             Dish dish = PizzaRecipeChecker.createPizzaDish(type, cooked);
 
             if (dish != null) {
-                chef.setHeldItem(dish);   // plate diganti pizza dish
+                // Pastikan Dish boleh ditaruh ke plate --> debugging plate 
+                if (!plate.canAccept(dish)) {
+                    System.out.println("[CookingStation] Dish final tidak bisa ditaruh ke plate (canAccept() = false).");
+                    return false;
+                }
+                plate.addIngredient(dish);
+                chef.setHeldItem(plate);   
                 System.out.println("[CookingStation] Pizza jadi: " + dish.getName());
+                System.out.println("   Isi plate sekarang: " + plate.getContents().size() + " item");
                 return true;
             }
 

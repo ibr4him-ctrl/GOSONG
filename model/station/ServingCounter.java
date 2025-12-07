@@ -27,96 +27,51 @@ public class ServingCounter extends Station {
     public boolean interact(Chef chef) {
 
         Item hand = chef.getHeldItem();
-        Item onStation = getItemOnStation();
-
-        System.out.println("[Serving] HAND = " +
-                (hand == null ? "null" : hand.getName() + " (" + hand.getClass().getSimpleName() + ")"));
-        System.out.println("[Serving] ON STATION = " +
-                (onStation == null ? "null" : onStation.getName() + " (" + onStation.getClass().getSimpleName() + ")"));
-
-        Plate plate = null;
-        Dish dish = null;
-        boolean plateFromHand = false;
-        boolean itemFromHand = false;
-
-        // ====== 1. Coba pakai PLATE berisi Dish dulu (prioritas spek) ======
-        if (hand instanceof Plate p) {
-            System.out.println("[Serving] Plate di tangan, contents size = " + p.getContents().size());
-            if (!p.isEmpty()) {
-                plate = p;
-                dish = p.getDish();
-                plateFromHand = true;
-                itemFromHand = true;
-                System.out.println("[Serving] → pakai plate dari TANGAN");
-            } else {
-                System.out.println("[Serving] Plate di tangan tapi kosong menurut kode.");
-            }
-        }
-
-        if (plate == null && onStation instanceof Plate p2) {
-            System.out.println("[Serving] Plate di station, contents size = " + p2.getContents().size());
-            if (!p2.isEmpty()) {
-                plate = p2;
-                dish = p2.getDish();
-                plateFromHand = false;
-                itemFromHand = false;
-                System.out.println("[Serving] → pakai plate dari STATION");
-                setItemOnStation(null); // anggap diambil
-            } else {
-                System.out.println("[Serving] Plate di station tapi kosong menurut kode.");
-            }
-        }
-
-        // ====== 2. Kalau belum ketemu Dish, coba DISH langsung (tanpa plate) ======
-        if (dish == null && hand instanceof Dish d) {
-            dish = d;
-            itemFromHand = true;
-            System.out.println("[Serving] → pakai DISH dari TANGAN tanpa plate: " + dish);
-        } else if (dish == null && onStation instanceof Dish d2) {
-            dish = d2;
-            itemFromHand = false;
-            System.out.println("[Serving] → pakai DISH dari STATION tanpa plate: " + dish);
-            setItemOnStation(null);
-        }
-
-        // Masih ga ada dish juga? yaudah gagal
-        if (dish == null) {
-            System.out.println("[Serving] Tidak menemukan Dish yang bisa disajikan (plate/dish).");
+        // harus pegang Plate
+        if (!(hand instanceof Plate plate)) {
+            System.out.println("[Serving] Chef harus megang plate, bukan " +
+                    (hand == null ? "tangan kosong" : hand.getClass().getSimpleName()));
             return false;
         }
 
+        // plate harus bersih (dari PlateStorage / habis dicuci)
+        if (!plate.isClean()) {
+            System.out.println("[Serving] Plate kotor, gak boleh menyajikan.");
+            return false;
+        }
+
+        // plate harus berisi Dish final
+        Dish dish = plate.getDish();   // method yang sudah kamu buat di Plate
+        if (dish == null) {
+            System.out.println("[Serving] Plate belum berisi Dish final (pizza belum jadi).");
+            return false;
+        }
         System.out.println("[Serving] Dish type: " + dish.getPizzaType());
 
-        // ====== 3. Validasi ke OrderManager ======
-        Order matchedOrder = OrderManager.getInstance().validateDish(dish);
+                Order matchedOrder = OrderManager.getInstance().validateDish(dish);
 
         if (matchedOrder != null) {
-            System.out.println("✅ SUKSES: " + matchedOrder.getPizzaType().getDisplayName());
-            System.out.println("💰 Reward: +" + matchedOrder.getReward());
+            System.out.println("SUKSES: " + matchedOrder.getPizzaType().getDisplayName());
+            System.out.println("Reward: +" + matchedOrder.getReward());
             // TODO: ScoreManager.add(matchedOrder.getReward());
         } else {
-            System.out.println("❌ GAGAL: Tidak ada pesanan untuk "
+            System.out.println("GAGAL: Tidak ada pesanan untuk "
                     + dish.getPizzaType().getDisplayName());
             System.out.println("Penalti -50 (contoh)");
             // TODO: ScoreManager.add(-50);
         }
-
-        // ====== 4. Bersihin item yang sudah diserve ======
-        if (plate != null) {
-            // Kalau pakai plate → dish dihapus dari plate, plate jadi kotor, balik ke storage
-            plate.removeDish();
-            plate.markDirty();
-            if (plateFromHand) {
-                chef.setHeldItem(null);
-            }
-            returnToPlateStorage(plate);
-        } else if (itemFromHand) {
-            // Kalau cuma Dish langsung di tangan → anggap dimakan, tangan kosong
-            chef.setHeldItem(null);
-        }
+        
+        // Habis diserve → dish hilang, plate jadi kotor, balik ke storage
+        plate.removeDish();   // kosongkan isi plate
+        plate.markDirty();    // status jadi kotor
+        chef.setHeldItem(null);
+        returnToPlateStorage(plate);   // method delay 10 detik yang kamu sudah buat
 
         return true;
     }
+
+        
+
 
 
     /**
