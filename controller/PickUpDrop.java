@@ -3,10 +3,8 @@ package controller;
 import model.chef.Chef;
 import model.item.Item;
 import model.item.utensils.Plate;
-import model.station.CookingStation;
 import model.station.Station;
 import model.station.WashingStation;
-// import model.station.IngredientStorage; // Uncomment jika sudah ada class ini
 
 public class PickUpDrop implements Action {
 
@@ -16,30 +14,16 @@ public class PickUpDrop implements Action {
 
         Item hand = chef.getHeldItem();
 
-        // --- CEK KEGAGALAN (RESTRICTIONS) ---
-
-        // Cek Washing Station: Tidak boleh menaruh piring bersih
+        // === RESTRIKSI KHUSUS WASHING STATION (sesuai spek) ===
         if (station instanceof WashingStation) {
-            if (hand instanceof Plate && ((Plate) hand).isClean()) {
-                System.out.println("Gagal: Piring bersih tidak perlu dicuci!");
+            if (hand instanceof Plate plate && plate.isClean()) {
+                System.out.println("[PickUpDrop] Gagal: Piring bersih tidak perlu dicuci!");
                 return false;
             }
         }
 
-        // Cek Cooking Station (Oven)
-        // (hanya Pizza mentah yang bisa).
-        if (station instanceof CookingStation) {
-            if (hand instanceof Plate) {
-                 CookingStation cs = (CookingStation) station;
-                 boolean isFoodReady = !cs.getOven().isCooking() && !cs.getOven().getContents().isEmpty();
-                 
-                 if (!isFoodReady) {
-                     System.out.println("Gagal: Tidak bisa memasukkan piring ke Oven (Kosong/Sedang Masak)!");
-                     return false;
-                 }
-            }
-        }
-        
+        // Selain pengecualian di atas, semua logika
+        // pick up / drop / plating diserahkan ke station.interact()
         return station.interact(chef);
     }
 }
