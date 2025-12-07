@@ -4,6 +4,7 @@ import model.chef.Chef;
 import model.item.Item;
 import model.item.Preparable;
 import model.item.ingredient.Ingredient;
+import model.item.ingredient.pizza.Dough;
 import model.item.utensils.Plate;
 
 public class AssemblyStation extends Station {
@@ -39,8 +40,6 @@ public class AssemblyStation extends Station {
         if (hand instanceof Ingredient ing && top instanceof Plate plate) {
             return performPlating(chef, plate, ing, false);
         }
-
-        // (kalau mau: Oven di tangan + Plate di meja → bisa ditambah di sini)
 
 
         // 2) AMBIL / TARUH BIASA
@@ -95,6 +94,38 @@ public class AssemblyStation extends Station {
             return false;
         }
 
+        // ====== ATURAN PIZZA KHUSUS DOUGH ======
+        boolean isDough = ingredient instanceof Dough;
+
+        // Ambil isi plate sekarang
+        var contents = plate.getContents();
+        boolean plateEmpty   = contents.isEmpty();
+        boolean plateHasDough = contents.stream().anyMatch(p -> p instanceof Dough);
+
+        // CASE 1: plate kosong -> apapun boleh (dough / topping)
+        if (plateEmpty) {
+            // tidak ada aturan ekstra
+        } else {
+            // plate TIDAK kosong
+            if (!plateHasDough) {
+                // artinya ingredient pertama BUKAN dough → single topping only
+                System.out.println(
+                    "Plate ini sudah berisi ingredient tanpa dough, " +
+                    "tidak bisa menambahkan ingredient lain lagi."
+                );
+                return false;
+            } else {
+                // plate sudah punya dough
+                if (isDough) {
+                    System.out.println("Plate sudah punya Dough, tidak bisa menambah Dough lagi.");
+                    return false;
+                }
+                // kalau topping lain (Tomato/Cheese/Chicken/Sausage) → boleh
+            }
+        }
+        // ====== END ATURAN PIZZA ======
+
+
         // Tambahkan ke plate
         boolean success = plate.addIngredient(ingredient);
     
@@ -105,7 +136,25 @@ public class AssemblyStation extends Station {
 
         String ingName = (ingredient instanceof Item i) ? i.getName() : "Ingredient";
         System.out.println("Plating: " + ingName + " → Plate");
-
+        // log isi plate biar kamu kelihatan
+        System.out.print("   Plate sekarang berisi: ");
+        if (plate.getContents().isEmpty()) {
+            System.out.println("(kosong?)");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (Preparable p : plate.getContents()) {
+                if (p instanceof Item it) {
+                    sb.append(it.getName());
+                } else {
+                    sb.append(p.getClass().getSimpleName());
+                }
+                sb.append(", ");
+            }
+            // buang koma terakhir
+            if (sb.length() >= 2) sb.setLength(sb.length() - 2);
+            System.out.println(sb.toString());
+        }
+        
         if (plateInHand) {
             // Plate di tangan, ingredient dari meja
             itemOnStation = null;      // hapus ingredient dari meja
