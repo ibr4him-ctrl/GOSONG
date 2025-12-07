@@ -3,22 +3,13 @@ package actions.useStation;
 import model.chef.Chef;
 import model.station.CookingStation;
 import model.station.Station;
-import controller.Action;
 
-public class CookingAction implements Action {
+public class CookingAction {
 
-    
-     // "Pemain memasukkan suatu bahan yang dapat diterima ke alat masak"
-    @Override
     public boolean execute(Chef chef, Station station) {
-        
-        // Cek apakah station target adalah CookingStation
-        if (station instanceof CookingStation) {
-            
-            // Casting station ke tipe CookingStation
-            CookingStation cookingStation = (CookingStation) station;
-            return cookingStation.interact(chef);
+        if (!(station instanceof CookingStation cs)) {
+            return false;
         }
-        return false;
+        return cs.interact(chef);   // <-- delegasi semua logika ke CookingStation
     }
 }
