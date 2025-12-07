@@ -2,6 +2,7 @@ package view;
 
 import actions.useStation.AssemblyAction;
 import actions.useStation.CookingAction;
+import actions.useStation.WashingAction;
 import controller.PickUpDrop;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -240,12 +241,19 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void updateCookingStations(double deltaSeconds) {
-    for (Station st : stationMap.values()) {
-        if (st instanceof CookingStation cs) {
-            cs.update(deltaSeconds);
+        for (Station st : stationMap.values()) {
+            if (st instanceof CookingStation cs) {
+                cs.update(deltaSeconds);
+            }
         }
     }
-}
+    private void updateWashingStations(double deltaSeconds) {
+        for (Station st : stationMap.values()) {
+            if (st instanceof WashingStation ws) {
+                ws.update(deltaSeconds);
+            }
+        }
+    }
     // ==========================================
     // UPDATE LOOP
     // ==========================================
@@ -259,7 +267,8 @@ public class GamePanel extends JPanel implements Runnable {
         updateActivePlayer();
         handleActions();
         updateCuttingStations(deltaSeconds);
-        updateCookingStations(deltaSeconds); 
+        updateCookingStations(deltaSeconds);
+        updateWashingStations(deltaSeconds); 
 
         OrderManager.getInstance().update(deltaSeconds);
     }
@@ -483,7 +492,10 @@ private void handleActions() {
             } else if (stationInFront instanceof CookingStation) {
                 boolean ok = new CookingAction().execute(activeChef, stationInFront);
                 if (!ok) System.out.println("CookingAction gagal.");
-            } else {
+            } else if (stationInFront instanceof WashingStation) {
+                boolean ok = new WashingAction().execute(activeChef, stationInFront);
+                if (!ok) System.out.println("WashingAction gagal.");
+            }else {
                 boolean ok = stationInFront.interact(activeChef);
                 if (!ok) System.out.println("Interaksi dengan " 
                         + stationInFront.getStationType() + " gagal.");
@@ -655,6 +667,28 @@ private void handleActions() {
                                 // fill: oranye kalau normal, merah kalau burned
                                 int fillWidth = (int) (barWidth * ratio);
                                 g2.setColor(cs.getOven().isBurned() ? Color.RED : Color.ORANGE);
+                                g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
+                            }
+                        }
+                    }
+                    // === PROGRESS BAR UNTUK WASHING STATION ===
+                    if (tileType == TileType.WASHING_STATION) {
+                        Station st = stationMap.get(stationKey(x, y));
+                        if (st instanceof WashingStation ws) {
+                            double ratio = ws.getProgressRatio(); // 0..1
+                            if (ratio > 0) {
+                                int barWidth  = TILE_SIZE - 4;
+                                int barHeight = 4;
+                                int bx = screenX + 2;
+                                int by = screenY + TILE_SIZE - barHeight - 2;
+
+                                // border
+                                g2.setColor(Color.DARK_GRAY);
+                                g2.drawRect(bx, by, barWidth, barHeight);
+
+                                // fill
+                                int fillWidth = (int) (barWidth * ratio);
+                                g2.setColor(Color.CYAN);      // warna bebas
                                 g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
                             }
                         }

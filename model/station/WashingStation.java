@@ -2,16 +2,18 @@ package model.station;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-
 import model.chef.Chef;
 import model.item.Item;
+import model.item.utensils.Plate;
 
 public class WashingStation extends Station {
+    //plate ktoor yang sudah ditaruh di sink
+    private final Deque<Plate> dirtyPlates = new ArrayDeque<>();
+    //plate bersih yang sudah dicuci (rak)
+    private final Deque<Plate> cleanPlates = new ArrayDeque<>();
 
-    private final Deque<Item> dirtyPlates = new ArrayDeque<>();
-    private final Deque<Item> cleanPlates = new ArrayDeque<>();
-
-    private boolean washing;
+    //state 
+    private boolean washing = false; 
     private double washProgressSeconds;
     private static final double WASH_TIME = 3.0;
 
@@ -30,40 +32,64 @@ public class WashingStation extends Station {
     public boolean interact(Chef chef) {
         Item hand = chef.getHeldItem();
 
-        if (hand != null && !hand.isClean()) {
-            dirtyPlates.addLast(hand);
+        //Chef bawa PLATE kotor --> taruh di sink (stack dirty)
+        if (hand instanceof Plate plate && !plate.isClean()) {
+            dirtyPlates.addLast(plate);
             chef.setHeldItem(null);
+            System.out.println("[Washing] Menaruh plate kotor. Total kotor = " + dirtyPlates.size());
+            // NOTE: hanya store, belum mulai cuci (cuci pakai V)
+            return true;
+        }        
 
+        //Chef tangan kosong dan masih aada plate kotor -> mulai / lanjut cuci (V)
+
+        if (hand == null && !dirtyPlates.isEmpty()) {
+            //Kalau belum washing, set chef busy n mulai
             if (!washing) {
                 washing = true;
-                washProgressSeconds = 0.0;
                 currentChef = chef;
                 currentChef.setBusy(true);
+                System.out.println("[Washing] Mulai / lanjut mencuci. Progress saat ini = "
+                        + washProgressSeconds + " detik");
             }
             return true;
         }
 
-        if (hand == null && !cleanPlates.isEmpty()) {
-            chef.setHeldItem(cleanPlates.pollFirst());
+        // 3) Chef tangan kosong, tidak ada plate kotor, tapi ada plate bersih di rak → ambil
+        if (hand == null && dirtyPlates.isEmpty() && !cleanPlates.isEmpty()) {
+            Plate clean = cleanPlates.pollFirst();
+            chef.setHeldItem(clean);
+            System.out.println("[Washing] Mengambil plate bersih dari rak. Sisa bersih = "
+                    + cleanPlates.size());
             return true;
         }
+        System.out.println("[Washing] Interaksi gagal (bukan plate kotor / tidak ada plate bersih).");
 
+        //Inputnya bukan pte, plate berih mau dimasukkan, tidak ada yang bisa dicuci / diambil
         return false;
     }
 
     public void update(double deltaSeconds) {
         if (!washing || dirtyPlates.isEmpty()) return;
 
+        // Kalau chef sudah tidak di dekat sink → pause washing (progress disimpan)
+        if (currentChef == null || !isAdjacentTo(currentChef)) {
+            pauseWashing();
+            return;
+        }
+        
         washProgressSeconds += deltaSeconds;
 
         if (washProgressSeconds >= WASH_TIME) {
-            Item plate = dirtyPlates.pollFirst();
+            Plate plate = dirtyPlates.pollFirst();
             plate.setClean(true);
             cleanPlates.addLast(plate);
+            System.out.println("[Washing] Selesai mencuci 1 plate. Sisa kotor = " + dirtyPlates.size());
 
             washProgressSeconds = 0.0;
 
             if (dirtyPlates.isEmpty()) {
+                //Tidk ada lagi yang dicuci 
                 washing = false;
                 if (currentChef != null) {
                     currentChef.setBusy(false);
@@ -79,6 +105,9 @@ public class WashingStation extends Station {
             currentChef.setBusy(false);
             currentChef = null;
         }
+        // debug: washProgressSeconds TIDAK di-reset → lanjut lagi nanti
+        System.out.println("[Washing] Proses mencuci dipause. Progress tersimpan = "
+                + washProgressSeconds + " detik");
     }
 
     public double getProgressRatio() {
