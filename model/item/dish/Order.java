@@ -39,13 +39,13 @@ public class Order {
     
     private static final AtomicInteger orderCounter = new AtomicInteger(0);
     
-    private final int id;
-    private final PizzaType pizzaType;
-    private final int reward;
-    private final int penalty;
-    private final int timeLimit;
-    private volatile int timeRemaining;
-    private final long createdAt;
+    private final int id; //Nomor urut 
+    private final PizzaType pizzaType; //Recipe 
+    private final int reward; //Reward 
+    private final int penalty; //penalti jika gagal 
+    private final int timeLimit; //time limit 
+    private volatile int timeRemaining; //sisa waktu 
+    private final long createdAt; // Timestamp saat order dibuat, untuk FIFO kalau ada dua order sama
     
     public Order(PizzaType pizzaType) {
         this.id = orderCounter.incrementAndGet();
