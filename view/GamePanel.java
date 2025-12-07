@@ -20,6 +20,7 @@ import model.item.ingredient.pizza.Dough;
 import model.item.ingredient.pizza.Sausage;
 import model.item.ingredient.pizza.Tomato;
 import model.item.utensils.Plate;
+import model.manager.OrderManager;
 import model.map.PizzaMap;
 import model.map.Position;
 import model.map.tile.TileType;
@@ -34,6 +35,7 @@ import model.station.TrashStation;
 import model.station.WashingStation;
 import src.GUI.KeyHandler;
 import view.PlayerSprite.Direction;
+
 
 public class GamePanel extends JPanel implements Runnable {
 
@@ -255,6 +257,8 @@ public class GamePanel extends JPanel implements Runnable {
         handleActions();
         updateCuttingStations(deltaSeconds);
         updateCookingStations(deltaSeconds); 
+
+        OrderManager.getInstance().update(deltaSeconds);
     }
 
     private Chef getActiveChef() {
@@ -675,6 +679,36 @@ private void handleActions() {
         g2.drawString("Active: " + (isPlayer1Active ? chef1.getName() : chef2.getName()) + " (WASD)", 10, 20);
         g2.drawString("TAB: Switch | C: PickUp/Drop | V: Use Station", 10, 40);
 
+        // ====== Gambar daftar Order aktif di pojok kanan atas ======
+        var orders = OrderManager.getInstance().getActiveOrders();
+        int boxWidth = 260;
+        int boxHeight = 20;
+        int startX = SCREEN_WIDTH - boxWidth - 10;
+        int startY = 60;
+
+        g2.setFont(g2.getFont().deriveFont(12f));
+
+        int i = 0;
+        for (var order : orders) {
+            int x = startX;
+            int y = startY + i * (boxHeight + 4);
+
+            // background
+            g2.setColor(new Color(250, 250, 250, 220));
+            g2.fillRoundRect(x, y, boxWidth, boxHeight, 8, 8);
+            g2.setColor(Color.BLACK);
+            g2.drawRoundRect(x, y, boxWidth, boxHeight, 8, 8);
+
+            String text = String.format(
+                "#%d %s  [%ds]",
+                order.getId(),
+                order.getPizzaType().getDisplayName(),
+                order.getTimeRemaining()
+            );
+            g2.drawString(text, x + 6, y + 14);
+
+            i++;
+        }
         g2.dispose();
     }
 }
