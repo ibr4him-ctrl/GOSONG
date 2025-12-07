@@ -2,10 +2,9 @@ package model.station;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-
 import model.chef.Chef;
-import model.item.Item;
 import model.enums.ItemType;
+import model.item.Item;
 
 public class PlateStorage extends Station {
 
@@ -62,5 +61,9 @@ public class PlateStorage extends Station {
         Item clean = platestack.pop();
         chef.setHeldItem(clean);
         return true;
+    }
+
+    public int getPlateCount() {
+        return platestack.size();
     }
 }
