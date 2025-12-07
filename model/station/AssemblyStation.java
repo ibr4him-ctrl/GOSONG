@@ -4,14 +4,14 @@ import model.chef.Chef;
 import model.item.Item;
 import model.item.Preparable;
 import model.item.ingredient.Ingredient;
-import model.item.utensils.Oven;
 import model.item.utensils.Plate;
 
 public class AssemblyStation extends Station {
+
     public AssemblyStation(int x, int y) {
         super(x, y, "Assembly");
     }
-    
+
     @Override
     public String getSymbol() {
         return "A";
@@ -19,148 +19,127 @@ public class AssemblyStation extends Station {
 
     @Override
     public boolean interact(Chef chef) {
+
         if (!isAdjacentTo(chef)) {
-            System.out.println("❌ Chef terlalu jauh dari assembly station!");
+            System.out.println("Chef terlalu jauh dari assembly station!");
             return false;
         }
-        
+
         Item hand = chef.getHeldItem();
-    
-        if (hand == null && itemOnStation != null) {
-            chef.setHeldItem(itemOnStation);
-            
+        Item top  = itemOnStation;
+
+        // 1) PRIORITAS: PLATING
+        
+        // Plate di tangan, ingredient di meja
+        if (hand instanceof Plate plate && top instanceof Ingredient ing) {
+            return performPlating(chef, plate, ing, true);
+        }
+
+        // Ingredient di tangan, plate di meja
+        if (hand instanceof Ingredient ing && top instanceof Plate plate) {
+            return performPlating(chef, plate, ing, false);
+        }
+
+        // (kalau mau: Oven di tangan + Plate di meja → bisa ditambah di sini)
+
+
+        // 2) AMBIL / TARUH BIASA
+
+        // Tangan kosong, meja ada item → ambil
+        if (hand == null && top != null) {
+            chef.setHeldItem(top);
             itemOnStation = null;
+            System.out.println("Chef " + chef.getName() + " mengambil " +
+                               chef.getHeldItem().getName() + " dari assembly.");
             return true;
         }
-        
-        if (hand != null && itemOnStation == null) {
+
+        // Tangan pegang item, meja kosong → taruh
+        if (hand != null && top == null) {
             itemOnStation = hand;
             chef.setHeldItem(null);
-            
-            System.out.println("Chef " + chef.getName() + " meletakkan " + 
-                             itemOnStation.getName() + " di assembly station");
+            System.out.println("Chef " + chef.getName() + " meletakkan " +
+                               itemOnStation.getName() + " di assembly.");
             return true;
         }
-        
-        if (hand instanceof Plate plate && itemOnStation instanceof Ingredient ing) {
-            return performPlating(chef, plate, ing, true);
-        }
 
-        // 1. PLATE DI TANGAN + INGREDIENT DI MEJA (Sudah ada di kodemu)
-        if (hand instanceof Plate plate && itemOnStation instanceof Ingredient ing) {
-            return performPlating(chef, plate, ing, true);
-        }
+        // 3) CASE LAIN: GAGAL
         
-        // 2. INGREDIENT DI TANGAN + PLATE DI MEJA (Sudah ada di kodemu)
-        if (hand instanceof Ingredient ing && itemOnStation instanceof Plate plate) {
-            return performPlating(chef, plate, ing, false);
-        }
 
-        // --- TAMBAHAN UNTUK SPEK KITCHEN UTENSILS ---
-        
-        // 3. UTENSIL (Oven) DI TANGAN + PLATE DI MEJA
-        // "Ingredient di dalam kitchen utensils di tangan dan piring bersih di [A]"
-        // if (hand instanceof Oven oven && itemOnStation instanceof Plate plate) {
-        //     // Ambil hasil masakan dari Oven
-        //     if (!oven.isCooking() && !oven.getContents().isEmpty()) {
-        //         // Asumsi Oven punya method getResult() atau kita ambil contentnya
-        //         // Logika ini harus menyesuaikan cara kamu mengambil item dari Oven
-        //         // Contoh:
-        //         // Ingredient cookedResult = oven.takeResult(); 
-        //         // return performPlating(chef, plate, cookedResult, false);
-        //     }
-        // }
-        
-        if (hand instanceof Ingredient ing && itemOnStation instanceof Plate plate) {
-            return performPlating(chef, plate, ing, false);
+        if (hand != null && top != null) {
+            System.out.println("Udah ada item di atas assembly, " +
+                               "gabisa naro lagi kecuali kombinasi Plate + Ingredient.");
         }
-        
-        if (hand != null && itemOnStation != null) {
-            System.out.println("Udah ada item diatasnya!");
-            return false;
-        }
-        
         return false;
     }
-    
-    private boolean performPlating(Chef chef, Plate plate, Preparable ingredient, boolean plateInHand) {
+
+    private boolean performPlating(Chef chef,
+                                   Plate plate,
+                                   Preparable ingredient,
+                                   boolean plateInHand) {
+
+        // Plate harus bersih
         if (!plate.isClean()) {
-            System.out.println("Plate kotor tidak bisa digunakan untuk plating!");
-            System.out.println("Cuci plate di Washing Station dulu.");
+            System.out.println("Plate kotor tidak bisa digunakan untuk plating! Cuci dulu di Washing Station.");
             return false;
         }
-        
-        // Validasi: ingredient harus bisa di-plate
+
+        // Ingredient harus boleh di-plate
         if (!plate.canAccept(ingredient)) {
             System.out.println("Ingredient tidak bisa ditambahkan ke plate!");
-            
             if (ingredient == null) {
                 System.out.println("Loh gada ingredientnya.");
             } else if (!ingredient.canBePlacedOnPlate()) {
-                System.out.println("Ingredient harus diproses dulu (potong/masak)");
+                System.out.println("Ingredient harus dipotong / dimasak dulu.");
             }
-            
             return false;
         }
-        
-        // Tambahkan ingredient ke plate
+
+        // Tambahkan ke plate
         boolean success = plate.addIngredient(ingredient);
-        
-        if (success) {
-            String ingredientName = "Ingredient";
-            if (ingredient instanceof Item item) {
-                ingredientName = item.getName();
-            }
-            
-            System.out.println("🍽️ Plating: " + ingredientName + " → Plate");
-            
-            if (plateInHand) {
-                itemOnStation = null;
-                chef.setHeldItem(plate);
-                
-            } else {
-                chef.setHeldItem(null);
-                itemOnStation = plate;
-            }
-            
-            System.out.println("   Plate sekarang berisi: " + plate.getContents().size() + " ingredient(s)");
-            return true;
-            
-        } else {
-            System.out.println("   Ingredient mungkin sudah ada di plate.");
+        if (!success) {
+            System.out.println("Ingredient mungkin sudah ada di plate (set menolak duplikat).");
             return false;
         }
+
+        String ingName = (ingredient instanceof Item i) ? i.getName() : "Ingredient";
+        System.out.println("Plating: " + ingName + " → Plate");
+
+        if (plateInHand) {
+            // Plate di tangan, ingredient dari meja
+            itemOnStation = null;      // hapus ingredient dari meja
+            chef.setHeldItem(plate);   // plate tetap di tangan
+        } else {
+            // Plate di meja, ingredient dari tangan
+            chef.setHeldItem(null);    // tangan kosong
+            itemOnStation = plate;     // plate tetap di meja
+        }
+
+        System.out.println("   Plate sekarang berisi: " + plate.getContents().size() + " ingredient(s)");
+        return true;
     }
-    
+
     public Item takeItem() {
         Item temp = itemOnStation;
         itemOnStation = null;
         return temp;
     }
-    
-    /**
-     * Taruh item di station (manual, untuk special cases)
-     */
+
     public boolean placeItem(Item item) {
-        if (itemOnStation != null) {
-            return false; // Sudah ada item
-        }
+        if (itemOnStation != null) return false;
         itemOnStation = item;
         return true;
     }
-    
-    /**
-     * Cek apakah station kosong
-     */
+
     @Override
     public boolean isEmpty() {
         return itemOnStation == null;
     }
-    
+
     @Override
     public String toString() {
         return String.format("AssemblyStation{pos=(%d,%d), item=%s}",
-            posX, posY, 
+            posX, posY,
             itemOnStation != null ? itemOnStation.getName() : "empty");
     }
 }
