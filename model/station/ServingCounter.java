@@ -8,6 +8,7 @@ import model.item.Item;
 import model.item.dish.Order;
 import model.item.utensils.Plate;
 import model.manager.OrderManager;
+import model.manager.ScoreManager;
 
 public class ServingCounter extends Station {
 
@@ -40,38 +41,40 @@ public class ServingCounter extends Station {
             return false;
         }
 
+
         // plate harus berisi Dish final
         Dish dish = plate.getDish();   // method yang sudah kamu buat di Plate
+        
         if (dish == null) {
             System.out.println("[Serving] Plate belum berisi Dish final (pizza belum jadi).");
-            return false;
-        }
-        System.out.println("[Serving] Dish type: " + dish.getPizzaType());
+            System.out.println("Penalti -50 (serve pizza belum jadi).");
+            ScoreManager.getInstance().add(-50);
+        }else {
+            // === KASUS: ada Dish, cek ke OrderManager ===
+            System.out.println("[Serving] Dish type: " + dish.getPizzaType());
 
-                Order matchedOrder = OrderManager.getInstance().validateDish(dish);
+            Order matchedOrder = OrderManager.getInstance().validateDish(dish);
 
-        if (matchedOrder != null) {
-            System.out.println("SUKSES: " + matchedOrder.getPizzaType().getDisplayName());
-            System.out.println("Reward: +" + matchedOrder.getReward());
-            // TODO: ScoreManager.add(matchedOrder.getReward());
-        } else {
-            System.out.println("GAGAL: Tidak ada pesanan untuk "
-                    + dish.getPizzaType().getDisplayName());
-            System.out.println("Penalti -50 (contoh)");
-            // TODO: ScoreManager.add(-50);
+            if (matchedOrder != null) {
+                System.out.println("SUKSES: " + matchedOrder.getPizzaType().getDisplayName());
+                System.out.println("Reward: +" + matchedOrder.getReward());
+                ScoreManager.getInstance().add(matchedOrder.getReward());
+            } else {
+                System.out.println("GAGAL: Tidak ada pesanan untuk "
+                        + dish.getPizzaType().getDisplayName());
+                System.out.println("Penalti -50 (pizza salah pesanan).");
+                ScoreManager.getInstance().add(-50);
+            }
         }
-        
-        // Habis diserve → dish hilang, plate jadi kotor, balik ke storage
-        plate.removeDish();   // kosongkan isi plate
+
+        // 4. DI SEMUA KASUS DI ATAS (selama pegang plate bersih) → plate diambil:
+        plate.removeDish();   // kosongkan isi plate (kalau ada)
         plate.markDirty();    // status jadi kotor
         chef.setHeldItem(null);
-        returnToPlateStorage(plate);   // method delay 10 detik yang kamu sudah buat
+        returnToPlateStorage(plate);   // delay 10 detik, balik ke PlateStorage
 
-        return true;
+        return true; // interaksi BERHASIL (meski hasilnya penalti)
     }
-
-        
-
 
 
     /**
