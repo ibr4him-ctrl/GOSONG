@@ -11,12 +11,15 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JPanel;
 import model.chef.Chef;
+import model.item.Dish;
+import model.item.Item;
 import model.item.ingredient.Ingredient;
 import model.item.ingredient.pizza.Cheese;
 import model.item.ingredient.pizza.Chicken;
 import model.item.ingredient.pizza.Dough;
 import model.item.ingredient.pizza.Sausage;
 import model.item.ingredient.pizza.Tomato;
+import model.item.utensils.Plate;
 import model.map.PizzaMap;
 import model.map.Position;
 import model.map.tile.TileType;
@@ -80,6 +83,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         pizzaMap = new PizzaMap();
         initStationsFromMap();  // <-- bangun objek Station dari PizzaMap
+        initPlateStorages();
 
         // Inisialisasi chef dari spawnpoint
         if (pizzaMap.getSpawnPoints().size() >= 2) {
@@ -176,6 +180,19 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
         System.out.println("Stations initialized: " + stationMap.size());
+    }
+
+    private void initPlateStorages() {
+        for (Station st : stationMap.values()) {
+            if (st instanceof PlateStorage ps) {
+                // misal: awalnya punya 5 piring bersih
+                for (int i = 0; i < 5; i++) {
+                    ps.pushInitialCleanPlate(new Plate());
+                }
+                System.out.println("Init PlateStorage di (" + ps.getPosX() + "," + ps.getPosY() +
+                                ") dengan 5 clean plates");
+            }
+        }
     }
 
     private String stationKey(int x, int y) {
@@ -389,12 +406,11 @@ private void drawHeldItemIcon(Graphics2D g2, Chef chef, int screenX, int screenY
         fill = new Color(180, 90, 60);
         label = "S";
     } 
-    // contoh: kalau item-nya Plate
-    else if (item instanceof model.item.utensils.Plate) {
+    else if (item instanceof Plate plate) {
         fill = Color.WHITE;
-        label = "P";
+        int count = plate.getContents().size();
+        label = (count == 0) ? "P" : "P" + count;
     } 
-    // fallback umum: huruf pertama dari class name
     else {
         String simple = item.getClass().getSimpleName();
         if (!simple.isEmpty()) {
@@ -462,6 +478,55 @@ private void handleActions() {
 }
 
     // ==========================================
+    // Gambar item di atas semua station
+    // ==========================================
+    private void drawItemsOnStations(Graphics2D g2) {
+        for (Station st : stationMap.values()) {
+            Item item = st.getItemOnStation();
+            if (item == null) continue; // station kosong → skip
+
+            int px = st.getPosX() * TILE_SIZE - mapOffsetX;
+            int py = st.getPosY() * TILE_SIZE - mapOffsetY;
+
+            int size   = TILE_SIZE - 8;
+            int offset = 4;
+
+            // Pilih warna & label berdasarkan tipe item
+            Color fillColor = new Color(240, 240, 240);
+            String label = "?";
+
+            if (item instanceof Plate plate) {
+                // plate bersih / kotor beda dikit warnanya
+                fillColor = plate.isClean()
+                        ? new Color(245, 245, 255)
+                        : new Color(200, 200, 220);
+                label = "Pl";
+            } else if (item instanceof Ingredient ing) {
+                fillColor = new Color(255, 230, 180);
+                // ambil huruf pertama nama ingredient (T / C / D / S / dsb)
+                String name = ing.getName();
+                label = name.isEmpty() ? "I" : name.substring(0, 1);
+            } else if (item instanceof Dish) {
+                fillColor = new Color(255, 200, 200);
+                label = "D";
+            } else {
+                // fallback: 2 huruf pertama nama item
+                String name = item.getName();
+                label = name.substring(0, Math.min(2, name.length()));
+            }
+
+            // kotak kecil di tengah tile
+            g2.setColor(fillColor);
+            g2.fillRoundRect(px + offset, py + offset, size, size, 6, 6);
+            g2.setColor(Color.BLACK);
+            g2.drawRoundRect(px + offset, py + offset, size, size, 6, 6);
+
+            // tulis label
+            g2.drawString(label, px + offset + 3, py + offset + 12);
+        }
+    }
+
+    // ==========================================
     // RENDER
     // ==========================================
     @Override
@@ -523,6 +588,18 @@ private void handleActions() {
                     g2.setColor(Color.BLACK);
                     g2.drawRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
 
+                    //  TULIS jumlah plate di atas tile P 
+                    if (pizzaMap.getTileAt(x, y).getType() == TileType.PLATE_STORAGE) {
+                        Station st = stationMap.get(stationKey(x, y));
+                        if (st instanceof PlateStorage ps) {
+                            String text = String.valueOf(ps.getPlateCount());
+                            g2.setColor(Color.BLACK);
+                            g2.drawString(text,
+                                screenX + TILE_SIZE/2 - 4,
+                                screenY + TILE_SIZE/2 + 4);
+                        }
+                    }
+
                     if (tileType == TileType.CUTTING_STATION) {
                         Station st = stationMap.get(stationKey(x, y));
                         if (st instanceof CuttingStation cs) {
@@ -547,6 +624,9 @@ private void handleActions() {
                 }
             }
         }
+        // INI NAANTI DIHPUAPUS AKU MAU CEK SEMUA ITEM AJA
+        drawItemsOnStations(g2);
+
 
         // gambar chef 1
         int chef1X = chef1.getPosition().getX() * TILE_SIZE - mapOffsetX;
