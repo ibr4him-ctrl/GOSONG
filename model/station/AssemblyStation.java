@@ -97,6 +97,7 @@ public class AssemblyStation extends Station {
 
         // Tambahkan ke plate
         boolean success = plate.addIngredient(ingredient);
+    
         if (!success) {
             System.out.println("Ingredient mungkin sudah ada di plate (set menolak duplikat).");
             return false;
@@ -116,7 +117,31 @@ public class AssemblyStation extends Station {
         }
 
         System.out.println("   Plate sekarang berisi: " + plate.getContents().size() + " ingredient(s)");
+        StringBuilder sb = new StringBuilder("   Isi plate: [");
+        boolean first = true;
+        for (Preparable prep : plate.getContents()) {
+            String name;
+            if (prep instanceof Item it) {
+                name = it.getName();
+            } else {
+                name = prep.getClass().getSimpleName();
+            }
+
+            if (!first) sb.append(", ");
+            sb.append(name);
+
+            if (prep instanceof Ingredient ing2) {
+                sb.append(" (").append(ing2.getState()).append(")");
+            }
+            first = false;
+        }
+        sb.append("]");
+        System.out.println(sb.toString());
+        
+
         return true;
+
+
     }
 
     public Item takeItem() {
