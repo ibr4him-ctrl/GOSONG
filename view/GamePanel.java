@@ -52,6 +52,13 @@ public class GamePanel extends JPanel implements Runnable {
     // map -> Station
     private Map<String, Station> stationMap = new HashMap<>();
 
+    // item yang dijatuhkan di lantai (tile WALKABLE)
+    private Map<String, Item> groundItems = new HashMap<>();
+
+    private String groundKey(int x, int y) {
+        return x + "," + y;
+    }
+
     // object game
     private PizzaMap pizzaMap;
     private KeyHandler keyH = new KeyHandler();
@@ -127,6 +134,9 @@ public class GamePanel extends JPanel implements Runnable {
 
         // INI ORDER SYSTEM 
         OrderManager.getInstance().init();
+
+        // RESET SCORE DI AWAL GAME
+        model.manager.ScoreManager.getInstance().reset();
     }
 
     // ==========================================
@@ -272,8 +282,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         OrderManager.getInstance().update(deltaSeconds);
 
-        // RESET SCORE DI AWAL GAME
-        model.manager.ScoreManager.getInstance().reset();
+        
     }
 
     private Chef getActiveChef() {
@@ -285,32 +294,39 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private Station getStationInFrontOf(Chef chef, PlayerSprite sprite) {
-        int x = chef.getPosition().getX();
-        int y = chef.getPosition().getY();
-
-        int dx = 0, dy = 0;
-
-        Direction dir = sprite.getDirection();
-        switch (dir) {
-            case NORTH      -> { dx = 0;  dy = -1; }
-            case SOUTH      -> { dx = 0;  dy = 1;  }
-            case EAST       -> { dx = 1;  dy = 0;  }
-            case WEST       -> { dx = -1; dy = 0;  }
-            case NORTHEAST  -> { dx = 1;  dy = -1; }
-            case NORTHWEST  -> { dx = -1; dy = -1; }
-            case SOUTHEAST  -> { dx = 1;  dy = 1;  }
-            case SOUTHWEST  -> { dx = -1; dy = 1;  }
-        }
-
-        int tx = x + dx;
-        int ty = y + dy;
-
-        if (tx < 0 || tx >= PizzaMap.WIDTH || ty < 0 || ty >= PizzaMap.HEIGHT) {
-            return null;
-        }
-
-        return stationMap.get(stationKey(tx, ty));
+        Position front = getTileInFrontPos(chef, sprite);
+        if (front == null) return null;
+        return stationMap.get(stationKey(front.getX(), front.getY()));
     }
+
+    private Position getTileInFrontPos(Chef chef, PlayerSprite sprite) {
+    int x = chef.getPosition().getX();
+    int y = chef.getPosition().getY();
+
+    int dx = 0, dy = 0;
+
+    Direction dir = sprite.getDirection();
+    switch (dir) {
+        case NORTH      -> { dx = 0;  dy = -1; }
+        case SOUTH      -> { dx = 0;  dy = 1;  }
+        case EAST       -> { dx = 1;  dy = 0;  }
+        case WEST       -> { dx = -1; dy = 0;  }
+        case NORTHEAST  -> { dx = 1;  dy = -1; }
+        case NORTHWEST  -> { dx = -1; dy = -1; }
+        case SOUTHEAST  -> { dx = 1;  dy = 1;  }
+        case SOUTHWEST  -> { dx = -1; dy = 1;  }
+    }
+
+    int tx = x + dx;
+    int ty = y + dy;
+
+    if (tx < 0 || tx >= PizzaMap.WIDTH || ty < 0 || ty >= PizzaMap.HEIGHT) {
+        return null;
+        }
+    return new Position(tx, ty);
+    }
+
+
 
     private void updateActivePlayer() {
 
@@ -472,11 +488,56 @@ private void handleActions() {
     // === PICK UP / DROP: tombol C ===
     if (keyH.cPressed && !wasCPressed) {
         System.out.println("[GUI] C pressed by " + activeChef.getName());
-        boolean ok = new PickUpDrop().execute(activeChef, stationInFront);
-        if (!ok) {
-            System.out.println("PickUpDrop gagal atau tidak ada station cocok.");
+
+        // Hitung posisi tile di depan (buat ground logic)
+        Position frontPos = getTileInFrontPos(activeChef, activeSprite);
+
+        if (stationInFront != null) {
+            // Ada STATION di depan → pakai PickUpDrop seperti biasa
+            boolean ok = new PickUpDrop().execute(activeChef, stationInFront);
+            if (!ok) {
+                System.out.println("PickUpDrop gagal atau tidak ada station cocok.");
+            }
+        } else if (frontPos != null) {
+            // TIDAK ada station → coba drop / pick di LANTAI
+            int tx = frontPos.getX();
+            int ty = frontPos.getY();
+
+            // Pastikan tile-nya WALKABLE (atau boleh juga SPAWN_CHEF kalau mau)
+            TileType tt = pizzaMap.getTileAt(tx, ty).getType();
+            if (tt != TileType.WALKABLE) {
+                System.out.println("[Ground] Tile depan bukan WALKABLE, tidak bisa drop di lantai.");
+            } else {
+                String key = groundKey(tx, ty);
+                Item hand = activeChef.getHeldItem();
+                Item ground = groundItems.get(key);
+
+                // Tangan kosong + ada item di lantai → ambil
+                if (hand == null && ground != null) {
+                    activeChef.setHeldItem(ground);
+                    groundItems.remove(key);
+                    System.out.println("[Ground] Chef mengambil " + ground.getName() +
+                                       " dari lantai (" + tx + "," + ty + ")");
+                }
+                // Tangan pegang item + lantai kosong → taruh
+                else if (hand != null && ground == null) {
+                    groundItems.put(key, hand);
+                    activeChef.setHeldItem(null);
+                    System.out.println("[Ground] Chef meletakkan " + hand.getName() +
+                                       " di lantai (" + tx + "," + ty + ")");
+                }
+                else {
+                    // dua-duanya kosong atau dua-duanya isi
+                    System.out.println("[Ground] Tidak ada aksi cocok (hand=" +
+                                       (hand == null ? "null" : hand.getName()) +
+                                       ", ground=" + (ground == null ? "null" : ground.getName()) + ")");
+                }
+            }
+        } else {
+            System.out.println("[GUI] Tile depan di luar map.");
         }
     }
+    wasCPressed = keyH.cPressed;
     wasCPressed = keyH.cPressed;
 
     // === USE STATION: tombol V ===
@@ -702,6 +763,26 @@ private void handleActions() {
         // INI NAANTI DIHPUAPUS AKU MAU CEK SEMUA ITEM AJA
         drawItemsOnStations(g2);
 
+        for (var entry : groundItems.entrySet()) {
+            String[] parts = entry.getKey().split(",");
+            int gx = Integer.parseInt(parts[0]);
+            int gy = Integer.parseInt(parts[1]);
+            Item item = entry.getValue();
+
+            int px = gx * TILE_SIZE - mapOffsetX;
+            int py = gy * TILE_SIZE - mapOffsetY;
+
+            int size   = TILE_SIZE - 10;
+            int offset = 5;
+
+            g2.setColor(new Color(220, 220, 220));
+            g2.fillRoundRect(px + offset, py + offset, size, size, 6, 6);
+            g2.setColor(Color.BLACK);
+            g2.drawRoundRect(px + offset, py + offset, size, size, 6, 6);
+
+            String label = item.getName().substring(0, Math.min(2, item.getName().length()));
+            g2.drawString(label, px + offset + 4, py + offset + 12);
+        }
 
         // gambar chef 1
         int chef1X = chef1.getPosition().getX() * TILE_SIZE - mapOffsetX;
@@ -755,3 +836,8 @@ private void handleActions() {
         g2.dispose();
     }
 }
+
+
+//WARNING KALO KALIAN MAU GANTI INI 
+//CEK DULU APAKAH FUNGSI KALIAN GANTI BEKERJA ATAU GAK
+//ini 
