@@ -74,6 +74,8 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean wasCPressed = false;
     private boolean wasVPressed = false;
 
+    private long lastUpdateNs = System.nanoTime();
+
     public GamePanel() {
 
         pizzaMap = new PizzaMap();
@@ -207,12 +209,26 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
+    private void updateCuttingStations(double deltaSeconds) {
+    for (Station st : stationMap.values()) {
+        if (st instanceof CuttingStation cs) {
+            cs.update(deltaSeconds);
+        }
+    }
+}
     // ==========================================
     // UPDATE LOOP
     // ==========================================
     public void update() {
+        long now = System.nanoTime();
+        double deltaSeconds = (now - lastUpdateNs) / 1_000_000_000.0;
+        if (deltaSeconds < 0) deltaSeconds = 0;
+        if (deltaSeconds > 0.1) deltaSeconds = 0.1; // clamp biar gak loncat kalo lag
+        lastUpdateNs = now;
+
         updateActivePlayer();
         handleActions();
+        updateCuttingStations(deltaSeconds);
     }
 
     private Chef getActiveChef() {
@@ -342,6 +358,64 @@ public class GamePanel extends JPanel implements Runnable {
                tileY >= 0 && tileY < PizzaMap.HEIGHT &&
                pizzaMap.isWalkable(tileX, tileY);
     }
+    // Icon kecil di atas chef yang menunjukkan item yang sedang dipegang
+
+private void drawHeldItemIcon(Graphics2D g2, Chef chef, int screenX, int screenY) {
+    var item = chef.getHeldItem();
+    if (item == null) return; // gak pegang apa-apa
+
+    int iconSize = TILE_SIZE / 3;  // ukuran bubble
+    int x = screenX + TILE_SIZE - iconSize;  // pojok kanan atas tile
+    int y = screenY - iconSize / 2;          // agak naik dikit
+
+    // warna default
+    Color fill = new Color(240, 240, 240);
+    String label = "?";
+
+    // Ingredient khusus pizza → warna beda & huruf awal
+    if (item instanceof model.item.ingredient.pizza.Dough) {
+        fill = new Color(210, 180, 140); // coklat dough
+        label = "D";
+    } else if (item instanceof model.item.ingredient.pizza.Tomato) {
+        fill = Color.RED;
+        label = "T";
+    } else if (item instanceof model.item.ingredient.pizza.Cheese) {
+        fill = Color.YELLOW;
+        label = "C";
+    } else if (item instanceof model.item.ingredient.pizza.Chicken) {
+        fill = new Color(255, 220, 200);
+        label = "K"; // ayam (chicKen) biar beda
+    } else if (item instanceof model.item.ingredient.pizza.Sausage) {
+        fill = new Color(180, 90, 60);
+        label = "S";
+    } 
+    // contoh: kalau item-nya Plate
+    else if (item instanceof model.item.utensils.Plate) {
+        fill = Color.WHITE;
+        label = "P";
+    } 
+    // fallback umum: huruf pertama dari class name
+    else {
+        String simple = item.getClass().getSimpleName();
+        if (!simple.isEmpty()) {
+            label = simple.substring(0, 1).toUpperCase();
+        }
+    }
+
+    // gambar bubble
+    g2.setColor(fill);
+    g2.fillOval(x, y, iconSize, iconSize);
+
+    g2.setColor(Color.BLACK);
+    g2.drawOval(x, y, iconSize, iconSize);
+
+    // tulis huruf di tengah
+    g2.setFont(g2.getFont().deriveFont(10f));
+    int textX = x + iconSize / 2 - 3;
+    int textY = y + iconSize / 2 + 4;
+    g2.drawString(label, textX, textY);
+}
+
 
     // ==========================================
     // HANDLE ACTION (C & V)
@@ -404,6 +478,8 @@ private void handleActions() {
                 if (screenX + TILE_SIZE > 0 && screenX < getWidth() &&
                     screenY + TILE_SIZE > 0 && screenY < getHeight()) {
 
+                    TileType tileType = pizzaMap.getTileAt(x, y).getType();
+
                     switch (pizzaMap.getTileAt(x, y).getType()) {
                         case WALL:
                             g2.setColor(Color.DARK_GRAY);
@@ -446,6 +522,28 @@ private void handleActions() {
 
                     g2.setColor(Color.BLACK);
                     g2.drawRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+
+                    if (tileType == TileType.CUTTING_STATION) {
+                        Station st = stationMap.get(stationKey(x, y));
+                        if (st instanceof CuttingStation cs) {
+                            double ratio = cs.getProgressRatio(); // 0.0 .. 1.0
+                            if (ratio > 0) {
+                                int barWidth  = TILE_SIZE - 4;
+                                int barHeight = 4;
+                                int bx = screenX + 2;
+                                int by = screenY + TILE_SIZE - barHeight - 2;
+
+                                // border
+                                g2.setColor(Color.DARK_GRAY);
+                                g2.drawRect(bx, by, barWidth, barHeight);
+
+                                // fill
+                                int fillWidth = (int) (barWidth * ratio);
+                                g2.setColor(Color.GREEN);
+                                g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -454,11 +552,13 @@ private void handleActions() {
         int chef1X = chef1.getPosition().getX() * TILE_SIZE - mapOffsetX;
         int chef1Y = chef1.getPosition().getY() * TILE_SIZE - mapOffsetY;
         chef1Sprite.draw(g2, chef1X, chef1Y, TILE_SIZE, isPlayer1Active);
+        drawHeldItemIcon(g2, chef1, chef1X, chef1Y);
 
         // gambar chef 2
         int chef2X = chef2.getPosition().getX() * TILE_SIZE - mapOffsetX;
         int chef2Y = chef2.getPosition().getY() * TILE_SIZE - mapOffsetY;
         chef2Sprite.draw(g2, chef2X, chef2Y, TILE_SIZE, !isPlayer1Active);
+        drawHeldItemIcon(g2, chef2, chef2X, chef2Y); 
 
         g2.setColor(Color.WHITE);
         g2.drawString("Active: " + (isPlayer1Active ? chef1.getName() : chef2.getName()) + " (WASD)", 10, 20);

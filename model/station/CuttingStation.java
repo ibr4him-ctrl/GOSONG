@@ -26,57 +26,104 @@ public class CuttingStation extends Station {
     public String getSymbol() {
         return "C";
     }
-    @Override
-    public boolean interact(Chef chef) {
-        if (!isAdjacentTo(chef)) return false; 
 
-        Item hand = chef.getHeldItem(); 
+    public boolean interact(Chef chef) {
+        if (!isAdjacentTo(chef)) return false;
+
+        Item hand = chef.getHeldItem();
+
+        // 1) Kalau sudah selesai dipotong (CHOPPED) dan tangan kosong → pickup
+        if (currentIngredient != null &&
+            currentIngredient.getState() == IngredientState.CHOPPED &&
+            !cutting && hand == null) {
+
+            chef.setHeldItem(currentIngredient);      // chef pegang hasil potongan
+            System.out.println("Chef mengambil " + currentIngredient.getName()
+                            + " (CHOPPED) dari CuttingStation.");
+
+            // kosongkan station
+            itemOnStation = null;
+            currentIngredient = null;
+            cutProgressSeconds = 0.0;
+            currentChef = null;
+            return true;
+        }
+
+        // 2) Kalau belum ada ingredient yang lagi di-manage → coba mulai potong
         if (currentIngredient == null) {
             Ingredient target = null;
+
+            // from hand: RAW ingredient di tangan → taruh ke station
             if (hand instanceof Ingredient ing &&
-                ing.getState() == IngredientState.RAW) {
+                ing.canBeChopped()) {
+
                 target = ing;
                 chef.setHeldItem(null);
-            }
 
-            else if (hand == null && itemOnStation instanceof Ingredient ing2 &&
-                     ing2.getState() == IngredientState.RAW) {
+            // from station: ada RAW ingredient di atas station, tangan kosong
+            } else if (hand == null && itemOnStation instanceof Ingredient ing2 &&
+                    ing2.canBeChopped()) {
+
                 target = ing2;
+
             } else {
+                // bukan RAW ingredient / kondisi nggak valid
+                System.out.println("Item tidak bisa dipotong di CuttingStation.");
                 return false;
             }
 
             itemOnStation = target;
             currentIngredient = target;
+            cutProgressSeconds = 0.0;   // mulai dari 0 lagi
             cutting = true;
-            currentChef = chef; 
+            currentChef = chef;
             chef.setBusy(true);
-            return true;
-        }
-        if (currentIngredient != null &&
-            currentIngredient.getState() == IngredientState.RAW &&
-            !cutting) {
-            cutting = true;
-            currentChef =  chef; 
-            chef.setBusy(true);
+
+            System.out.println("Mulai memotong " + target.getName()
+                            + " di CuttingStation (" + posX + "," + posY + ")");
             return true;
         }
 
+        // 3) Sudah ada ingredient RAW, tapi lagi di-pause → lanjutkan motong
+        if (currentIngredient != null &&
+            currentIngredient.canBeChopped() &&
+            !cutting) {
+
+            cutting = true;
+            currentChef = chef;
+            chef.setBusy(true);
+
+            System.out.println("Lanjut memotong " + currentIngredient.getName());
+            return true;
+        }
+
+        // 4) Selain kondisi-kondisi di atas → nggak ada aksi yang valid
         return false;
     }
+
 
     public void update(double deltaSeconds) {
         if (!cutting || currentIngredient == null) return;
 
+        // Kalau chef sudah tidak adjacent lagi ke station → pause
+        if (currentChef != null && !isAdjacentTo(currentChef)) {
+            System.out.println("Chef menjauh dari CuttingStation, pemotongan dipause.");
+            pauseCutting();
+            return;
+        }
         cutProgressSeconds += deltaSeconds;
 
         if (cutProgressSeconds >= CUT_TIME) {
-            currentIngredient.chop();
+            currentIngredient.chop();     //UBAH STATE KE CHOPPED 
             cutting = false;
             cutProgressSeconds = CUT_TIME;
+            
+            System.out.println("Selesai memotong " + currentIngredient.getName() +
+                       " → state = " + currentIngredient.getState());
 
             if (currentChef != null){
                 currentChef.setBusy(false);
+                currentChef = null; 
             }
         }
     }
