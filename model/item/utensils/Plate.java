@@ -2,7 +2,6 @@ package model.item.utensils;
 
 import java.util.HashSet;
 import java.util.Set;
-
 import model.enums.ItemLocation;
 import model.enums.ItemType;
 import model.item.Dish;
@@ -76,5 +75,8 @@ public class Plate extends Item {
     public String toString() {
         String status = isClean() ? "Clean" : "Dirty";
         return "Plate(" + status + ", items=" + contents.size() + ")";
+    }
+    public boolean removeIngredient(Preparable p) {
+        return contents.remove(p);   
     }
 }
