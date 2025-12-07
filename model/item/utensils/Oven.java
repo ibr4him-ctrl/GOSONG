@@ -138,6 +138,11 @@ public class Oven extends Item implements CookingDevice{
     public boolean isEmpty() {
         return contents.isEmpty();
     }
+    
+    public boolean isReadyToTakeOut() {
+        return !contents.isEmpty() && cookTimeSeconds >= COOK_TIME_DONE;
+    }
+
 
     public List<Preparable> getContents() {
         return Collections.unmodifiableList(contents);
