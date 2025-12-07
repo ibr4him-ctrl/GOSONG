@@ -123,6 +123,9 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(keyH);
         this.setFocusable(true);
         this.setFocusTraversalKeysEnabled(false);
+
+        // INI ORDER SYSTEM 
+        OrderManager.getInstance().init();
     }
 
     // ==========================================

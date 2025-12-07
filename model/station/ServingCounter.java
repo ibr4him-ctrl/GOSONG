@@ -1,5 +1,7 @@
 package model.station;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import model.chef.Chef;
 import model.item.Dish;
 import model.item.Item;
@@ -8,6 +10,8 @@ import model.item.utensils.Plate;
 import model.manager.OrderManager;
 
 public class ServingCounter extends Station {
+
+    private static final long PLATE_RETURN_DELAY_MS = 10_000L; // 10 detik
 
     public ServingCounter(int x, int y) {
         super(x, y, "Serving");
@@ -22,46 +26,69 @@ public class ServingCounter extends Station {
     public boolean interact(Chef chef) {
         Item hand = chef.getHeldItem();
 
-        if (!(hand instanceof Plate )) {
+        // Spek: harus menyerahkan plate (dengan dish)
+        if (!(hand instanceof Plate)) {
             return false;
         }
+
         Plate plate = (Plate) hand;
 
         if (plate.isEmpty()) {
+            // tidak ada dish di atas plate
             return false;
         }
+
         Dish dish = plate.getDish();
+        if (dish == null) return false;
 
-        if (dish == null) return false; 
-
-        // 4. Validasi ke OrderManager
-        // JIKA DISINI MERAH: Cek apakah OrderManager sudah di-import?
-        // JIKA getPizzaType() MERAH: Cek Dish.java apakah methodnya getPizzaType()?
+        // Validasi ke OrderManager
         Order matchedOrder = OrderManager.getInstance().validateDish(dish);
 
         if (matchedOrder != null) {
-            // === SUKSES ===
-            // Pastikan Order.java punya method getPizzaType()
+            // ====== SERVE BERHASIL ======
             System.out.println("✅ SUKSES: " + matchedOrder.getPizzaType().getDisplayName());
             System.out.println("💰 Reward: +" + matchedOrder.getReward());
+
+            // TODO: aplikasi skor lewat ScoreManager.
         } else {
-            // === GAGAL ===
-            // Pastikan Dish.java punya method getPizzaType()
-            System.out.println(" GAGAL: Tidak ada pesanan untuk " + dish.getPizzaType().getDisplayName());
-            System.out.println("Penalti -50");
+            // ====== SERVE GAGAL ======
+            System.out.println("❌ GAGAL: Tidak ada pesanan untuk "
+                    + dish.getPizzaType().getDisplayName());
+            System.out.println("Penalti -50 (contoh)");
+
+            // TODO: aplikasi penalti skor di sini.
         }
 
-        // 5. Bersihkan
-        chef.setHeldItem(null);
+        // Dish dimakan / dihapus; piring jadi kotor
         plate.removeDish();
         plate.markDirty();
-        
+
+        // Chef tidak lagi memegang apa-apa
+        chef.setHeldItem(null);
+
+        // Piring otomatis kembali ke Plate Storage sebagai kotor setelah 10 detik
         returnToPlateStorage(plate);
 
         return true;
     }
 
+    /**
+     * Mengembalikan plate ke PlateStorage terdekat 10 detik setelah serve,
+     * dalam kondisi kotor (sesuai kitchen loop & serving action).
+     */
     private void returnToPlateStorage(Plate dirtyPlate) {
-        System.out.println("DEBUG: Piring kotor kembali ke storage.");
+        PlateStorage target = PlateStorage.getInstance();
+        if (target == null) {
+            System.out.println("WARN: Tidak ada PlateStorage untuk menerima piring kotor.");
+            return;
+        }
+
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                target.pushDirtyPlate(dirtyPlate);
+                System.out.println("DEBUG: Piring kotor kembali ke PlateStorage (delay 10 detik).");
+            }
+        }, PLATE_RETURN_DELAY_MS);
     }
 }
