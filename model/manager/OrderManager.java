@@ -68,8 +68,9 @@ public class OrderManager {
                 System.out.println("ORDER GAGAL (Waktu habis): "
                         + order.getPizzaType().getDisplayName());
 
-                // TODO: panggil ScoreManager / callback penalti di sini.
-                // contoh: ScoreManager.add(order.getPenalty());
+                // penalti karena timeout
+                // misal pakai penalty di order
+                model.manager.ScoreManager.getInstance().add(order.getPenalty());
 
                 activeOrders.remove(order);
                 spawnOrderIfNeeded();
@@ -116,9 +117,6 @@ public class OrderManager {
             if (order.getPizzaType() == dish.getPizzaType()) {
                 // Order ini yang dianggap selesai (FIFO)
                 activeOrders.remove(order);
-
-                // TODO: beri reward skor di sini lewat ScoreManager.
-                // contoh: ScoreManager.add(order.getReward());
 
                 // Setelah 1 order selesai → spawn order baru (kalau boleh)
                 spawnOrderIfNeeded();
