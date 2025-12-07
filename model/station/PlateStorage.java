@@ -8,11 +8,19 @@ import model.item.Item;
 
 public class PlateStorage extends Station {
 
-    private final Deque<Item> platestack; 
+    // Satu-satunya PlateStorage di map
+    private static PlateStorage instance;
+
+    private final Deque<Item> platestack;
 
     public PlateStorage(int x, int y) {
         super(x, y, "PlateStorage");
-        this.platestack = new ArrayDeque<>(); 
+        this.platestack = new ArrayDeque<>();
+        instance = this; // daftarkan diri sebagai instance global
+    }
+
+    public static PlateStorage getInstance() {
+        return instance;
     }
 
     @Override
@@ -20,50 +28,43 @@ public class PlateStorage extends Station {
         return "P";
     }
 
-    public void pushInitialCleanPlate(Item plate) {
-        if (plate == null) return; 
-        if (plate.getItemType() != ItemType.PLATE) return; 
+    public synchronized void pushInitialCleanPlate(Item plate) {
+        if (plate == null) return;
+        if (plate.getItemType() != ItemType.PLATE) return;
         plate.setClean(true);
         platestack.push(plate);
     }
 
-    public void pushDirtyPlate(Item plate) {
-        if (plate == null) return; 
-        if (plate.getItemType() != ItemType.PLATE) return; 
+    public synchronized void pushDirtyPlate(Item plate) {
+        if (plate == null) return;
+        if (plate.getItemType() != ItemType.PLATE) return;
         plate.setClean(false);
         platestack.push(plate);
     }
 
     @Override
-    public boolean interact(Chef chef) {
+    public synchronized boolean interact(Chef chef) {
+        if (!isAdjacentTo(chef)) return false;
 
-        if (!isAdjacentTo(chef)) return false; 
-
-        Item hand = chef.getHeldItem();
-
-        if (hand != null) {
-            return false;
-        }
+        // gak boleh drop apa pun di sini
+        if (chef.getHeldItem() != null) return false;
 
         if (platestack.isEmpty()) return false;
 
         if (!platestack.peek().isClean()) {
-            Deque<Item> dirtyStack = new ArrayDeque<>();
-            while (!platestack.isEmpty() && !platestack.peek().isClean()) {
-                dirtyStack.push(platestack.pop());
-            }
-            Item oneDirty = dirtyStack.pop();
-            chef.setHeldItem(oneDirty);
-            while (!dirtyStack.isEmpty()) platestack.push(dirtyStack.pop());
+            // ada piring kotor di atas → ambil 1 piring kotor
+            Item dirty = platestack.pop();
+            chef.setHeldItem(dirty);
             return true;
         }
-        // Kalau top bersih → ambil satu piring bersih
+
+        // top clean → ambil 1 piring bersih
         Item clean = platestack.pop();
         chef.setHeldItem(clean);
         return true;
     }
 
-    public int getPlateCount() {
+    public synchronized int getPlateCount() {
         return platestack.size();
     }
 }
