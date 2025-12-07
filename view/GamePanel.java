@@ -227,8 +227,16 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void updateCuttingStations(double deltaSeconds) {
+        for (Station st : stationMap.values()) {
+            if (st instanceof CuttingStation cs) {
+                cs.update(deltaSeconds);
+            }
+        }
+    }
+
+    private void updateCookingStations(double deltaSeconds) {
     for (Station st : stationMap.values()) {
-        if (st instanceof CuttingStation cs) {
+        if (st instanceof CookingStation cs) {
             cs.update(deltaSeconds);
         }
     }
@@ -246,6 +254,7 @@ public class GamePanel extends JPanel implements Runnable {
         updateActivePlayer();
         handleActions();
         updateCuttingStations(deltaSeconds);
+        updateCookingStations(deltaSeconds); 
     }
 
     private Chef getActiveChef() {
@@ -617,6 +626,28 @@ private void handleActions() {
                                 // fill
                                 int fillWidth = (int) (barWidth * ratio);
                                 g2.setColor(Color.GREEN);
+                                g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
+                            }
+                        }
+                    }
+
+                    if (tileType == TileType.COOKING_STATION) {
+                        Station st = stationMap.get(stationKey(x, y));
+                        if (st instanceof CookingStation cs) {
+                            double ratio = cs.getOven().getProgressRatio(); // 0..1 (12 detik)
+                            if (ratio > 0) {
+                                int barWidth  = TILE_SIZE - 4;
+                                int barHeight = 4;
+                                int bx = screenX + 2;
+                                int by = screenY + TILE_SIZE - barHeight - 2;
+
+                                // border
+                                g2.setColor(Color.DARK_GRAY);
+                                g2.drawRect(bx, by, barWidth, barHeight);
+
+                                // fill: oranye kalau normal, merah kalau burned
+                                int fillWidth = (int) (barWidth * ratio);
+                                g2.setColor(cs.getOven().isBurned() ? Color.RED : Color.ORANGE);
                                 g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
                             }
                         }
