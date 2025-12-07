@@ -271,6 +271,9 @@ public class GamePanel extends JPanel implements Runnable {
         updateWashingStations(deltaSeconds); 
 
         OrderManager.getInstance().update(deltaSeconds);
+
+        // RESET SCORE DI AWAL GAME
+        model.manager.ScoreManager.getInstance().reset();
     }
 
     private Chef getActiveChef() {
@@ -715,6 +718,9 @@ private void handleActions() {
         g2.setColor(Color.WHITE);
         g2.drawString("Active: " + (isPlayer1Active ? chef1.getName() : chef2.getName()) + " (WASD)", 10, 20);
         g2.drawString("TAB: Switch | C: PickUp/Drop | V: Use Station", 10, 40);
+
+        int score = model.manager.ScoreManager.getInstance().getScore();
+        g2.drawString("Score: " + score, 10, 60);
 
         // ====== Gambar daftar Order aktif di pojok kanan atas ======
         var orders = OrderManager.getInstance().getActiveOrders();
