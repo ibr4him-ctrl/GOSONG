@@ -51,11 +51,31 @@ public class CookingStation extends Station {
                 return false;
             }
 
+            // --- CEK DULU: OVEN DALAM KONDISI BURNED? ---
+            boolean wasBurned = oven.isBurned();
+
             System.out.println("[CookingStation] Mengeluarkan isi oven...");
             List<Preparable> cooked = oven.takeOutAll();  // aman: >= COOK_TIME_DONE
-            
+
+                    // ====== KASUS 1: SEMUA SUDAH GOSONG ======
+            if (wasBurned) {
+                System.out.println("[CookingStation] Isi oven gosong! Dipindahkan ke plate untuk dibuang.");
+                for (Preparable p : cooked) {
+                    if (!plate.canAccept(p)) {
+                        System.out.println("[CookingStation]   Tidak bisa menaruh " + p + " ke plate (canAccept = false).");
+                        continue;
+                    }
+                    plate.addIngredient(p);
+                }
+                chef.setHeldItem(plate);
+                // di titik ini plate berisi ingredient BURNED → player bisa ke TrashStation buat buang
+                return true;
+            }
+                
             //deteksi jenis pizza dari kombinasi cooked 
 
+            //kasus normal dan tidak burned 
+            
             PizzaType type = PizzaRecipeChecker.detectPizza(cooked);
 
             Dish dish = PizzaRecipeChecker.createPizzaDish(type, cooked);
