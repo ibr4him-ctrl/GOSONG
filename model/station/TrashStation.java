@@ -3,9 +3,7 @@ package model.station;
 
 import model.chef.Chef;
 import model.enums.ItemType;
-import model.interfaces.CookingDevice;
 import model.item.Item;
-import model.item.utensils.Oven;
 import model.item.utensils.Plate;
 
 public class TrashStation extends Station {
@@ -23,24 +21,24 @@ public class TrashStation extends Station {
     public boolean interact(Chef chef) {
         Item hand = chef.getHeldItem();
         if (hand == null) return false;
+        //prioritas plate dulu 
+        if (hand instanceof Plate plate){
+            if (plate.isEmpty()){
+                System.out.println("Gagal: Tidak bisa membuang piring kosong!");
+                return false;
+            }
+            plate.clear();
+            plate.setClean(false);
+            System.out.println("Isi piring dibuang. Piring tetap di tangan (kotor).");
+            return true; 
+        }
 
         if (hand.getItemType() == ItemType.KITCHEN_UTENSIL) {
-            if (hand instanceof Plate) {
-            Plate plate = (Plate) hand;
-            
-            // Jika piring sudah kosong, kita Return False (Gagal)
-            // Karena kita tidak mau membuang piringnya.
-            if (plate.isEmpty()) {
-                System.out.println("Gagal: Tidak bisa membuang piring kosong!");
-                return false; 
-            }
-
-            // Jika ada isinya, hapus isinya saja
-            plate.clear(); // atau plate.removeDish() / plate.contents.clear()
-            System.out.println("Isi piring dibuang. Piring tetap di tangan.");
-            return true;
-
+            System.out.println("Gagal: tidak dapat membuang kitchen utensil");
+            return false;
         }
+
+
         //     if (hand instanceof Oven oven) {
         //         oven.clearContents(); // kamu sudah punya clearContents() di Oven
         //         // utensil tetap di tangan Chef
@@ -48,10 +46,11 @@ public class TrashStation extends Station {
         //     }
         //     // untuk utensil lain, nanti bisa dibuat method clear sendiri
         //     return false;
-        }
+            //Utensil lain sementara : gagal dibuang 
 
-        // Selain itu (ingredient / dish / dsb.) → buang item-nya
+        // ===== BUKAN kitchen utensil → item-nya dibuang =====
         chef.setHeldItem(null);
+        System.out.println(hand.getName() + " dibuang ke tempat sampah.");
         return true;
     }
 }
