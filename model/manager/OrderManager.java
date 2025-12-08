@@ -3,6 +3,7 @@ package model.manager;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
+import main.Main;
 import model.item.Dish;
 import model.item.dish.Order;
 import model.item.dish.Order.PizzaType;
@@ -11,20 +12,23 @@ public class OrderManager {
 
     private static OrderManager instance;
 
-    // Daftar order aktif (antrian)
     private final List<Order> activeOrders;
 
     private final Random random;
 
-    // Untuk countdown per detik
     private double secondAccumulator = 0.0;
+    private double sessionTimeElapsed = 0.0;
+    private double timeSinceLastSpawn = 0.0;
 
-    // Spec: maksimal order yang ditampilkan (boleh 4 atau 5)
     private static final int MAX_ORDERS = 5;
-    private static final int INITIAL_ORDERS = 3;
+    private static final int INITIAL_ORDERS = 1;
+    private static final int MAX_TOTAL_ORDERS = 3;
+    private static final double SESSION_LIMIT_SECONDS = 180.0;
+    private static final double SPAWN_INTERVAL_SECONDS = 30.0;
 
-    // Untuk stage over: kalau false, tidak spawn order baru lagi
     private boolean acceptingNewOrders = true;
+    private boolean sessionOver = false;
+    private int totalSpawnedOrders = 0;
 
     private OrderManager() {
         this.activeOrders = new CopyOnWriteArrayList<>();
@@ -38,23 +42,27 @@ public class OrderManager {
         return instance;
     }
 
-    /**
-     * Dipanggil sekali di awal game (misal di GamePanel constructor).
-     */
     public void init() {
         activeOrders.clear();
+        totalSpawnedOrders = 0;
+        acceptingNewOrders = true;
+        sessionOver = false;
+        sessionTimeElapsed = 0.0;
+        timeSinceLastSpawn = 0.0;
         for (int i = 0; i < INITIAL_ORDERS; i++) {
             spawnRandomOrder();
         }
     }
 
-    /**
-     * Dipanggil dari GamePanel.update(deltaSeconds).
-     */
     public void update(double deltaSeconds) {
+        if (sessionOver) {
+            return;
+        }
 
-        // A. Countdown time limit (per detik)
         secondAccumulator += deltaSeconds;
+        sessionTimeElapsed += deltaSeconds;
+        timeSinceLastSpawn += deltaSeconds;
+
         if (secondAccumulator >= 1.0) {
             for (Order order : activeOrders) {
                 order.decrementTime();
@@ -62,69 +70,61 @@ public class OrderManager {
             secondAccumulator -= 1.0;
         }
 
-        // B. Hapus order yang expired
         for (Order order : activeOrders) {
             if (order.isExpired()) {
                 System.out.println("ORDER GAGAL (Waktu habis): "
                         + order.getPizzaType().getDisplayName());
 
-                // penalti karena timeout
-                // misal pakai penalty di order
                 model.manager.ScoreManager.getInstance().add(order.getPenalty());
 
                 activeOrders.remove(order);
                 spawnOrderIfNeeded();
             }
         }
+
+        if (sessionTimeElapsed >= SESSION_LIMIT_SECONDS) {
+            sessionOver = true;
+            acceptingNewOrders = false;
+            Main.stopGame();
+        }
     }
 
-    /**
-     * Spawn order baru jika:
-     * - masih menerima order baru
-     * - belum mencapai batas MAX_ORDERS
-     */
     private void spawnOrderIfNeeded() {
         if (!acceptingNewOrders) return;
         if (activeOrders.size() >= MAX_ORDERS) return;
+        if (timeSinceLastSpawn < SPAWN_INTERVAL_SECONDS) return;
         spawnRandomOrder();
     }
 
-    /**
-     * Order baru dengan jenis pizza random sesuai level.
-     */
     private void spawnRandomOrder() {
+        if (totalSpawnedOrders >= MAX_TOTAL_ORDERS) {
+            acceptingNewOrders = false;
+            return;
+        }
+
         PizzaType[] types = PizzaType.values();
         PizzaType randomType = types[random.nextInt(types.length)];
 
         Order newOrder = new Order(randomType);
         activeOrders.add(newOrder);
+        totalSpawnedOrders++;
+        timeSinceLastSpawn = 0.0;
 
         System.out.println("NEW ORDER: " + newOrder);
     }
 
-    /**
-     * Dipanggil oleh ServingCounter ketika chef menyajikan dish.
-     * Mengembalikan Order yang cocok (kalau ada), atau null kalau salah.
-     * 
-     * Spek:
-     * - Kalau ada 2 order sama, selesaikan yang paling awal masuk.
-     *   → kita iterasi dari depan list (insertion order).
-     */
     public Order validateDish(Dish dish) {
         if (dish == null) return null;
 
         for (Order order : activeOrders) {
             if (order.getPizzaType() == dish.getPizzaType()) {
-                // Order ini yang dianggap selesai (FIFO)
                 activeOrders.remove(order);
 
-                // Setelah 1 order selesai → spawn order baru (kalau boleh)
                 spawnOrderIfNeeded();
                 return order;
             }
         }
 
-        // Tidak ada order dengan jenis pizza ini
         return null;
     }
 
@@ -132,9 +132,6 @@ public class OrderManager {
         return activeOrders;
     }
 
-    /**
-     * Dipanggil saat Stage Over (Time's Up) → game berhenti menerima order baru.
-     */
     public void stopAcceptingNewOrders() {
         acceptingNewOrders = false;
     }

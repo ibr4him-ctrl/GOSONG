@@ -52,7 +52,7 @@ public class Order {
         this.pizzaType = pizzaType;
         this.reward = pizzaType.getBaseReward();
         this.penalty = -50;
-        this.timeLimit = pizzaType.getBaseTime();
+        this.timeLimit = 60;
         this.timeRemaining = this.timeLimit;
         this.createdAt = System.currentTimeMillis();
     }
