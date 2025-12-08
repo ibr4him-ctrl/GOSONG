@@ -19,6 +19,8 @@ public class TrashStation extends Station {
 
     @Override
     public boolean interact(Chef chef) {
+        if (!isAdjacentTo(chef)) return false;
+        
         Item hand = chef.getHeldItem();
         if (hand == null) return false;
         //prioritas plate dulu 
