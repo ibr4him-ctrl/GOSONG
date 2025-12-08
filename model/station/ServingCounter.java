@@ -26,6 +26,7 @@ public class ServingCounter extends Station {
     
     @Override
     public boolean interact(Chef chef) {
+        if (!isAdjacentTo(chef)) return false;
 
         Item hand = chef.getHeldItem();
         // harus pegang Plate
