@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JPanel;
@@ -36,7 +37,6 @@ import model.station.TrashStation;
 import model.station.WashingStation;
 import src.GUI.KeyHandler;
 import view.PlayerSprite.Direction;
-import java.awt.image.BufferedImage;
 
 
 public class GamePanel extends JPanel implements Runnable {
@@ -123,8 +123,10 @@ public class GamePanel extends JPanel implements Runnable {
             chef2.setName("Chef 2");
         }
 
-        chef1Sprite = new PlayerSprite();
-        chef2Sprite = new PlayerSprite();
+        // Chef 1: folder Chef1, warna blue
+        chef1Sprite = new PlayerSprite("Chef1", "blue");
+        // Chef 2: folder Chef2, warna red
+        chef2Sprite = new PlayerSprite("Chef2", "red");
 
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         this.setBackground(Color.black);
