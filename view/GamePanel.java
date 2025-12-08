@@ -48,6 +48,7 @@ public class GamePanel extends JPanel implements Runnable {
     private static final int MAX_SCREEN_ROW = 12;
     private static final int SCREEN_WIDTH = TILE_SIZE * MAX_SCREEN_COL;
     private static final int SCREEN_HEIGHT = TILE_SIZE * MAX_SCREEN_ROW;
+    private AssemblyRenderer assemblyRenderer = new AssemblyRenderer();
 
     // map -> Station
     private Map<String, Station> stationMap = new HashMap<>();
@@ -580,43 +581,45 @@ private void handleActions() {
             int px = st.getPosX() * TILE_SIZE - mapOffsetX;
             int py = st.getPosY() * TILE_SIZE - mapOffsetY;
 
+            // === CASE KHUSUS: AssemblyStation + Plate → pakai renderer pizza ===
+            if (st instanceof AssemblyStation && item instanceof Plate plate) {
+                assemblyRenderer.drawPlateOnAssembly(g2, px, py, TILE_SIZE, plate);
+                continue;
+            }
+
+            // === DEFAULT: kotak kecil seperti sebelumnya ===
             int size   = TILE_SIZE - 8;
             int offset = 4;
 
-            // Pilih warna & label berdasarkan tipe item
             Color fillColor = new Color(240, 240, 240);
             String label = "?";
 
             if (item instanceof Plate plate) {
-                // plate bersih / kotor beda dikit warnanya
                 fillColor = plate.isClean()
                         ? new Color(245, 245, 255)
                         : new Color(200, 200, 220);
                 label = "Pl";
             } else if (item instanceof Ingredient ing) {
                 fillColor = new Color(255, 230, 180);
-                // ambil huruf pertama nama ingredient (T / C / D / S / dsb)
                 String name = ing.getName();
                 label = name.isEmpty() ? "I" : name.substring(0, 1);
             } else if (item instanceof Dish) {
                 fillColor = new Color(255, 200, 200);
                 label = "D";
             } else {
-                // fallback: 2 huruf pertama nama item
                 String name = item.getName();
                 label = name.substring(0, Math.min(2, name.length()));
             }
 
-            // kotak kecil di tengah tile
             g2.setColor(fillColor);
             g2.fillRoundRect(px + offset, py + offset, size, size, 6, 6);
             g2.setColor(Color.BLACK);
             g2.drawRoundRect(px + offset, py + offset, size, size, 6, 6);
 
-            // tulis label
             g2.drawString(label, px + offset + 3, py + offset + 12);
         }
     }
+
 
     // ==========================================
     // RENDER

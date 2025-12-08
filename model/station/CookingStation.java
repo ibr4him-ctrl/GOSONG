@@ -39,26 +39,29 @@ public class CookingStation extends Station {
         Item hand = chef.getHeldItem();
 
         // =========================
-        // 1) OVEN SUDAH SIAP & CHEF PEGANG PLATE → KELUARKAN PIZZA
+        // 1) OVEN SUDAH SIAP & CHEF PEGANG PLATE → KELUARKAN ISI
         // =========================
         if (oven.isReadyToTakeOut() && hand instanceof Plate) {
 
-            Plate plate = (Plate)hand; 
+            Plate plate = (Plate) hand;
 
-            
             if (!plate.isClean()) {
                 System.out.println("[CookingStation] Plate kotor, gak boleh buat plating pizza matang.");
                 return false;
             }
 
-            // --- CEK DULU: OVEN DALAM KONDISI BURNED? ---
             boolean wasBurned = oven.isBurned();
 
-            System.out.println("[CookingStation] Mengeluarkan isi oven...");
-            List<Preparable> cooked = oven.takeOutAll();  // aman: >= COOK_TIME_DONE
+            // ---- LIHAT DULU ISI OVEN TANPA NGOSONGIN ----
+            List<Preparable> cookedView = new ArrayList<>(oven.getContents());
+            System.out.println("[CookingStation] Siap mengeluarkan isi oven, count = " + cookedView.size()
+                            + ", burned=" + wasBurned);
 
-                    // ====== KASUS 1: SEMUA SUDAH GOSONG ======
+            // ========== KASUS 1: ISI OVEN GOSONG ==========
             if (wasBurned) {
+                // Semua isi oven gosong → tetap dipindahin ke plate
+                List<Preparable> cooked = oven.takeOutAll();   // baru beneran kosongin
+
                 System.out.println("[CookingStation] Isi oven gosong! Dipindahkan ke plate untuk dibuang.");
                 for (Preparable p : cooked) {
                     if (!plate.canAccept(p)) {
@@ -68,33 +71,58 @@ public class CookingStation extends Station {
                     plate.addIngredient(p);
                 }
                 chef.setHeldItem(plate);
-                // di titik ini plate berisi ingredient BURNED → player bisa ke TrashStation buat buang
+                System.out.println("   Plate sekarang berisi " + plate.getContents().size() + " item (burned).");
                 return true;
             }
-                
-            //deteksi jenis pizza dari kombinasi cooked 
 
-            //kasus normal dan tidak burned 
-            
-            PizzaType type = PizzaRecipeChecker.detectPizza(cooked);
-
-            Dish dish = PizzaRecipeChecker.createPizzaDish(type, cooked);
+            // ========== KASUS 2: NORMAL, COBA JADI PIZZA DULU ==========
+            PizzaType type = PizzaRecipeChecker.detectPizza(cookedView);
+            Dish dish = PizzaRecipeChecker.createPizzaDish(type, cookedView);
 
             if (dish != null) {
-                // Pastikan Dish boleh ditaruh ke plate --> debugging plate 
-                if (!plate.canAccept(dish)) {
+                // RESEP VALID
+                if (plate.canAccept(dish)) {
+                    // plate mau nerima Dish → oke, baru kosongin oven
+                    oven.takeOutAll();
+                    plate.addIngredient(dish);
+                    chef.setHeldItem(plate);
+                    System.out.println("[CookingStation] Pizza jadi: " + dish.getName());
+                    System.out.println("   Isi plate sekarang: " + plate.getContents().size() + " item");
+                    return true;
+                } else {
+                    // Resep valid tapi plate nolak Dish → fallback: pindahin cooked apa adanya
                     System.out.println("[CookingStation] Dish final tidak bisa ditaruh ke plate (canAccept() = false).");
-                    return false;
+                    System.out.println("   Fallback: pindahkan isi oven sebagai ingredient cooked.");
+
+                    List<Preparable> cooked = oven.takeOutAll();
+                    for (Preparable p : cooked) {
+                        if (!plate.canAccept(p)) {
+                            System.out.println("[CookingStation]   Tidak bisa menaruh " + p + " ke plate (canAccept = false).");
+                            continue;
+                        }
+                        plate.addIngredient(p);
+                    }
+                    chef.setHeldItem(plate);
+                    System.out.println("   Plate sekarang berisi " + plate.getContents().size() + " item (fallback cooked).");
+                    return true;
                 }
-                plate.addIngredient(dish);
-                chef.setHeldItem(plate);   
-                System.out.println("[CookingStation] Pizza jadi: " + dish.getName());
-                System.out.println("   Isi plate sekarang: " + plate.getContents().size() + " item");
-                return true;
             }
 
+            // ========== KASUS 3: RESEP TIDAK COCOK SAMA SEKALI ==========
             System.out.println("[CookingStation] Kombinasi cooked tidak cocok resep mana pun.");
-            return false;
+            System.out.println("   Tetap dipindahkan ke plate sebagai 'gagal'.");
+
+            List<Preparable> cooked = oven.takeOutAll();
+            for (Preparable p : cooked) {
+                if (!plate.canAccept(p)) {
+                    System.out.println("[CookingStation]   Tidak bisa menaruh " + p + " ke plate (canAccept = false).");
+                    continue;
+                }
+                plate.addIngredient(p);
+            }
+            chef.setHeldItem(plate);
+            System.out.println("   Plate sekarang berisi " + plate.getContents().size() + " item (hasil gagal).");
+            return true;
         }
 
         // =========================
@@ -116,7 +144,7 @@ public class CookingStation extends Station {
                 if (!oven.canAccept(ing)) continue;            // oven full / gak boleh
 
                 oven.addIngredient(ing);
-                plate.removeIngredient(ing);                   // pastikan ada di Plate
+                plate.removeIngredient(ing);
 
                 movedAny = true;
                 System.out.println("Masukin dari plate ke oven: " + ing.getName());
@@ -127,7 +155,7 @@ public class CookingStation extends Station {
                 System.out.println("Oven start cooking, isi = " + oven.getContents().size());
             }
 
-            return movedAny;  // true kalau ada yang masuk, false kalau plate kosong / gagal
+            return movedAny;
         }
 
         // =========================
@@ -154,6 +182,7 @@ public class CookingStation extends Station {
         // =========================
         return false;
     }
+
 
     public void update(double deltaSeconds) {
         oven.update(deltaSeconds);
