@@ -28,7 +28,7 @@ public class TileRenderer {
         spawnTile  = loadImage("resources/tile/spawn-tile.png");
 
         // load station images
-        assemblyStationImg = loadImage("resources/station/assembling_station.png");
+        assemblyStationImg = loadImage("resources/station/assemblystation2.png");
         cuttingStationImg  = loadImage("resources/station/cutting_station.png");
     }
 
