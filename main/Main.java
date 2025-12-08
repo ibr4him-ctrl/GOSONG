@@ -1,34 +1,41 @@
+package main;
 import javax.swing.*;
 import view.GamePanel;
+import view.MainMenu;
 
 public class Main {
 
     private static GamePanel gamePanel;
     private static JFrame window;
 
-    // Label skor & log order (belum terhubung ke OrderManager)
     private static int score = 0;
     private static JLabel scoreLabel;
     private static JTextArea orderLog;
 
     public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MainMenu mainMenu = new MainMenu();
+                mainMenu.setVisible(true);
+            }
+        });
+    }
 
+    public static void startGame() {
         window = new JFrame("GOSONG - Pizza Chef");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
         window.setLayout(new BoxLayout(window.getContentPane(), BoxLayout.Y_AXIS));
 
-        // Panel skor (UI saja dulu)
         JPanel scorePanel = new JPanel();
         scoreLabel = new JLabel("Score: 0");
         scorePanel.add(scoreLabel);
         window.add(scorePanel);
 
-        // Panel game
         gamePanel = new GamePanel();
         window.add(gamePanel);
 
-        // Log order (nanti bisa dipakai OrderManager/ScoreManager)
         orderLog = new JTextArea(5, 40);
         orderLog.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(orderLog);
