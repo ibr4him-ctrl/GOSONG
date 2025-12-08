@@ -130,16 +130,16 @@ public class IngredientStorage extends Station {
     public Class<? extends Ingredient> getIngredientType() {
         return ingredientType;
     }
-
+    
     public String getIngredientName() {
         return ingredientName;
     }
 
     public boolean isValidIngredient(Item item) {
-        // pakai isInstance supaya subclass juga boleh
-        return item instanceof Ingredient &&
-               ingredientType != null &&
-               ingredientType.isInstance(item);
+        return item != null &&
+            item instanceof Ingredient &&
+            ingredientType != null &&
+            ingredientType.isInstance(item);
     }
 
     public String getTooltip() {
