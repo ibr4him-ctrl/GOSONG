@@ -136,6 +136,12 @@ public class CookingStation extends Station {
                 return false;
             }
 
+            // RULE BARU: plate harus mengandung Dough
+            if (!plateHasDough(plate)) {
+                System.out.println("[CookingStation] Plate tanpa dough tidak boleh masuk oven.");
+                return false;
+            }
+
             boolean movedAny = false;
             var contentsCopy = new ArrayList<>(plate.getContents());
 
@@ -186,5 +192,14 @@ public class CookingStation extends Station {
 
     public void update(double deltaSeconds) {
         oven.update(deltaSeconds);
+    }
+
+    private boolean plateHasDough(Plate plate) {
+        for (Preparable p : plate.getContents()) {
+            if (p instanceof Ingredient ing && ing instanceof model.item.ingredient.pizza.Dough) {
+                return true;
+            }
+        }
+        return false;
     }
 }
