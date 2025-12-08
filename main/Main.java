@@ -2,11 +2,13 @@ package main;
 import javax.swing.*;
 import view.GamePanel;
 import view.MainMenu;
+import util.MusicPlayer;
 
 public class Main {
 
     private static GamePanel gamePanel;
     private static JFrame window;
+    private static MusicPlayer musicPlayer = new MusicPlayer();
 
     private static int score = 0;
     private static JLabel scoreLabel;
@@ -46,6 +48,8 @@ public class Main {
         window.setVisible(true);
 
         gamePanel.startGameThread();
+
+        musicPlayer.playLoop("/resources/game/music/GameMusic.mp3");
     }
 
     // ====== Helper untuk masa depan ScoreManager ======
@@ -69,6 +73,7 @@ public class Main {
      */
     public static void stopGame() {
         model.manager.OrderManager.getInstance().stopAcceptingNewOrders();
+        musicPlayer.stop();
         System.exit(0);
     }
 }
