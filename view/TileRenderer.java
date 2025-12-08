@@ -12,14 +12,24 @@ public class TileRenderer {
 
     private BufferedImage tileLight;
     private BufferedImage tileDark;
+    private BufferedImage spawnTile;
+
+    // NEW: station sprites
+    private BufferedImage assemblyStationImg;
+    private BufferedImage cuttingStationImg;
 
     public TileRenderer() {
         loadTiles();
     }
 
     private void loadTiles() {
-        tileLight = loadImage("resources/tile/tile-light.png");
-        tileDark  = loadImage("resources/tile/tile-dark.png");
+        tileLight  = loadImage("resources/tile/tile-light.png");
+        tileDark   = loadImage("resources/tile/tile-dark.png");
+        spawnTile  = loadImage("resources/tile/spawn-tile.png");
+
+        // load station images
+        assemblyStationImg = loadImage("resources/station/assembling_station.png");
+        cuttingStationImg  = loadImage("resources/station/cutting_station.png");
     }
 
     private BufferedImage loadImage(String path) {
@@ -47,8 +57,18 @@ public class TileRenderer {
                          int screenX, int screenY,
                          int tileSize) {
 
-        // =============== FLOOR CHECKERBOARD ===============
-        // dipakai untuk tile WALKABLE (dan bisa ditambah SPAWN_CHEF kalau mau)
+        // =============== SPAWN TILE ===============
+        if (type == TileType.SPAWN_CHEF) {
+            if (spawnTile != null) {
+                g2.drawImage(spawnTile, screenX, screenY, tileSize, tileSize, null);
+            } else {
+                g2.setColor(Color.GREEN);
+                g2.fillRect(screenX, screenY, tileSize, tileSize);
+            }
+            return;
+        }
+
+        // =============== FLOOR CHECKERBOARD (WALKABLE) ===============
         if (type == TileType.WALKABLE) {
             BufferedImage tex =
                     ((xIndex + yIndex) % 2 == 0) ? tileLight : tileDark;
@@ -56,44 +76,53 @@ public class TileRenderer {
             if (tex != null) {
                 g2.drawImage(tex, screenX, screenY, tileSize, tileSize, null);
             } else {
-                // fallback kalau gambar gagal load
                 Color c = ((xIndex + yIndex) % 2 == 0)
                         ? new Color(220, 220, 220)
                         : new Color(200, 200, 200);
                 g2.setColor(c);
                 g2.fillRect(screenX, screenY, tileSize, tileSize);
             }
-        }
-        // =============== TILE LAIN (STATION, WALL, DLL) ===============
-        else {
-            switch (type) {
-                case WALL ->
-                        g2.setColor(Color.DARK_GRAY);
-                case ASSEMBLY_STATION ->
-                        g2.setColor(new Color(139, 69, 19));
-                case COOKING_STATION ->
-                        g2.setColor(Color.RED);
-                case SPAWN_CHEF ->
-                        g2.setColor(Color.GREEN);
-                case CUTTING_STATION ->
-                        g2.setColor(Color.ORANGE);
-                case PLATE_STORAGE ->
-                        g2.setColor(Color.CYAN);
-                case INGREDIENT_STORAGE ->
-                        g2.setColor(Color.YELLOW);
-                case SERVING_COUNTER ->
-                        g2.setColor(Color.MAGENTA);
-                case WASHING_STATION ->
-                        g2.setColor(Color.BLUE);
-                case TRASH ->
-                        g2.setColor(new Color(128, 0, 0));
-                default ->
-                        g2.setColor(Color.WHITE);
-            }
-            g2.fillRect(screenX, screenY, tileSize, tileSize);
+            return;
         }
 
-        // // border tile hitam tipis
+        // =============== TILE LAIN (STATION, WALL, DLL) ===============
+        // coba dulu pakai sprite kalau ada
+        if (type == TileType.ASSEMBLY_STATION && assemblyStationImg != null) {
+            g2.drawImage(assemblyStationImg, screenX, screenY, tileSize, tileSize, null);
+            return;
+        }
+
+        if (type == TileType.CUTTING_STATION && cuttingStationImg != null) {
+            g2.drawImage(cuttingStationImg, screenX, screenY, tileSize, tileSize, null);
+            return;
+        }
+
+        // kalau nggak ada sprite khusus → fallback ke warna kotak
+        switch (type) {
+            case WALL ->
+                g2.setColor(Color.DARK_GRAY);
+            case ASSEMBLY_STATION ->
+                g2.setColor(new Color(139, 69, 19));
+            case COOKING_STATION ->
+                g2.setColor(Color.RED);
+            case CUTTING_STATION ->
+                g2.setColor(Color.ORANGE);
+            case PLATE_STORAGE ->
+                g2.setColor(Color.CYAN);
+            case INGREDIENT_STORAGE ->
+                g2.setColor(Color.YELLOW);
+            case SERVING_COUNTER ->
+                g2.setColor(Color.MAGENTA);
+            case WASHING_STATION ->
+                g2.setColor(Color.BLUE);
+            case TRASH ->
+                g2.setColor(new Color(128, 0, 0));
+            default ->
+                g2.setColor(Color.WHITE);
+        }
+        g2.fillRect(screenX, screenY, tileSize, tileSize);
+
+        // kalau mau border, tinggal hidupin lagi:
         // g2.setColor(Color.BLACK);
         // g2.drawRect(screenX, screenY, tileSize, tileSize);
     }
