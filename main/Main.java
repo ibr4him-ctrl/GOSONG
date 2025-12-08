@@ -2,7 +2,6 @@ package main;
 import javax.swing.*;
 import view.GamePanel;
 import view.MainMenu;
-import view.GameOver;
 
 public class Main {
 
@@ -70,10 +69,6 @@ public class Main {
      */
     public static void stopGame() {
         model.manager.OrderManager.getInstance().stopAcceptingNewOrders();
-        if (window != null) {
-            window.dispose();
-        }
-        GameOver gameOver = new GameOver();
-        gameOver.setVisible(true);
+        System.exit(0);
     }
 }

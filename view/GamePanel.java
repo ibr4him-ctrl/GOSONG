@@ -36,6 +36,7 @@ import model.station.TrashStation;
 import model.station.WashingStation;
 import src.GUI.KeyHandler;
 import view.PlayerSprite.Direction;
+import java.awt.image.BufferedImage;
 
 
 public class GamePanel extends JPanel implements Runnable {
@@ -775,6 +776,19 @@ private void handleActions() {
             int px = gx * TILE_SIZE - mapOffsetX;
             int py = gy * TILE_SIZE - mapOffsetY;
 
+            // --- kalau ingredient pizza → pakai sprite yang sama kayak di plate ---
+            if (item instanceof Ingredient ing) {
+                BufferedImage sprite = assemblyRenderer.getSpriteForIngredient(ing);
+                if (sprite != null) {
+                    int size = (int) (TILE_SIZE * 0.8);
+                    int drawX = px + TILE_SIZE / 2 - size / 2;
+                    int drawY = py + TILE_SIZE / 2 - size / 2;
+                    g2.drawImage(sprite, drawX, drawY, size, size, null);
+                    continue; // sudah digambar, lanjut item berikutnya
+                }
+            }
+
+            // --- fallback: kotak abu + label (buat item lain) ---
             int size   = TILE_SIZE - 10;
             int offset = 5;
 

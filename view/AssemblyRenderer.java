@@ -86,7 +86,7 @@ public class AssemblyRenderer {
     // =========================
     // HELPER: GET SPRITE BY STATE
     // =========================
-    private BufferedImage getSprite(Ingredient ing) {
+    private  BufferedImage getSprite(Ingredient ing) {
         IngredientState state = ing.getState();
         String className = ing.getClass().getSimpleName(); // Dough / Tomato / ...
 
@@ -109,6 +109,9 @@ public class AssemblyRenderer {
         return img;
     }
 
+    public BufferedImage getSpriteForIngredient(Ingredient ing) {
+        return getSprite(ing);
+    }
     // =========================
     // HELPER: KUMPULKAN INGREDIENT DARI Preparable (Dish / Ingredient)
     // =========================
