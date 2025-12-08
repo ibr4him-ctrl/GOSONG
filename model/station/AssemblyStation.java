@@ -59,7 +59,7 @@ public class AssemblyStation extends Station {
             if (hand instanceof Ingredient /* || hand instanceof Dish */) {
             System.out.println(
                 "[Assembly] Ingredient (atau makanan) harus di atas plate, " +
-                "tidak bisa ditaruh langsung di assembly."
+                "tidak bisa ditaruh langsung di Station!"
                 );
             return false;
             }
