@@ -10,12 +10,17 @@ public class MusicPlayer {
     public void playLoop(String resourcePath) {
         stop();
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
-                    MusicPlayer.class.getResource(resourcePath));
+            java.net.URL url = MusicPlayer.class.getResource(resourcePath);
+            if (url == null) {
+                System.out.println("Music file not found: " + resourcePath);
+                return;
+            }
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(url);
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
