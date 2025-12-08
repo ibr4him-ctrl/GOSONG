@@ -50,6 +50,7 @@ public class GamePanel extends JPanel implements Runnable {
     private static final int SCREEN_WIDTH = TILE_SIZE * MAX_SCREEN_COL;
     private static final int SCREEN_HEIGHT = TILE_SIZE * MAX_SCREEN_ROW;
     private AssemblyRenderer assemblyRenderer = new AssemblyRenderer();
+    private TileRenderer tileRenderer = new TileRenderer();
 
     // map -> Station
     private Map<String, Station> stationMap = new HashMap<>();
@@ -642,49 +643,14 @@ private void handleActions() {
                     screenY + TILE_SIZE > 0 && screenY < getHeight()) {
 
                     TileType tileType = pizzaMap.getTileAt(x, y).getType();
-
-                    switch (pizzaMap.getTileAt(x, y).getType()) {
-                        case WALL:
-                            g2.setColor(Color.DARK_GRAY);
-                            break;
-                        case WALKABLE:
-                            g2.setColor(new Color(200, 200, 200));
-                            break;
-                        case ASSEMBLY_STATION:
-                            g2.setColor(new Color(139, 69, 19));
-                            break;
-                        case COOKING_STATION:
-                            g2.setColor(Color.RED);
-                            break;
-                        case SPAWN_CHEF:
-                            g2.setColor(Color.GREEN);
-                            break;
-                        case CUTTING_STATION:
-                            g2.setColor(Color.ORANGE);
-                            break;
-                        case PLATE_STORAGE:
-                            g2.setColor(Color.CYAN);
-                            break;
-                        case INGREDIENT_STORAGE:
-                            g2.setColor(Color.YELLOW);
-                            break;
-                        case SERVING_COUNTER:
-                            g2.setColor(Color.MAGENTA);
-                            break;
-                        case WASHING_STATION:
-                            g2.setColor(Color.BLUE);
-                            break;
-                        case TRASH:
-                            g2.setColor(new Color(128, 0, 0));
-                            break;
-                        default:
-                            g2.setColor(Color.WHITE);
-                    }
-
-                    g2.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-
-                    g2.setColor(Color.BLACK);
-                    g2.drawRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+                    
+                    tileRenderer.drawTile(
+                        g2,
+                        tileType,
+                        x, y,
+                        screenX, screenY,
+                        TILE_SIZE
+                    );
 
                     //  TULIS jumlah plate di atas tile P 
                     if (pizzaMap.getTileAt(x, y).getType() == TileType.PLATE_STORAGE) {
