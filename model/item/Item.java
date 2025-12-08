@@ -9,7 +9,7 @@ public abstract class Item { // abstract berarti dia ga bisa dibikin langsung me
     private ItemLocation location; // lokasi benda benda ditaro
     private boolean isEdible; 
     private boolean isClean; 
-    
+    //dibuat private agar lebih aman dan bisa di manage serta cegah bug
     public Item(String name, ItemType type, ItemLocation location) {
         this.name = name;
         this.type = type;
@@ -18,7 +18,7 @@ public abstract class Item { // abstract berarti dia ga bisa dibikin langsung me
         this.isClean = true;
     }
     
-    // Getters
+    // Getters: mengambil info(gak ngelakuin aksi cuman kasi tau)
     public String getName() { 
         return name; 
     }
