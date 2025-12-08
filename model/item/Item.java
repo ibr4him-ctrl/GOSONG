@@ -3,12 +3,12 @@ package model.item;
 import model.enums.ItemLocation; 
 import model.enums.ItemType; 
 
-public abstract class Item {
-    private String name;
-    private ItemType type;
-    private ItemLocation location;
-    private boolean isEdible;
-    private boolean isClean;
+public abstract class Item { // abstract berarti dia ga bisa dibikin langsung mesti ada turunannya 
+    private String name; //nama benda
+    private ItemType type; //jenis: ingredient, plate, dsb
+    private ItemLocation location; // lokasi benda benda ditaro
+    private boolean isEdible; 
+    private boolean isClean; 
     
     public Item(String name, ItemType type, ItemLocation location) {
         this.name = name;
