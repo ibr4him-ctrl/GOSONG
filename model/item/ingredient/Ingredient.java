@@ -36,7 +36,7 @@ public class Ingredient extends Item implements Preparable {
     @Override
     public boolean canBePlacedOnPlate(){
         //ini aku masih bingung apa aja yang bisa ditaruh di plate mungkin ini. sesuain ama game -tyara
-        return state == IngredientState.CHOPPED || state == IngredientState.COOKED; 
+        return state == IngredientState.RAW || state == IngredientState.CHOPPED || state == IngredientState.COOKED; 
     }
 
     @Override

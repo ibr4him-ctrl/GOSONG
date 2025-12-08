@@ -1,6 +1,7 @@
 package model.station;
 
 import model.chef.Chef;
+import model.enums.IngredientState;
 import model.item.Item;
 import model.item.Preparable;
 import model.item.ingredient.Ingredient;
@@ -94,14 +95,33 @@ public class AssemblyStation extends Station {
             return false;
         }
 
-        // ====== ATURAN PIZZA KHUSUS DOUGH ======
-        boolean isDough = ingredient instanceof Dough;
+        // ====== INFO INGREDIENT & ISI PLATE ======
+        Ingredient ingObj = (ingredient instanceof Ingredient) ? (Ingredient) ingredient : null;
+        boolean isDough   = ingredient instanceof Dough;
+        boolean isRaw     = (ingObj != null && ingObj.getState() == IngredientState.RAW);
 
-        // Ambil isi plate sekarang
-        var contents = plate.getContents();
-        boolean plateEmpty   = contents.isEmpty();
+        var contents       = plate.getContents();
+        boolean plateEmpty = contents.isEmpty();
         boolean plateHasDough = contents.stream().anyMatch(p -> p instanceof Dough);
+        boolean plateHasRaw   = contents.stream().anyMatch(p ->
+                p instanceof Ingredient i2 && i2.getState() == IngredientState.RAW);
 
+
+            // ====== RULE RAW: raw boleh masuk plate, tapi TIDAK bisa digabung ======
+
+        // Kalau mau menambah RAW ke plate yang sudah ada isinya → tolak
+        if (isRaw && !plateEmpty) {
+            System.out.println("Ingredient RAW hanya boleh di-plate pada plate kosong, tidak bisa digabung.");
+            return false;
+        }
+
+        // Kalau plate sudah berisi ingredient RAW → tolak penambahan apapun
+        if (plateHasRaw && !plateEmpty) {
+            System.out.println("Plate ini sudah berisi ingredient RAW, tidak bisa menambahkan ingredient lain lagi.");
+            return false;
+        }
+
+        // ====== ATURAN PIZZA (dough base) ======
         // CASE 1: plate kosong -> apapun boleh (dough / topping)
         if (plateEmpty) {
             // tidak ada aturan ekstra
@@ -135,6 +155,7 @@ public class AssemblyStation extends Station {
         }
 
         String ingName = (ingredient instanceof Item i) ? i.getName() : "Ingredient";
+        
         System.out.println("Plating: " + ingName + " → Plate");
         // log isi plate biar kamu kelihatan
         System.out.print("   Plate sekarang berisi: ");
