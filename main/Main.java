@@ -49,7 +49,7 @@ public class Main {
 
         gamePanel.startGameThread();
 
-        musicPlayer.playLoop("/resources/game/music/GameMusic.mp3");
+        musicPlayer.playLoop("/resources/game/music/GameMusic.wav");
     }
 
     // ====== Helper untuk masa depan ScoreManager ======
