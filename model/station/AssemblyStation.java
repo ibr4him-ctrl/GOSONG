@@ -56,6 +56,13 @@ public class AssemblyStation extends Station {
 
         // Tangan pegang item, meja kosong → taruh
         if (hand != null && top == null) {
+            if (hand instanceof Ingredient /* || hand instanceof Dish */) {
+            System.out.println(
+                "[Assembly] Ingredient (atau makanan) harus di atas plate, " +
+                "tidak bisa ditaruh langsung di assembly."
+                );
+            return false;
+            }
             itemOnStation = hand;
             chef.setHeldItem(null);
             System.out.println("Chef " + chef.getName() + " meletakkan " +
