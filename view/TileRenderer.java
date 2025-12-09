@@ -68,7 +68,7 @@ public class TileRenderer {
 
         // station
         assemblyStationImg = loadImage("resources/station/assembling_station/assemblystation2.png");
-        cuttingStationImg  = loadImage("resources/station/cutting_station.png");
+        cuttingStationImg  = loadImage("resources/station/cutting_station/cutting_station.png");
 
         // wall
         wallBottom      = loadImage("resources/wall/bottom-wall.png");
