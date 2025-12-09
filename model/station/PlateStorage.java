@@ -46,21 +46,40 @@ public class PlateStorage extends Station {
     public synchronized boolean interact(Chef chef) {
         if (!isAdjacentTo(chef)) return false;
 
-        // gak boleh drop apa pun di sini
-        if (chef.getHeldItem() != null) return false;
+        Item hand = chef.getHeldItem();
 
-        if (platestack.isEmpty()) return false;
+        // ============================
+        // 1. Chef lagi megang sesuatu
+        // ============================
+        if (hand != null) {
+            // cuma boleh naro plate
+            if (hand.getItemType() != ItemType.PLATE) {
+                return false;
+            }
 
-        if (!platestack.peek().isClean()) {
-            // ada piring kotor di atas → ambil 1 piring kotor
-            Item dirty = platestack.pop();
-            chef.setHeldItem(dirty);
+            // plate kotor nggak boleh dimasukin manual ke PlateStorage
+            if (!hand.isClean()) {
+                System.out.println("[PlateStorage] Plate kotor gak boleh langsung disimpan di PlateStorage.");
+                return false;
+            }
+
+            // plate bersih → taruh di atas stack
+            platestack.push(hand);
+            chef.setHeldItem(null);
+            System.out.println("[PlateStorage] Plate bersih dikembalikan ke PlateStorage (top of stack).");
             return true;
         }
 
-        // top clean → ambil 1 piring bersih
-        Item clean = platestack.pop();
-        chef.setHeldItem(clean);
+        // ============================
+        // 2. Tangan kosong → ambil plate
+        // ============================
+        if (platestack.isEmpty()) return false;
+
+        // ambil plate paling atas (bisa clean / dirty, tergantung kondisi stack)
+        Item top = platestack.pop();
+        chef.setHeldItem(top);
+        System.out.println("[PlateStorage] Chef mengambil plate dari PlateStorage ("
+                + (top.isClean() ? "clean" : "dirty") + ").");
         return true;
     }
 
