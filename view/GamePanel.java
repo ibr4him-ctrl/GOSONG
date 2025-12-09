@@ -731,9 +731,21 @@ private void handleActions() {
                     }
 
                     // === PROGRESS BAR UNTUK WASHING STATION ===
+                                        // === WASHING STATION (sprite + progress bar) ===
                     if (tileType == TileType.WASHING_STATION) {
                         Station st = stationMap.get(stationKey(x, y));
                         if (st instanceof WashingStation ws) {
+
+                            // 1) gambar sprite washing station (empty / washing) + light/dark
+                            tileRenderer.drawWashing(
+                                g2,
+                                x, y,
+                                screenX, screenY,
+                                TILE_SIZE,
+                                ws.isWashing()
+                            );
+
+                            // 2) progress bar di atas sink (opsional, sama kayak sebelumnya)
                             double ratio = ws.getProgressRatio(); // 0..1
                             if (ratio > 0) {
                                 int barWidth  = TILE_SIZE - 4;
@@ -741,13 +753,11 @@ private void handleActions() {
                                 int bx = screenX + 2;
                                 int by = screenY + TILE_SIZE - barHeight - 2;
 
-                                // border
                                 g2.setColor(Color.DARK_GRAY);
                                 g2.drawRect(bx, by, barWidth, barHeight);
 
-                                // fill
                                 int fillWidth = (int) (barWidth * ratio);
-                                g2.setColor(Color.CYAN);      // warna bebas
+                                g2.setColor(Color.CYAN);
                                 g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
                             }
                         }

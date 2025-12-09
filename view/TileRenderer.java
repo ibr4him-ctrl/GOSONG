@@ -50,6 +50,12 @@ public class TileRenderer {
     private BufferedImage trashEmpty;
     private BufferedImage trashFull;
 
+    // ===== WASHING STATION SPRITES =====
+    private BufferedImage washEmptyLight;
+    private BufferedImage washEmptyDark;
+    private BufferedImage washBusyLight;
+    private BufferedImage washBusyDark;
+
 
     public TileRenderer() {
         loadTiles();
@@ -92,6 +98,12 @@ public class TileRenderer {
         // ===== TRASH SPRITES =====
         trashEmpty = loadImage("resources/station/trash_station/trash-empty.png");
         trashFull  = loadImage("resources/station/trash_station/trash-full.png");
+
+        // ===== WASHING STATION SPRITES =====
+        washEmptyDark = loadImage("resources/station/washing_station/empty-dark.png");
+        washEmptyLight = loadImage("resources/station/washing_station/empty-light.png");
+        washBusyDark = loadImage("resources/station/washing_station/wash-dark.png");
+        washBusyLight = loadImage("resources/station/washing_station/wash-light.png");
     }
 
     private BufferedImage loadImage(String path) {
@@ -227,6 +239,32 @@ public class TileRenderer {
             g2.fillRect(screenX, screenY, tileSize, tileSize);
         }
     }
+
+    public void drawWashing(Graphics2D g2,
+                            int xIndex, int yIndex,
+                            int screenX, int screenY,
+                            int tileSize,
+                            boolean isWashing) {
+
+        // pola lantai sama kayak WALKABLE
+        boolean isLight = ((xIndex + yIndex) % 2 == 0);
+
+        BufferedImage tex;
+        if (isWashing) {
+            tex = isLight ? washBusyLight : washBusyDark;
+        } else {
+            tex = isLight ? washEmptyLight : washEmptyDark;
+        }
+
+        if (tex != null) {
+            g2.drawImage(tex, screenX, screenY, tileSize, tileSize, null);
+        } else {
+            // fallback kalau sprite gagal ke-load
+            g2.setColor(Color.BLUE);
+            g2.fillRect(screenX, screenY, tileSize, tileSize);
+        }
+    }
+
 
     /**
      * Gambar 1 tile di (screenX, screenY) dengan ukuran tileSize.
