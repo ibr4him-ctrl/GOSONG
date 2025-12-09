@@ -591,6 +591,18 @@ private void handleActions() {
                 continue;
             }
 
+            // === INGREDIENT DI ATAS STATION (termasuk CuttingStation) → pakai sprite ===
+            if (item instanceof Ingredient ing) {
+                BufferedImage sprite = assemblyRenderer.getSpriteForIngredient(ing);
+                if (sprite != null) {
+                    int size  = (int) (TILE_SIZE * 0.8);
+                    int drawX = px + TILE_SIZE / 2 - size / 2;
+                    int drawY = py + TILE_SIZE / 2 - size / 2;
+                    g2.drawImage(sprite, drawX, drawY, size, size, null);
+                    continue; // sudah digambar, lanjut station berikutnya
+                }
+            }
+
             // === DEFAULT: kotak kecil seperti sebelumnya ===
             int size   = TILE_SIZE - 8;
             int offset = 4;
