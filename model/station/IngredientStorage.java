@@ -73,8 +73,17 @@ public class IngredientStorage extends Station {
             }
 
             if (!isValidIngredient(hand)) {
-                System.out.println("Item ini bukan " + ingredientName +
-                                ", tidak bisa disimpan di " + ingredientName + " storage.");
+                if (hand instanceof Ingredient ing &&
+                    ingredientType != null &&
+                    ingredientType.isInstance(ing) &&
+                    ing.getState() != IngredientState.RAW) {
+
+                    System.out.println("Tidak bisa menyimpan " + ingredientName +
+                            " yang sudah " + ing.getState() + " ke storage (hanya RAW).");
+                } else {
+                    System.out.println("Item ini bukan " + ingredientName +
+                            ", tidak bisa disimpan di " + ingredientName + " storage.");
+                }
                 return false;
             }
             
@@ -91,7 +100,7 @@ public class IngredientStorage extends Station {
 
     private Ingredient createNewIngredient() {
         if (ingredientType == null) {
-            System.out.println("⚠ IngredientStorage di (" + posX + "," + posY +
+            System.out.println("IngredientStorage di (" + posX + "," + posY +
                                ") belum di-set ingredientType-nya, tidak bisa spawn ingredient.");
             return null;
         }
@@ -136,11 +145,17 @@ public class IngredientStorage extends Station {
     }
 
     public boolean isValidIngredient(Item item) {
-        return item != null &&
-            item instanceof Ingredient &&
-            ingredientType != null &&
-            ingredientType.isInstance(item);
+        if (!(item instanceof Ingredient ing)) {
+            return false;
+        }
+        if (ingredientType == null || !ingredientType.isInstance(ing)) {
+            // beda jenis (Tomato masuk ke Cheese storage, dsb)
+            return false;
+        }
+        // hanya boleh yang masih RAW
+        return ing.getState() == IngredientState.RAW;
     }
+
 
     public String getTooltip() {
         StringBuilder sb = new StringBuilder();
