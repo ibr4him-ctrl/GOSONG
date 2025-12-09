@@ -41,61 +41,37 @@ public class IngredientStorage extends Station {
 
         Item hand = chef.getHeldItem();
 
+        // ==============================
+        // STORAGE HANYA BISA NGAMBIL
+        // ==============================
+        // Kalau tangan chef TIDAK kosong → TOLAK.
+        if (hand != null) {
+            System.out.println("Storage " + ingredientName +
+                    " hanya untuk MENGAMBIL ingredient, tidak bisa menaruh kembali.");
+            return false;
+        }
+
         // 1) Tangan kosong, tapi ada item di atas storage → ambil itemOnStation
-        if (hand == null && itemOnStation != null) {
+        if (itemOnStation != null) {
             chef.setHeldItem(itemOnStation);
+            System.out.println("Chef mengambil " + itemOnStation.getName() +
+                    " dari atas " + ingredientName + " storage.");
             itemOnStation = null;
             return true;
         }
 
         // 2) Tangan kosong, storage kosong → spawn ingredient baru (infinite stock)
-        if (hand == null && itemOnStation == null) {
-            Ingredient newIngredient = createNewIngredient();
+        Ingredient newIngredient = createNewIngredient();
 
-            if (newIngredient != null) {
-                chef.setHeldItem(newIngredient);
-                System.out.println("Chef mengambil " + newIngredient.getName() +
-                                   " (RAW) dari " + ingredientName + " storage.");
-                return true;
-            } else {
-                // createNewIngredient() gagal
-                return false;
-            }
-        }
-
-        // 3) Tangan pegang sesuatu
-        if (hand != null) {
-
-            // Kalau ada item di atas storage → gak bisa taruh lagi
-            if (itemOnStation != null) {
-                System.out.println("Sudah ada item di atas storage, tidak bisa menaruh lagi!");
-                return false;
-            }
-
-            if (!isValidIngredient(hand)) {
-                if (hand instanceof Ingredient ing &&
-                    ingredientType != null &&
-                    ingredientType.isInstance(ing) &&
-                    ing.getState() != IngredientState.RAW) {
-
-                    System.out.println("Tidak bisa menyimpan " + ingredientName +
-                            " yang sudah " + ing.getState() + " ke storage (hanya RAW).");
-                } else {
-                    System.out.println("Item ini bukan " + ingredientName +
-                            ", tidak bisa disimpan di " + ingredientName + " storage.");
-                }
-                return false;
-            }
-            
-
-            itemOnStation = hand;
-            chef.setHeldItem(null);
-            System.out.println("Chef meletakkan " + itemOnStation.getName() +
-                               " di atas " + ingredientName + " storage.");
+        if (newIngredient != null) {
+            chef.setHeldItem(newIngredient);
+            System.out.println("Chef mengambil " + newIngredient.getName() +
+                    " (RAW) dari " + ingredientName + " storage.");
             return true;
+        } else {
+            // createNewIngredient() gagal
+            return false;
         }
-
-        return false;
     }
 
     private Ingredient createNewIngredient() {
