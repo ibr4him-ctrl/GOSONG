@@ -430,11 +430,6 @@ public class TileRenderer {
                 g2.drawImage(plateStorageImg, screenX, screenY, tileSize, tileSize, null);
                 return;
             }
-
-        // fallback ke warna kotak
-        switch (type) {
-            case INGREDIENT_STORAGE -> g2.setColor(Color.YELLOW);
-        }
         g2.fillRect(screenX, screenY, tileSize, tileSize);
     }
 }
