@@ -7,6 +7,7 @@ import model.item.Preparable;
 import model.item.ingredient.Ingredient;
 import model.item.ingredient.pizza.Dough;
 import model.item.utensils.Plate;
+import model.logic.PlatingRules;
 
 public class AssemblyStation extends Station {
 
@@ -30,197 +31,144 @@ public class AssemblyStation extends Station {
         Item hand = chef.getHeldItem();
         Item top  = itemOnStation;
 
-        // 1) PRIORITAS: PLATING
-        
-        // Plate di tangan, ingredient di meja
-        if (hand instanceof Plate plate && top instanceof Ingredient ing) {
-            return performPlating(chef, plate, ing, true);
+        // =====================================================
+        // 1) PRIORITAS: PLATE + PREPARABLE (sesuai spek)
+        // =====================================================
+
+        // Plate di tangan, objek Preparable (Ingredient / Dough / Dish) di meja
+        if (hand instanceof Plate plateInHand && top instanceof Preparable prepOnTable) {
+            return doPlating(chef, plateInHand, prepOnTable, true);
         }
 
-        // Ingredient di tangan, plate di meja
-        if (hand instanceof Ingredient ing && top instanceof Plate plate) {
-            return performPlating(chef, plate, ing, false);
+        // Plate di meja, objek Preparable di tangan
+        if (top instanceof Plate plateOnTable && hand instanceof Preparable prepInHand) {
+            return doPlating(chef, plateOnTable, prepInHand, false);
         }
 
+        // =====================================================
+        // 2) KELUAR JALUR: Dough di meja + Ingredient di tangan
+        //    (assembling tanpa plate)
+        // =====================================================
 
-        // 2) AMBIL / TARUH BIASA
+        if (top instanceof Dough doughOnTable && hand instanceof Ingredient ingInHand) {
+            return combineDoughAndTopping(chef, doughOnTable, ingInHand);
+        }
+
+        // =====================================================
+        // 3) INTERAKSI BIASA: ambil / taruh 1 item di meja
+        // =====================================================
 
         // Tangan kosong, meja ada item → ambil
+
         if (hand == null && top != null) {
+            
+            if (top instanceof Dough dough) {
+                // anggap Dough punya getToppings() yang return Collection/Set<String> atau sejenisnya
+                boolean hasTopping = dough.getToppings() != null && !dough.getToppings().isEmpty();
+                boolean isChopped  = dough.getState() == IngredientState.CHOPPED;
+
+                if (isChopped && hasTopping) {
+                    System.out.println("[Assembly] Pizza (dough + topping) tidak boleh diambil tangan kosong. " +
+                                    "Gunakan plate bersih untuk mengambilnya.");
+                    return false;
+                }
+            }
+
+            // selain case di atas → boleh diambil seperti biasa
             chef.setHeldItem(top);
             itemOnStation = null;
-            System.out.println("Chef " + chef.getName() + " mengambil " +
-                               chef.getHeldItem().getName() + " dari assembly.");
+            System.out.println("Chef " + chef.getName() + " mengambil "
+                    + chef.getHeldItem().getName() + " dari assembly.");
             return true;
         }
 
         // Tangan pegang item, meja kosong → taruh
         if (hand != null && top == null) {
-            if (hand instanceof Ingredient /* || hand instanceof Dish */) {
-            System.out.println(
-                "[Assembly] Ingredient (atau makanan) harus di atas plate, " +
-                "tidak bisa ditaruh langsung di Station!"
-                );
-            return false;
+
+            // plate kotor TIDAK boleh ditaruh di assembly
+            if (hand instanceof Plate p && !p.isClean()) {
+                System.out.println("[Assembly] Plate kotor tidak boleh ditaruh di assembly.");
+                return false;
             }
+
+            // selain itu (dough, ingredient, dish, plate bersih, dll) → boleh
             itemOnStation = hand;
             chef.setHeldItem(null);
-            System.out.println("Chef " + chef.getName() + " meletakkan " +
-                               itemOnStation.getName() + " di assembly.");
+            System.out.println("Chef " + chef.getName() + " meletakkan "
+                    + itemOnStation.getName() + " di assembly.");
             return true;
         }
 
-        // 3) CASE LAIN: GAGAL
-        
+        // =====================================================
+        // 4) CASE LAIN: GAGAL (tangan isi & meja isi,
+        //    bukan kombinasi yang didukung)
+        // =====================================================
 
         if (hand != null && top != null) {
-            System.out.println("Udah ada item di atas assembly, " +
-                               "gabisa naro lagi kecuali kombinasi Plate + Ingredient.");
+            System.out.println("[Assembly] Udah ada item di assembly, "
+                    + "gabisa naro lagi kecuali kombinasi:"
+                    + " Plate + Ingredient/Dough/Dish atau Dough + Ingredient (tanpa plate).");
         }
+
         return false;
     }
 
-    private boolean performPlating(Chef chef,
-                                   Plate plate,
-                                   Preparable ingredient,
-                                   boolean plateInHand) {
+    // =======================
+    // HELPER: PLATING NORMAL
+    // =======================
+    private boolean doPlating(Chef chef,
+                              Plate plate,
+                              Preparable prep,
+                              boolean plateInHand) {
 
-        // Plate harus bersih
-        if (!plate.isClean()) {
-            System.out.println("Plate kotor tidak bisa digunakan untuk plating! Cuci dulu di Washing Station.");
-            return false;
-        }
+        boolean ok = PlatingRules.applyPlating(plate, prep, "[Assembly]");
+        if (!ok) return false;
 
-        // Ingredient harus boleh di-plate
-        if (!plate.canAccept(ingredient)) {
-            System.out.println("Ingredient tidak bisa ditambahkan ke plate!");
-            if (ingredient == null) {
-                System.out.println("Loh gada ingredientnya.");
-            } else if (!ingredient.canBePlacedOnPlate()) {
-                System.out.println("Ingredient harus dipotong / dimasak dulu.");
-            }
-            return false;
-        }
-
-        // ====== INFO INGREDIENT & ISI PLATE ======
-        Ingredient ingObj = (ingredient instanceof Ingredient) ? (Ingredient) ingredient : null;
-        boolean isDough   = ingredient instanceof Dough;
-        boolean isRaw     = (ingObj != null && ingObj.getState() == IngredientState.RAW);
-
-        var contents       = plate.getContents();
-        boolean plateEmpty = contents.isEmpty();
-        boolean plateHasDough = contents.stream().anyMatch(p -> p instanceof Dough);
-        boolean plateHasRaw   = contents.stream().anyMatch(p ->
-                p instanceof Ingredient i2 && i2.getState() == IngredientState.RAW);
-
-
-            // ====== RULE RAW: raw boleh masuk plate, tapi TIDAK bisa digabung ======
-
-        // Kalau mau menambah RAW ke plate yang sudah ada isinya → tolak
-        if (isRaw && !plateEmpty) {
-            System.out.println("Ingredient RAW hanya boleh di-plate pada plate kosong, tidak bisa digabung.");
-            return false;
-        }
-
-        // Kalau plate sudah berisi ingredient RAW → tolak penambahan apapun
-        if (plateHasRaw && !plateEmpty) {
-            System.out.println("Plate ini sudah berisi ingredient RAW, tidak bisa menambahkan ingredient lain lagi.");
-            return false;
-        }
-
-        // ====== ATURAN PIZZA (dough base) ======
-        // CASE 1: plate kosong -> apapun boleh (dough / topping)
-        if (plateEmpty) {
-            // tidak ada aturan ekstra
-        } else {
-            // plate TIDAK kosong
-            if (!plateHasDough) {
-                // artinya ingredient pertama BUKAN dough → single topping only
-                System.out.println(
-                    "Plate ini sudah berisi ingredient tanpa dough, " +
-                    "tidak bisa menambahkan ingredient lain lagi."
-                );
-                return false;
-            } else {
-                // plate sudah punya dough
-                if (isDough) {
-                    System.out.println("Plate sudah punya Dough, tidak bisa menambah Dough lagi.");
-                    return false;
-                }
-                // kalau topping lain (Tomato/Cheese/Chicken/Sausage) → boleh
-            }
-        }
-        // ====== END ATURAN PIZZA ======
-
-
-        // Tambahkan ke plate
-        boolean success = plate.addIngredient(ingredient);
-    
-        if (!success) {
-            System.out.println("Ingredient mungkin sudah ada di plate (set menolak duplikat).");
-            return false;
-        }
-
-        String ingName = (ingredient instanceof Item i) ? i.getName() : "Ingredient";
-        
-        System.out.println("Plating: " + ingName + " → Plate");
-        // log isi plate biar kamu kelihatan
-        System.out.print("   Plate sekarang berisi: ");
-        if (plate.getContents().isEmpty()) {
-            System.out.println("(kosong?)");
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (Preparable p : plate.getContents()) {
-                if (p instanceof Item it) {
-                    sb.append(it.getName());
-                } else {
-                    sb.append(p.getClass().getSimpleName());
-                }
-                sb.append(", ");
-            }
-            // buang koma terakhir
-            if (sb.length() >= 2) sb.setLength(sb.length() - 2);
-            System.out.println(sb.toString());
-        }
-        
         if (plateInHand) {
-            // Plate di tangan, ingredient dari meja
-            itemOnStation = null;      // hapus ingredient dari meja
-            chef.setHeldItem(plate);   // plate tetap di tangan
+            // Plate di tangan, prep di meja → prep dihapus dari meja
+            itemOnStation = null;
+            chef.setHeldItem(plate);
         } else {
-            // Plate di meja, ingredient dari tangan
-            chef.setHeldItem(null);    // tangan kosong
-            itemOnStation = plate;     // plate tetap di meja
+            // Plate di meja, prep di tangan → tangan dikosongkan
+            chef.setHeldItem(null);
+            itemOnStation = plate;
         }
-
-        System.out.println("   Plate sekarang berisi: " + plate.getContents().size() + " ingredient(s)");
-        StringBuilder sb = new StringBuilder("   Isi plate: [");
-        boolean first = true;
-        for (Preparable prep : plate.getContents()) {
-            String name;
-            if (prep instanceof Item it) {
-                name = it.getName();
-            } else {
-                name = prep.getClass().getSimpleName();
-            }
-
-            if (!first) sb.append(", ");
-            sb.append(name);
-
-            if (prep instanceof Ingredient ing2) {
-                sb.append(" (").append(ing2.getState()).append(")");
-            }
-            first = false;
-        }
-        sb.append("]");
-        System.out.println(sb.toString());
-        
 
         return true;
-
-
     }
 
+    // =======================
+    // HELPER: DOUGH + TOPPING
+    // =======================
+    private boolean combineDoughAndTopping(Chef chef,
+                                           Dough doughOnTable,
+                                           Ingredient toppingInHand) {
+
+        if (!doughOnTable.isChopped()) {
+            System.out.println("[Assembly] Dough harus CHOPPED sebelum bisa ditambah topping.");
+            return false;
+        }
+        if (!toppingInHand.isChopped()) {
+            System.out.println("[Assembly] Topping harus CHOPPED sebelum bisa digabung ke dough.");
+            return false;
+        }
+
+        boolean ok = doughOnTable.addTopping(toppingInHand);
+        if (!ok) {
+            // Pesan detail sudah dikeluarkan oleh Dough.addTopping()
+            return false;
+        }
+
+        // topping pindah dari tangan → “nempel” di dough
+        chef.setHeldItem(null);
+        System.out.println("[Assembly] " + toppingInHand.getName()
+                + " ditambahkan ke Dough di assembly (tanpa plate).");
+        return true;
+    }
+
+    // =======================
+    // UTIL LAIN
+    // =======================
     public Item takeItem() {
         Item temp = itemOnStation;
         itemOnStation = null;
@@ -228,7 +176,13 @@ public class AssemblyStation extends Station {
     }
 
     public boolean placeItem(Item item) {
-        if (itemOnStation != null) return false;
+        if (itemOnStation != null || item == null) return false;
+
+        if (item instanceof Plate p && !p.isClean()) {
+            System.out.println("[Assembly] Plate kotor tidak boleh ditaruh di assembly (placeItem).");
+            return false;
+        }
+
         itemOnStation = item;
         return true;
     }
@@ -241,7 +195,7 @@ public class AssemblyStation extends Station {
     @Override
     public String toString() {
         return String.format("AssemblyStation{pos=(%d,%d), item=%s}",
-            posX, posY,
-            itemOnStation != null ? itemOnStation.getName() : "empty");
+                posX, posY,
+                itemOnStation != null ? itemOnStation.getName() : "empty");
     }
 }

@@ -32,42 +32,31 @@ public class WashingStation extends Station {
     public boolean interact(Chef chef) {
         Item hand = chef.getHeldItem();
 
-        //Chef bawa PLATE kotor --> taruh di sink (stack dirty)
-        if (hand instanceof Plate plate && !plate.isClean()) {
-            dirtyPlates.addLast(plate);
-            chef.setHeldItem(null);
-            System.out.println("[Washing] Menaruh plate kotor. Total kotor = " + dirtyPlates.size());
-            // NOTE: hanya store, belum mulai cuci (cuci pakai V)
-            return true;
-        }        
+        // 1) Kalau tangan TIDAK kosong → V TIDAK dipakai buat naruh plate.
+        if (hand != null) {
+            System.out.println("[Washing] (V) Gunakan tombol C untuk menaruh/mengambil plate. " +
+                            "V hanya untuk MEMULAI / MELANJUTKAN cuci.");
+            return false;
+        }
 
-        //Chef tangan kosong dan masih aada plate kotor -> mulai / lanjut cuci (V)
-
-        if (hand == null && !dirtyPlates.isEmpty()) {
-            //Kalau belum washing, set chef busy n mulai
+        // 2) Tangan kosong dan masih ada plate kotor → mulai / lanjut cuci
+        if (!dirtyPlates.isEmpty()) {
             if (!washing) {
                 washing = true;
                 currentChef = chef;
                 currentChef.setBusy(true);
-                System.out.println("[Washing] Mulai / lanjut mencuci. Progress saat ini = "
+                System.out.println("[Washing] (V) Mulai / lanjut mencuci. Progress saat ini = "
                         + washProgressSeconds + " detik");
             }
             return true;
         }
 
-        // 3) Chef tangan kosong, tidak ada plate kotor, tapi ada plate bersih di rak → ambil
-        if (hand == null && dirtyPlates.isEmpty() && !cleanPlates.isEmpty()) {
-            Plate clean = cleanPlates.pollFirst();
-            chef.setHeldItem(clean);
-            System.out.println("[Washing] Mengambil plate bersih dari rak. Sisa bersih = "
-                    + cleanPlates.size());
-            return true;
-        }
-        System.out.println("[Washing] Interaksi gagal (bukan plate kotor / tidak ada plate bersih).");
-
-        //Inputnya bukan pte, plate berih mau dimasukkan, tidak ada yang bisa dicuci / diambil
+        // 3) Tidak ada plate kotor → tidak ada yang bisa dicuci
+        System.out.println("[Washing] (V) Tidak ada plate kotor di sink. " +
+                        "Taruh plate kotor dulu dengan tombol C.");
         return false;
     }
+
 
     public void update(double deltaSeconds) {
         if (!washing || dirtyPlates.isEmpty()) return;
@@ -140,4 +129,30 @@ public class WashingStation extends Station {
     public double getWashProgressSeconds() {
         return washProgressSeconds;
     }
+
+    public boolean handlePickUpDrop(Chef chef) {
+        Item hand = chef.getHeldItem();
+
+        // 1) Chef bawa plate kotor → store ke dirtyPlates
+        if (hand instanceof Plate plate && !plate.isClean()) {
+            dirtyPlates.addLast(plate);
+            chef.setHeldItem(null);
+            System.out.println("[Washing] (C) Menaruh plate kotor ke sink. Total kotor = " + dirtyPlates.size());
+            return true;
+        }
+
+        // 2) Chef tangan kosong, ada plate bersih di rak → ambil
+        if (hand == null && !cleanPlates.isEmpty()) {
+            Plate clean = cleanPlates.pollFirst();
+            chef.setHeldItem(clean);
+            System.out.println("[Washing] (C) Mengambil plate bersih dari rak. Sisa bersih = " + cleanPlates.size());
+            return true;
+        }
+
+        // 3) Kasus lain → tidak valid
+        System.out.println("[Washing] (C) Tidak ada aksi valid. " +
+                "Butuh plate kotor di tangan atau plate bersih di rak.");
+        return false;
+    }
+
 }

@@ -3,10 +3,13 @@ package controller;
 import model.chef.Chef;
 import model.item.Item;
 import model.item.utensils.Plate;
+import model.station.AssemblyStation;
+import model.station.CuttingStation;
 import model.station.IngredientStorage;
 import model.station.PlateStorage;
 import model.station.Station;
 import model.station.WashingStation;
+
 
 public class PickUpDrop implements Action {
 
@@ -18,6 +21,15 @@ public class PickUpDrop implements Action {
         if (station == null) {
             System.out.println("[PickUpDrop] Tidak ada station di depan (belum bisa drop di lantai).");
             return false;
+        }
+
+        if (station instanceof WashingStation ws) {
+        // Semua drop/ambil plate di sink lewat method khusus ini
+            return ws.handlePickUpDrop(chef);
+        }
+
+        if (station instanceof CuttingStation cs) {
+            return cs.handlePickUpDrop(chef);   // baru
         }
 
         Item top = station.getItemOnStation();
@@ -47,6 +59,12 @@ public class PickUpDrop implements Action {
 
         // 3. Tangan pegang item + station kosong → LETAKKAN
         if (hand != null && top == null) {
+
+            // === AssemblyStation punya aturan sendiri, jangan bypass ===
+            if (station instanceof AssemblyStation) {
+                System.out.println("[PickUpDrop] Delegasi ke AssemblyStation.interact untuk penempatan item.");
+                return station.interact(chef);
+            }
 
             // Contoh: jangan boleh taruh sembarang item di PlateStorage
             if (station instanceof PlateStorage) {

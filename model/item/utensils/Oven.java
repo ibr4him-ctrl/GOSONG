@@ -70,7 +70,12 @@ public class Oven extends Item implements CookingDevice{
         if (contents.size() >= maxCapacity) return false; 
 
         Ingredient ing = (Ingredient) ingredient; 
-        IngredientState state = ing.getState(); 
+        IngredientState state = ing.getState();
+        
+        if (state == IngredientState.RAW) {
+            System.out.println("[Oven] Menolak ingredient RAW: " + ing.getName());
+            return false;
+        } 
 
         return ing.canBeCooked(); 
     }

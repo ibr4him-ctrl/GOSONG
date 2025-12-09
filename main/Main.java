@@ -34,7 +34,6 @@ public class Main {
         scoreLabel = new JLabel("Score: 0");
         scorePanel.add(scoreLabel);
         window.add(scorePanel);
-
         gamePanel = new GamePanel();
         window.add(gamePanel);
 
