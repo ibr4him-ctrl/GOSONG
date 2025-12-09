@@ -49,6 +49,7 @@ public class OrderManager {
         sessionOver = false;
         sessionTimeElapsed = 0.0;
         timeSinceLastSpawn = 0.0;
+        secondAccumulator = 0.0;
         for (int i = 0; i < INITIAL_ORDERS; i++) {
             spawnRandomOrder();
         }
@@ -143,5 +144,13 @@ public class OrderManager {
 
     public void stopAcceptingNewOrders() {
         acceptingNewOrders = false;
+    }
+
+    public double getSessionTimeElapsed() {
+        return sessionTimeElapsed;
+    }
+
+    public static double getSessionLimitSeconds() {
+        return SESSION_LIMIT_SECONDS;
     }
 }

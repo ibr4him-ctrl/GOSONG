@@ -79,9 +79,29 @@ public class Main {
     }
 
 
+    public static void restartGame() {
+        if (window != null) {
+            window.setVisible(false);
+            window.dispose();
+        }
+        musicPlayer.stop();
+        model.manager.OrderManager.getInstance().stopAcceptingNewOrders();
+        model.manager.ScoreManager.getInstance().reset();
+        model.item.dish.Order.resetOrderCounter();
+        model.manager.OrderManager.getInstance().init();
+        
+        SwingUtilities.invokeLater(() -> {
+            startGame();
+        });
+    }
+
     public static void stopGame() {
         model.manager.OrderManager.getInstance().stopAcceptingNewOrders();
         musicPlayer.stop();
         System.exit(0);
+    }
+
+    public static MusicPlayer getMusicPlayer() {
+        return musicPlayer;
     }
 }

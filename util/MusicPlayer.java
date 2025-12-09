@@ -31,4 +31,8 @@ public class MusicPlayer {
             clip = null;
         }
     }
+
+    public Clip getClip() {
+        return clip;
+    }
 }

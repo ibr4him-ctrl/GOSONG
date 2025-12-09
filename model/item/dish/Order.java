@@ -105,4 +105,8 @@ public class Order {
     public int compareByCreationTime(Order other) {
         return Long.compare(this.createdAt, other.createdAt);
     }
+    
+    public static void resetOrderCounter() {
+        orderCounter.set(0);
+    }
 }

@@ -39,6 +39,9 @@ import model.station.TrashStation;
 import model.station.WashingStation;
 import src.GUI.KeyHandler;
 import view.PlayerSprite.Direction;
+import view.SettingsEditor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 
 public class GamePanel extends JPanel implements Runnable {
@@ -88,6 +91,8 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean wasVPressed = false;
 
     private long lastUpdateNs = System.nanoTime();
+    
+    private int settingButtonX, settingButtonY, settingButtonWidth, settingButtonHeight;
 
     public GamePanel() {
 
@@ -132,6 +137,20 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(keyH);
         this.setFocusable(true);
         this.setFocusTraversalKeysEnabled(false);
+        
+        this.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int mx = e.getX();
+                int my = e.getY();
+                
+                if (mx >= settingButtonX && mx <= settingButtonX + settingButtonWidth &&
+                    my >= settingButtonY && my <= settingButtonY + settingButtonHeight) {
+                    SettingsEditor settings = new SettingsEditor((javax.swing.JFrame) getTopLevelAncestor());
+                    settings.setVisible(true);
+                }
+            }
+        });
 
         // INI ORDER SYSTEM 
         OrderManager.getInstance().init();
@@ -139,8 +158,9 @@ public class GamePanel extends JPanel implements Runnable {
         // RESET SCORE DI AWAL GAME
         model.manager.ScoreManager.getInstance().reset();
         
-        // Load order indicator images
         loadOrderIndicatorImages();
+        
+        SettingsEditor.setMusicPlayer(main.Main.getMusicPlayer());
     }
     
     
@@ -912,7 +932,122 @@ private void handleActions() {
 
             i++;
         }
+
+        drawSettingButton(g2);
+        drawBottomStatusBar(g2);
+        
         g2.dispose();
+    }
+
+    private void drawSettingButton(Graphics2D g2) {
+        int buttonSize = 2 * TILE_SIZE;
+        settingButtonX = SCREEN_WIDTH - buttonSize;
+        settingButtonY = 6 * TILE_SIZE;
+        settingButtonWidth = buttonSize;
+        settingButtonHeight = buttonSize;
+        
+        g2.setColor(new Color(250, 250, 250, 220));
+        g2.fillRoundRect(settingButtonX, settingButtonY, buttonSize, buttonSize, 8, 8);
+        g2.setColor(Color.BLACK);
+        g2.drawRoundRect(settingButtonX, settingButtonY, buttonSize, buttonSize, 8, 8);
+
+        String text = "Setting";
+        g2.setFont(g2.getFont().deriveFont(12f));
+        
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int textX = settingButtonX + (buttonSize - fm.stringWidth(text)) / 2;
+        int textY = settingButtonY + (buttonSize + fm.getAscent() - fm.getDescent()) / 2;
+        
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx != 0 || dy != 0) {
+                    g2.setColor(new Color(0, 0, 0, 150));
+                    g2.drawString(text, textX + dx, textY + dy);
+                }
+            }
+        }
+        
+        g2.setColor(Color.WHITE);
+        g2.drawString(text, textX, textY);
+    }
+
+    private String getChefHeldItemInfo(Chef chef) {
+        Item item = chef.getHeldItem();
+        if (item == null) {
+            return "Empty";
+        }
+        
+        if (item instanceof Plate plate) {
+            int count = plate.getContents().size();
+            return count == 0 ? "Plate" : "Plate(" + count + ")";
+        } else if (item instanceof Ingredient) {
+            return item.getName();
+        } else if (item instanceof Dish) {
+            return "Dish";
+        } else {
+            return item.getName();
+        }
+    }
+
+    private String getRemainingTimeFormatted() {
+        int totalSeconds = (int) (model.manager.OrderManager.getSessionLimitSeconds() - 
+                                   model.manager.OrderManager.getInstance().getSessionTimeElapsed());
+        if (totalSeconds < 0) totalSeconds = 0;
+        
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        
+        return String.format("%d:%02d", minutes, seconds);
+    }
+
+    private void drawBottomStatusBar(Graphics2D g2) {
+        int barHeight = 30;
+        int barY = SCREEN_HEIGHT - barHeight;
+        
+        g2.setColor(new Color(0, 0, 0, 200));
+        g2.fillRect(0, barY, SCREEN_WIDTH, barHeight);
+        
+        g2.setColor(Color.WHITE);
+        g2.setFont(g2.getFont().deriveFont(12f));
+        
+        int spacing = SCREEN_WIDTH / 4;
+        int startX = spacing / 2;
+        
+        String chef1Info = "Chef 1: " + getChefHeldItemInfo(chef1);
+        String chef2Info = "Chef 2: " + getChefHeldItemInfo(chef2);
+        String logo = "LOGO";
+        
+        g2.drawString(chef1Info, startX, barY + 20);
+        g2.drawString(chef2Info, startX + spacing, barY + 20);
+        
+        int countdownBoxWidth = 6 * TILE_SIZE;
+        int countdownBoxHeight = 2 * TILE_SIZE;
+        int countdownBoxX = startX + spacing * 2;
+        int countdownBoxY = SCREEN_HEIGHT - countdownBoxHeight;
+        
+        Color woodBrown = new Color(101, 67, 33);
+        Color burntWood = new Color(139, 69, 19);
+        
+        g2.setColor(burntWood);
+        g2.fillRoundRect(countdownBoxX, countdownBoxY, countdownBoxWidth, countdownBoxHeight, 5, 5);
+        
+        g2.setColor(woodBrown);
+        g2.drawRoundRect(countdownBoxX, countdownBoxY, countdownBoxWidth, countdownBoxHeight, 5, 5);
+        
+        String countdownText = getRemainingTimeFormatted();
+        g2.setFont(g2.getFont().deriveFont(32f));
+        g2.setColor(Color.WHITE);
+        
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int textWidth = fm.stringWidth(countdownText);
+        int textHeight = fm.getHeight();
+        int textX = countdownBoxX + (countdownBoxWidth - textWidth) / 2;
+        int textY = countdownBoxY + (countdownBoxHeight + textHeight) / 2 - fm.getDescent();
+        
+        g2.drawString(countdownText, textX, textY);
+        
+        g2.setFont(g2.getFont().deriveFont(12f));
+        g2.drawString(logo, startX + spacing * 3, barY + 20);
     }
 }
 
