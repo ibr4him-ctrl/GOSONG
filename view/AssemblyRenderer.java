@@ -95,7 +95,7 @@ public class AssemblyRenderer {
             case RAW     -> suffix = "RAW";
             case CHOPPED -> suffix = "CHOPPED";
             case COOKED  -> suffix = "COOKED";
-            case BURNED  -> suffix = "BURNT";   // enum BURNED → file BURNT
+            case BURNED  -> suffix = "BURNED";   
             default      -> suffix = "RAW";
         }
 

@@ -646,6 +646,7 @@ private void handleActions() {
                     
                     tileRenderer.drawTile(
                         g2,
+                        pizzaMap,
                         tileType,
                         x, y,
                         screenX, screenY,
