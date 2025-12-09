@@ -615,6 +615,18 @@ private void handleActions() {
                 continue;
             }
 
+            // === INGREDIENT DI ATAS STATION (termasuk CuttingStation) → pakai sprite ===
+            if (item instanceof Ingredient ing) {
+                BufferedImage sprite = assemblyRenderer.getSpriteForIngredient(ing);
+                if (sprite != null) {
+                    int size  = (int) (TILE_SIZE * 0.8);
+                    int drawX = px + TILE_SIZE / 2 - size / 2;
+                    int drawY = py + TILE_SIZE / 2 - size / 2;
+                    g2.drawImage(sprite, drawX, drawY, size, size, null);
+                    continue; // sudah digambar, lanjut station berikutnya
+                }
+            }
+
             // === DEFAULT: kotak kecil seperti sebelumnya ===
             int size   = TILE_SIZE - 8;
             int offset = 4;
@@ -670,6 +682,7 @@ private void handleActions() {
                     
                     tileRenderer.drawTile(
                         g2,
+                        pizzaMap,
                         tileType,
                         x, y,
                         screenX, screenY,
@@ -713,6 +726,17 @@ private void handleActions() {
                     if (tileType == TileType.COOKING_STATION) {
                         Station st = stationMap.get(stationKey(x, y));
                         if (st instanceof CookingStation cs) {
+
+                            // 1) Gambar oven sesuai state + pola light/dark
+                            tileRenderer.drawOven(
+                                g2,
+                                x, y,
+                                screenX, screenY,
+                                TILE_SIZE,
+                                cs.getOven()
+                            );
+
+                            // 2) (opsional) progress bar di atas oven
                             double ratio = cs.getOven().getProgressRatio(); // 0..1 (12 detik)
                             if (ratio > 0) {
                                 int barWidth  = TILE_SIZE - 4;
@@ -720,21 +744,44 @@ private void handleActions() {
                                 int bx = screenX + 2;
                                 int by = screenY + TILE_SIZE - barHeight - 2;
 
-                                // border
                                 g2.setColor(Color.DARK_GRAY);
                                 g2.drawRect(bx, by, barWidth, barHeight);
 
-                                // fill: oranye kalau normal, merah kalau burned
                                 int fillWidth = (int) (barWidth * ratio);
                                 g2.setColor(cs.getOven().isBurned() ? Color.RED : Color.ORANGE);
                                 g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
                             }
                         }
                     }
+
+                    if (tileType == TileType.TRASH) {
+                        Station st = stationMap.get(stationKey(x, y));
+                        if (st instanceof TrashStation ts) {
+                            tileRenderer.drawTrash(
+                                g2,
+                                screenX, screenY,
+                                TILE_SIZE,
+                                ts.isFull()
+                            );
+                        }
+                    }
+
                     // === PROGRESS BAR UNTUK WASHING STATION ===
+                                        // === WASHING STATION (sprite + progress bar) ===
                     if (tileType == TileType.WASHING_STATION) {
                         Station st = stationMap.get(stationKey(x, y));
                         if (st instanceof WashingStation ws) {
+
+                            // 1) gambar sprite washing station (empty / washing) + light/dark
+                            tileRenderer.drawWashing(
+                                g2,
+                                x, y,
+                                screenX, screenY,
+                                TILE_SIZE,
+                                ws.isWashing()
+                            );
+
+                            // 2) progress bar di atas sink (opsional, sama kayak sebelumnya)
                             double ratio = ws.getProgressRatio(); // 0..1
                             if (ratio > 0) {
                                 int barWidth  = TILE_SIZE - 4;
@@ -742,13 +789,11 @@ private void handleActions() {
                                 int bx = screenX + 2;
                                 int by = screenY + TILE_SIZE - barHeight - 2;
 
-                                // border
                                 g2.setColor(Color.DARK_GRAY);
                                 g2.drawRect(bx, by, barWidth, barHeight);
 
-                                // fill
                                 int fillWidth = (int) (barWidth * ratio);
-                                g2.setColor(Color.CYAN);      // warna bebas
+                                g2.setColor(Color.CYAN);
                                 g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
                             }
                         }

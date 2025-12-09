@@ -8,6 +8,8 @@ import model.item.utensils.Plate;
 
 public class TrashStation extends Station {
 
+    private boolean hasTrash = false;
+
     public TrashStation(int x, int y) {
         super(x, y, "Trash");
     }
@@ -17,12 +19,23 @@ public class TrashStation extends Station {
         return "T";
     }
 
+    // === DIPAKAI DI GamePanel ===
+    public boolean isFull() {
+        return hasTrash;
+    }
+
+    // optional kalau nanti mau dikosongin
+    public void empty() {
+        hasTrash = false;
+    }
+
     @Override
     public boolean interact(Chef chef) {
         if (!isAdjacentTo(chef)) return false;
         
         Item hand = chef.getHeldItem();
         if (hand == null) return false;
+        
         //prioritas plate dulu 
         if (hand instanceof Plate plate){
             if (plate.isEmpty()){
@@ -31,6 +44,7 @@ public class TrashStation extends Station {
             }
             plate.clear();
             plate.setClean(false);
+            hasTrash = true; 
             System.out.println("Isi piring dibuang. Piring tetap di tangan (kotor).");
             return true; 
         }
@@ -52,6 +66,7 @@ public class TrashStation extends Station {
 
         // ===== BUKAN kitchen utensil → item-nya dibuang =====
         chef.setHeldItem(null);
+        hasTrash = true;
         System.out.println(hand.getName() + " dibuang ke tempat sampah.");
         return true;
     }
