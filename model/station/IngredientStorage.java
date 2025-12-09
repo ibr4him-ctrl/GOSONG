@@ -244,6 +244,15 @@ public class IngredientStorage extends Station {
         return itemOnStation == null;
     }
 
+    public Class<? extends Ingredient> getIngredientType() {
+        return ingredientType;
+    }
+
+    public String getIngredientName() {
+        return ingredientName;
+    }
+
+
     @Override
     public String toString() {
         return String.format("IngredientStorage{pos=(%d,%d), type=%s, item=%s}",

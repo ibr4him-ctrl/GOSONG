@@ -732,7 +732,19 @@ private void handleActions() {
                     screenY + TILE_SIZE > 0 && screenY < getHeight()) {
 
                     TileType tileType = pizzaMap.getTileAt(x, y).getType();
-                    
+
+                    if (tileType == TileType.INGREDIENT_STORAGE) {
+                        Station st = stationMap.get(stationKey(x, y));
+                        if (st instanceof IngredientStorage is) {
+                            tileRenderer.drawIngredientStorage(
+                                g2,
+                                is,
+                                screenX, screenY,
+                                TILE_SIZE
+                            );
+                            continue; // lanjut ke tile berikutnya, jangan panggil drawTile lagi
+                        }
+                    }
                     tileRenderer.drawTile(
                         g2,
                         pizzaMap,

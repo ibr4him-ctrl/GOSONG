@@ -6,9 +6,16 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import model.item.ingredient.Ingredient;
+import model.item.ingredient.pizza.Cheese;
+import model.item.ingredient.pizza.Chicken;
+import model.item.ingredient.pizza.Dough;
+import model.item.ingredient.pizza.Sausage;
+import model.item.ingredient.pizza.Tomato;
 import model.item.utensils.Oven;
 import model.map.PizzaMap;
 import model.map.tile.TileType;
+import model.station.IngredientStorage;
 
 
 public class TileRenderer {
@@ -20,6 +27,7 @@ public class TileRenderer {
     // station sprites
     private BufferedImage assemblyStationImg;
     private BufferedImage cuttingStationImg;
+    private BufferedImage plateStorageImg; 
 
     // ===== WALL SPRITES =====
     private BufferedImage wallBottom;
@@ -56,6 +64,18 @@ public class TileRenderer {
     private BufferedImage washBusyLight;
     private BufferedImage washBusyDark;
 
+    // ===== SERVING COUNTER SPRITES =====
+    private BufferedImage servingUpper;
+    private BufferedImage servingBottom;
+
+
+    // ===== INGREDIENT STORAGE SPRITES =====
+    private BufferedImage doughStorageImg;
+    private BufferedImage tomatoStorageImg;
+    private BufferedImage cheeseStorageImg;
+    private BufferedImage chickenStorageImg;
+    private BufferedImage sausageStorageImg;
+
 
     public TileRenderer() {
         loadTiles();
@@ -69,6 +89,7 @@ public class TileRenderer {
         // station
         assemblyStationImg = loadImage("resources/station/assembling_station/assemblystation2.png");
         cuttingStationImg  = loadImage("resources/station/cutting_station/cutting_station.png");
+        plateStorageImg    = loadImage("resources/station/plate_storage/platestorage.png");
 
         // wall
         wallBottom      = loadImage("resources/wall/bottom-wall.png");
@@ -104,6 +125,17 @@ public class TileRenderer {
         washEmptyLight = loadImage("resources/station/washing_station/empty-light.png");
         washBusyDark = loadImage("resources/station/washing_station/wash-dark.png");
         washBusyLight = loadImage("resources/station/washing_station/wash-light.png");
+
+        // ===== SERVING COUNTER SPRITES =====
+        servingUpper  = loadImage("resources/station/serving_station/serving-upper.png");
+        servingBottom = loadImage("resources/station/serving_station/serving-bottom.png");
+
+        // ===== INGREDIENT STORAGE SPRITES =====
+        doughStorageImg   = loadImage("resources/station/ingredient_station/dough_storage.png");
+        tomatoStorageImg  = loadImage("resources/station/ingredient_station/tomato_storage.png");
+        cheeseStorageImg  = loadImage("resources/station/ingredient_station/cheese_storage.png");
+        chickenStorageImg = loadImage("resources/station/ingredient_station/chicken_storage.png");
+        sausageStorageImg = loadImage("resources/station/ingredient_station/sausage_storage.png");
     }
 
     private BufferedImage loadImage(String path) {
@@ -131,6 +163,14 @@ public class TileRenderer {
         TileType t = map.getTileAt(x, y).getType();
         return t != TileType.WALL;
     }
+
+    private boolean isServingCounter(PizzaMap map, int x, int y) {
+        if (x < 0 || x >= PizzaMap.WIDTH || y < 0 || y >= PizzaMap.HEIGHT) {
+            return false;
+        }
+        return map.getTileAt(x, y).getType() == TileType.SERVING_COUNTER;
+    }
+
 
     private void drawWallTile(Graphics2D g2,
                             PizzaMap map,
@@ -265,6 +305,41 @@ public class TileRenderer {
         }
     }
 
+    public void drawIngredientStorage(Graphics2D g2,
+                                    IngredientStorage storage,
+                                    int screenX, int screenY,
+                                    int tileSize) {
+
+        if (storage == null) {
+            g2.setColor(Color.YELLOW);
+            g2.fillRect(screenX, screenY, tileSize, tileSize);
+            return;
+        }
+
+        Class<? extends Ingredient> type = storage.getIngredientType();
+        BufferedImage tex = null;
+
+        if (type == Dough.class) {
+            tex = doughStorageImg;
+        } else if (type == Tomato.class) {
+            tex = tomatoStorageImg;
+        } else if (type == Cheese.class) {
+            tex = cheeseStorageImg;
+        } else if (type == Chicken.class) {
+            tex = chickenStorageImg;
+        } else if (type == Sausage.class) {
+            tex = sausageStorageImg;
+        }
+
+        if (tex != null) {
+            g2.drawImage(tex, screenX, screenY, tileSize, tileSize, null);
+        } else {
+            // fallback kalau ada yang gak ke-load
+            g2.setColor(Color.YELLOW);
+            g2.fillRect(screenX, screenY, tileSize, tileSize);
+        }
+    }
+
 
     /**
      * Gambar 1 tile di (screenX, screenY) dengan ukuran tileSize.
@@ -313,26 +388,52 @@ public class TileRenderer {
 
         // =============== TILE LAIN (STATION, DLL) ===============
         if (type == TileType.ASSEMBLY_STATION && assemblyStationImg != null) {
-            g2.drawImage(assemblyStationImg, screenX, screenY, tileSize, tileSize, null);
-            return;
-        }
+                g2.drawImage(assemblyStationImg, screenX, screenY, tileSize, tileSize, null);
+                return;
+            }
 
-        if (type == TileType.CUTTING_STATION && cuttingStationImg != null) {
-            g2.drawImage(cuttingStationImg, screenX, screenY, tileSize, tileSize, null);
-            return;
-        }
+            if (type == TileType.CUTTING_STATION && cuttingStationImg != null) {
+                g2.drawImage(cuttingStationImg, screenX, screenY, tileSize, tileSize, null);
+                return;
+            }
+
+            if (type == TileType.SERVING_COUNTER) {
+
+                boolean hasAbove = isServingCounter(map, xIndex, yIndex - 1);
+                boolean hasBelow = isServingCounter(map, xIndex, yIndex + 1);
+
+                BufferedImage tex = null;
+
+                // kalau di bawahnya masih serving → ini tile atas
+                if (!hasAbove && hasBelow) {
+                    tex = servingUpper;
+                }
+                // kalau di atasnya masih serving → ini tile bawah
+                else if (hasAbove && !hasBelow) {
+                    tex = servingBottom;
+                }
+                // fallback (misalnya cuma 1 tile doang)
+                else {
+                    tex = servingBottom != null ? servingBottom : servingUpper;
+                }
+
+                if (tex != null) {
+                    g2.drawImage(tex, screenX, screenY, tileSize, tileSize, null);
+                } else {
+                    // kalau gambar gagal ke-load, jangan crash
+                    g2.setColor(Color.MAGENTA);
+                    g2.fillRect(screenX, screenY, tileSize, tileSize);
+                }
+                return;
+            }
+            if (type == TileType.PLATE_STORAGE && plateStorageImg != null) {
+                g2.drawImage(plateStorageImg, screenX, screenY, tileSize, tileSize, null);
+                return;
+            }
 
         // fallback ke warna kotak
         switch (type) {
-            case ASSEMBLY_STATION -> g2.setColor(new Color(139, 69, 19));
-            case COOKING_STATION  -> g2.setColor(Color.RED);
-            case CUTTING_STATION  -> g2.setColor(Color.ORANGE);
-            case PLATE_STORAGE    -> g2.setColor(Color.CYAN);
             case INGREDIENT_STORAGE -> g2.setColor(Color.YELLOW);
-            case SERVING_COUNTER  -> g2.setColor(Color.MAGENTA);
-            case WASHING_STATION  -> g2.setColor(Color.BLUE);
-            case TRASH            -> g2.setColor(new Color(128, 0, 0));
-            default               -> g2.setColor(Color.WHITE);
         }
         g2.fillRect(screenX, screenY, tileSize, tileSize);
     }
