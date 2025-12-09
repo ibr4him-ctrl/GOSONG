@@ -718,6 +718,18 @@ private void handleActions() {
                         }
                     }
 
+                    if (tileType == TileType.TRASH) {
+                        Station st = stationMap.get(stationKey(x, y));
+                        if (st instanceof TrashStation ts) {
+                            tileRenderer.drawTrash(
+                                g2,
+                                screenX, screenY,
+                                TILE_SIZE,
+                                ts.isFull()
+                            );
+                        }
+                    }
+
                     // === PROGRESS BAR UNTUK WASHING STATION ===
                     if (tileType == TileType.WASHING_STATION) {
                         Station st = stationMap.get(stationKey(x, y));

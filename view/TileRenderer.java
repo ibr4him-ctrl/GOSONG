@@ -46,6 +46,10 @@ public class TileRenderer {
     private BufferedImage ovenBurntLight;
     private BufferedImage ovenBurntDark;
 
+    // ===== TRASH STATION SPRITES =====
+    private BufferedImage trashEmpty;
+    private BufferedImage trashFull;
+
 
     public TileRenderer() {
         loadTiles();
@@ -83,6 +87,11 @@ public class TileRenderer {
         ovenReadyLight  = loadImage("resources/station/cooking_station/oven-ready-light.png");
         ovenBurntDark   = loadImage("resources/station/cooking_station/oven-burnt-dark.png");
         ovenBurntLight  = loadImage("resources/station/cooking_station/oven-burnt-light.png");
+
+
+        // ===== TRASH SPRITES =====
+        trashEmpty = loadImage("resources/station/trash_station/trash-empty.png");
+        trashFull  = loadImage("resources/station/trash_station/trash-full.png");
     }
 
     private BufferedImage loadImage(String path) {
@@ -204,8 +213,20 @@ public class TileRenderer {
         }
     }
 
+    public void drawTrash(Graphics2D g2,
+                        int screenX, int screenY,
+                        int tileSize,
+                        boolean isFull) {
 
+        BufferedImage tex = isFull ? trashFull : trashEmpty;
 
+        if (tex != null) {
+            g2.drawImage(tex, screenX, screenY, tileSize, tileSize, null);
+        } else {
+            g2.setColor(new Color(128, 0, 0));
+            g2.fillRect(screenX, screenY, tileSize, tileSize);
+        }
+    }
 
     /**
      * Gambar 1 tile di (screenX, screenY) dengan ukuran tileSize.
