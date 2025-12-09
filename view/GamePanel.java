@@ -9,8 +9,10 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import model.chef.Chef;
 import model.item.Dish;
@@ -41,7 +43,6 @@ import view.PlayerSprite.Direction;
 
 public class GamePanel extends JPanel implements Runnable {
 
-    // setting layar
     private static final int ORIGINAL_TILE_SIZE = 16;
     private static final int SCALE = 3;
     private static final int TILE_SIZE = ORIGINAL_TILE_SIZE * SCALE;
@@ -51,41 +52,37 @@ public class GamePanel extends JPanel implements Runnable {
     private static final int SCREEN_HEIGHT = TILE_SIZE * MAX_SCREEN_ROW;
     private AssemblyRenderer assemblyRenderer = new AssemblyRenderer();
     private TileRenderer tileRenderer = new TileRenderer();
+    
+    private BufferedImage ijo0Image;
+    private BufferedImage ijo1Image;
+    private BufferedImage ijo2Image;
 
-    // map -> Station
     private Map<String, Station> stationMap = new HashMap<>();
 
-    // item yang dijatuhkan di lantai (tile WALKABLE)
     private Map<String, Item> groundItems = new HashMap<>();
 
     private String groundKey(int x, int y) {
         return x + "," + y;
     }
 
-    // object game
     private PizzaMap pizzaMap;
     private KeyHandler keyH = new KeyHandler();
     private Thread gameThread;
 
-    // Chef
-    private Chef chef1;  // Chef 1
-    private Chef chef2;  // Chef 2
+    private Chef chef1;  
+    private Chef chef2;  
     private boolean isPlayer1Active = true;
 
-    // Sprite
     private PlayerSprite chef1Sprite;
     private PlayerSprite chef2Sprite;
 
-    // Map properties (kalau nanti mau scrolling)
     private int mapOffsetX = 0;
     private int mapOffsetY = 0;
 
-    // pergerakan: 1 tile per langkah, pakai cooldown
     private static final long MOVE_COOLDOWN_NS = 150_000_000L; // 150 ms
     private long lastMoveTimeChef1 = 0L;
     private long lastMoveTimeChef2 = 0L;
 
-    // flags tombol
     private boolean wasTabPressed = false;
     private boolean wasCPressed = false;
     private boolean wasVPressed = false;
@@ -95,10 +92,9 @@ public class GamePanel extends JPanel implements Runnable {
     public GamePanel() {
 
         pizzaMap = new PizzaMap();
-        initStationsFromMap();  // <-- bangun objek Station dari PizzaMap
+        initStationsFromMap();  
         initPlateStorages();
 
-        // Inisialisasi chef dari spawnpoint
         if (pizzaMap.getSpawnPoints().size() >= 2) {
             Position p1 = pizzaMap.getSpawnPoints().get(0);
             Position p2 = pizzaMap.getSpawnPoints().get(1);
@@ -142,6 +138,34 @@ public class GamePanel extends JPanel implements Runnable {
 
         // RESET SCORE DI AWAL GAME
         model.manager.ScoreManager.getInstance().reset();
+        
+        // Load order indicator images
+        loadOrderIndicatorImages();
+    }
+    
+    private void loadOrderIndicatorImages() {
+        try {
+            ijo0Image = ImageIO.read(getClass().getResource("/resources/game/ijo0.png"));
+            ijo1Image = ImageIO.read(getClass().getResource("/resources/game/ijo1.png"));
+            ijo2Image = ImageIO.read(getClass().getResource("/resources/game/ijo2.png"));
+            System.out.println("Order indicator images loaded successfully");
+        } catch (IOException e) {
+            System.err.println("Failed to load order indicator images: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private BufferedImage getOrderIndicatorImage(int timeRemaining) {
+        // 41-60 seconds (first 20 seconds): ijo0.png
+        // 21-40 seconds: ijo1.png
+        // 0-20 seconds (last 20 seconds): ijo2.png
+        if (timeRemaining > 40) {
+            return ijo0Image;
+        } else if (timeRemaining > 20) {
+            return ijo1Image;
+        } else {
+            return ijo2Image;
+        }
     }
 
     // ==========================================
@@ -790,31 +814,55 @@ private void handleActions() {
 
         // ====== Gambar daftar Order aktif di pojok kanan atas ======
         var orders = OrderManager.getInstance().getActiveOrders();
-        int boxWidth = 260;
-        int boxHeight = 20;
-        int startX = SCREEN_WIDTH - boxWidth - 10;
+        int imgWidth = 200;  // Lebar gambar indikator (proporsional)
+        int imgHeight = 50;  // Tinggi gambar indikator (proporsional)
+        int startX = SCREEN_WIDTH - imgWidth - 10;
         int startY = 60;
+        int spacing = 8;  // Jarak antar order
 
-        g2.setFont(g2.getFont().deriveFont(12f));
+        g2.setFont(g2.getFont().deriveFont(14f));
 
         int i = 0;
         for (var order : orders) {
             int x = startX;
-            int y = startY + i * (boxHeight + 4);
+            int y = startY + i * (imgHeight + spacing);
 
-            // background
-            g2.setColor(new Color(250, 250, 250, 220));
-            g2.fillRoundRect(x, y, boxWidth, boxHeight, 8, 8);
-            g2.setColor(Color.BLACK);
-            g2.drawRoundRect(x, y, boxWidth, boxHeight, 8, 8);
+            // Draw order indicator image as background
+            BufferedImage indicatorImg = getOrderIndicatorImage(order.getTimeRemaining());
+            if (indicatorImg != null) {
+                g2.drawImage(indicatorImg, x, y, imgWidth, imgHeight, null);
+            } else {
+                // Fallback: kotak abu-abu jika gambar tidak ada
+                g2.setColor(new Color(200, 200, 200));
+                g2.fillRoundRect(x, y, imgWidth, imgHeight, 8, 8);
+            }
 
+            // Draw text on top of the image
             String text = String.format(
                 "#%d %s  [%ds]",
                 order.getId(),
                 order.getPizzaType().getDisplayName(),
                 order.getTimeRemaining()
             );
-            g2.drawString(text, x + 6, y + 14);
+            
+            // Calculate text position (centered vertically, with padding)
+            int textX = x + 10;
+            int textY = y + imgHeight / 2 + 5; // Centered vertically
+            
+            // Draw text with outline/shadow for better visibility
+            // Draw outline/shadow
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if (dx != 0 || dy != 0) {
+                        g2.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
+                        g2.drawString(text, textX + dx, textY + dy);
+                    }
+                }
+            }
+            
+            // Draw main text in white
+            g2.setColor(Color.WHITE);
+            g2.drawString(text, textX, textY);
 
             i++;
         }

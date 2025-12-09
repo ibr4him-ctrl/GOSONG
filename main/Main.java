@@ -52,8 +52,6 @@ public class Main {
         musicPlayer.playLoop("/resources/game/music/GameMusic.wav");
     }
 
-    // ====== Helper untuk masa depan ScoreManager ======
-
     public static void addScore(int delta) {
         score += delta;
         SwingUtilities.invokeLater(() ->
@@ -67,10 +65,20 @@ public class Main {
         });
     }
 
-    /**
-     * Dipanggil saat Stage Over kalau kamu mau tutup game.
-     * Game berhenti menerima order baru.
-     */
+    public static void showGameOver() {
+        if (window != null) {
+            window.setVisible(false);
+            window.dispose();
+        }
+        musicPlayer.stop();
+        
+        SwingUtilities.invokeLater(() -> {
+            view.GameOver gameOver = new view.GameOver();
+            gameOver.setVisible(true);
+        });
+    }
+
+
     public static void stopGame() {
         model.manager.OrderManager.getInstance().stopAcceptingNewOrders();
         musicPlayer.stop();

@@ -1,6 +1,5 @@
 package view;
 
-import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -13,7 +12,6 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame; 
 import java.awt.Dimension;
-import javax.swing.JPanel;
 import main.Main;
 import view.Pengaturan;
 
@@ -76,15 +74,16 @@ public class MainMenu extends JFrame {
       int buttonWidthPengaturan = pengaturanIcon.getIconWidth();
       int buttonHeightPengaturan = pengaturanIcon.getIconHeight();
 
-      int totalWidth = buttonWidthMulai + buttonWidthPengaturan + 40;
-      int startX = (WIDTH - totalWidth) / 2;
-      int posY = (int) (HEIGHT * 0.75);
+      // Posisi Mulai
+      int mulaiX = (WIDTH - buttonWidthMulai) / 2; 
+      int mulaiY = (int) (HEIGHT * 0.25); 
+      
+      // Posisi Pengaturan
+      int pengaturanX = (WIDTH - buttonWidthPengaturan) / 2; 
+      int pengaturanY = mulaiY + buttonHeightMulai + 20; 
 
-      int mulaiX = startX;
-      int pengaturanX = startX + buttonWidthMulai + 40;
-
-      mulaiButton.setBounds(mulaiX, posY, buttonWidthMulai, buttonHeightMulai);
-      pengaturanButton.setBounds(pengaturanX, posY, buttonWidthPengaturan, buttonHeightPengaturan);
+      mulaiButton.setBounds(mulaiX, mulaiY, buttonWidthMulai, buttonHeightMulai);
+      pengaturanButton.setBounds(pengaturanX, pengaturanY, buttonWidthPengaturan, buttonHeightPengaturan);
 
       backgroundPanel.add(mulaiButton);
       backgroundPanel.add(pengaturanButton);

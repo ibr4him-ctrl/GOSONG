@@ -5,15 +5,18 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import util.MusicPlayer;
 
 public class GameOver extends JFrame {
    private static final int WIDTH = 16 * 16 * 3;
    private static final int HEIGHT = 12 * 16 * 3;
 
    private Image backgroundImage;
+   private MusicPlayer musicPlayer;
 
    public GameOver() {
       loadBackground();
@@ -23,6 +26,18 @@ public class GameOver extends JFrame {
       setResizable(false);
       pack();
       setLocationRelativeTo(null);
+
+      musicPlayer = new MusicPlayer();
+      musicPlayer.playLoop("/resources/game/music/GameOverMusic.wav");
+
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            if (musicPlayer != null) {
+               musicPlayer.stop();
+            }
+         }
+      });
    }
 
    private void loadBackground() {

@@ -82,10 +82,19 @@ public class OrderManager {
             }
         }
 
+        if (!acceptingNewOrders && activeOrders.isEmpty() && totalSpawnedOrders >= MAX_TOTAL_ORDERS) {
+            if (!sessionOver) {
+                sessionOver = true;
+                System.out.println("Semua order selesai! Game Over.");
+                Main.showGameOver();
+            }
+            return;
+        }
+
         if (sessionTimeElapsed >= SESSION_LIMIT_SECONDS) {
             sessionOver = true;
             acceptingNewOrders = false;
-            Main.stopGame();
+            Main.showGameOver();
         }
     }
 
