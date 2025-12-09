@@ -143,6 +143,7 @@ public class GamePanel extends JPanel implements Runnable {
         loadOrderIndicatorImages();
     }
     
+    
     private void loadOrderIndicatorImages() {
         try {
             ijo0Image = ImageIO.read(getClass().getResource("/resources/game/ijo0.png"));
