@@ -6,8 +6,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import model.item.utensils.Oven;
 import model.map.PizzaMap;
 import model.map.tile.TileType;
+
 
 public class TileRenderer {
 
@@ -32,6 +34,18 @@ public class TileRenderer {
     private BufferedImage wallSolid;
     private BufferedImage wallUpper;
     private BufferedImage wallUpperBottom;
+
+
+    // ===== COOKING STATION (OVEN) SPRITES =====
+    private BufferedImage ovenEmptyLight;
+    private BufferedImage ovenEmptyDark;
+    private BufferedImage ovenCookingLight;
+    private BufferedImage ovenCookingDark;
+    private BufferedImage ovenReadyLight;
+    private BufferedImage ovenReadyDark;
+    private BufferedImage ovenBurntLight;
+    private BufferedImage ovenBurntDark;
+
 
     public TileRenderer() {
         loadTiles();
@@ -59,6 +73,16 @@ public class TileRenderer {
         wallSolid       = loadImage("resources/wall/solid-wall.png");
         wallUpper       = loadImage("resources/wall/upper-wall.png");
         wallUpperBottom = loadImage("resources/wall/upper-bottom-wall.png");
+
+        // ===== OVEN SPRITES =====
+        ovenEmptyDark   = loadImage("resources/station/cooking_station/oven-kosong-dark.png");
+        ovenEmptyLight  = loadImage("resources/station/cooking_station/oven-kosong-light.png");
+        ovenCookingDark = loadImage("resources/station/cooking_station/oven-cooking-dark.png");
+        ovenCookingLight= loadImage("resources/station/cooking_station/oven-cooking-light.png");
+        ovenReadyDark   = loadImage("resources/station/cooking_station/oven-ready-dark.png");
+        ovenReadyLight  = loadImage("resources/station/cooking_station/oven-ready-light.png");
+        ovenBurntDark   = loadImage("resources/station/cooking_station/oven-burnt-dark.png");
+        ovenBurntLight  = loadImage("resources/station/cooking_station/oven-burnt-light.png");
     }
 
     private BufferedImage loadImage(String path) {
@@ -142,6 +166,44 @@ public class TileRenderer {
             g2.fillRect(screenX, screenY, tileSize, tileSize);
         }
     }
+
+    public void drawOven(Graphics2D g2,
+                        int xIndex, int yIndex,
+                        int screenX, int screenY,
+                        int tileSize,
+                        Oven oven) {
+
+        // ikut pola lantai: genap = light, ganjil = dark (sama kayak WALKABLE)
+        boolean isLight = ((xIndex + yIndex) % 2 == 0);
+
+        BufferedImage tex = null;
+
+        if (oven == null) {
+            // fallback: kosong
+            tex = isLight ? ovenEmptyLight : ovenEmptyDark;
+        } else if (oven.isBurned()) {
+            tex = isLight ? ovenBurntLight : ovenBurntDark;
+        } else if (oven.isReadyToTakeOut()) {
+            // sudah matang tapi belum gosong
+            tex = isLight ? ovenReadyLight : ovenReadyDark;
+        } else if (oven.isCooking()) {
+            tex = isLight ? ovenCookingLight : ovenCookingDark;
+        } else if (oven.isEmpty()) {
+            tex = isLight ? ovenEmptyLight : ovenEmptyDark;
+        } else {
+            // default (misal ada isi tapi belum startCooking)
+            tex = isLight ? ovenEmptyLight : ovenEmptyDark;
+        }
+
+        if (tex != null) {
+            g2.drawImage(tex, screenX, screenY, tileSize, tileSize, null);
+        } else {
+            // kalau ada gambar yang gagal ke-load, fallback kotak
+            g2.setColor(Color.RED);
+            g2.fillRect(screenX, screenY, tileSize, tileSize);
+        }
+    }
+
 
 
 

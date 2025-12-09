@@ -690,6 +690,17 @@ private void handleActions() {
                     if (tileType == TileType.COOKING_STATION) {
                         Station st = stationMap.get(stationKey(x, y));
                         if (st instanceof CookingStation cs) {
+
+                            // 1) Gambar oven sesuai state + pola light/dark
+                            tileRenderer.drawOven(
+                                g2,
+                                x, y,
+                                screenX, screenY,
+                                TILE_SIZE,
+                                cs.getOven()
+                            );
+
+                            // 2) (opsional) progress bar di atas oven
                             double ratio = cs.getOven().getProgressRatio(); // 0..1 (12 detik)
                             if (ratio > 0) {
                                 int barWidth  = TILE_SIZE - 4;
@@ -697,17 +708,16 @@ private void handleActions() {
                                 int bx = screenX + 2;
                                 int by = screenY + TILE_SIZE - barHeight - 2;
 
-                                // border
                                 g2.setColor(Color.DARK_GRAY);
                                 g2.drawRect(bx, by, barWidth, barHeight);
 
-                                // fill: oranye kalau normal, merah kalau burned
                                 int fillWidth = (int) (barWidth * ratio);
                                 g2.setColor(cs.getOven().isBurned() ? Color.RED : Color.ORANGE);
                                 g2.fillRect(bx + 1, by + 1, fillWidth - 1, barHeight - 1);
                             }
                         }
                     }
+
                     // === PROGRESS BAR UNTUK WASHING STATION ===
                     if (tileType == TileType.WASHING_STATION) {
                         Station st = stationMap.get(stationKey(x, y));
