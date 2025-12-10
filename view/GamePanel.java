@@ -202,7 +202,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     private void loadUiOverlayImages() {
         try {
-            URL url = getClass().getResource("/resources/game/Pengaturan.png");
+            URL url = getClass().getResource("/resources/game/SettingsIcon.png");
             if (url != null) {
                 settingsIconImage = ImageIO.read(url);
             }
@@ -519,185 +519,218 @@ public class GamePanel extends JPanel implements Runnable {
     }
     // Icon kecil di atas chef yang menunjukkan item yang sedang dipegang
 
-private void drawHeldItemIcon(Graphics2D g2, Chef chef, int screenX, int screenY) {
-    var item = chef.getHeldItem();
-    if (item == null) return; // gak pegang apa-apa
+    private void drawHeldItemIcon(Graphics2D g2, Chef chef, int screenX, int screenY) {
+        var item = chef.getHeldItem();
+        if (item == null) return; // gak pegang apa-apa
 
-    int iconSize = TILE_SIZE / 3;  // ukuran bubble
-    int x = screenX + TILE_SIZE - iconSize;  // pojok kanan atas tile
-    int y = screenY - iconSize / 2;          // agak naik dikit
+        int iconSize = TILE_SIZE / 3;  // ukuran bubble
+        int x = screenX + TILE_SIZE - iconSize;  // pojok kanan atas tile
+        int y = screenY - iconSize / 2;          // agak naik dikit
 
-    // warna default
-    Color fill = new Color(240, 240, 240);
-    String label = "?";
+        // warna default
+        Color fill = new Color(240, 240, 240);
+        String label = "?";
 
-    // Ingredient khusus pizza → warna beda & huruf awal
-    if (item instanceof model.item.ingredient.pizza.Dough) {
-        fill = new Color(210, 180, 140); // coklat dough
-        label = "D";
-    } else if (item instanceof model.item.ingredient.pizza.Tomato) {
-        fill = Color.RED;
-        label = "T";
-    } else if (item instanceof model.item.ingredient.pizza.Cheese) {
-        fill = Color.YELLOW;
-        label = "C";
-    } else if (item instanceof model.item.ingredient.pizza.Chicken) {
-        fill = new Color(255, 220, 200);
-        label = "K"; // ayam (chicKen) biar beda
-    } else if (item instanceof model.item.ingredient.pizza.Sausage) {
-        fill = new Color(180, 90, 60);
-        label = "S";
-    } 
-    else if (item instanceof Plate plate) {
-        fill = Color.WHITE;
-        int count = plate.getContents().size();
-        label = (count == 0) ? "P" : "P" + count;
-    } 
-    else {
-        String simple = item.getClass().getSimpleName();
-        if (!simple.isEmpty()) {
-            label = simple.substring(0, 1).toUpperCase();
+        // Ingredient khusus pizza → warna beda & huruf awal
+        if (item instanceof model.item.ingredient.pizza.Dough) {
+            fill = new Color(210, 180, 140); // coklat dough
+            label = "D";
+        } else if (item instanceof model.item.ingredient.pizza.Tomato) {
+            fill = Color.RED;
+            label = "T";
+        } else if (item instanceof model.item.ingredient.pizza.Cheese) {
+            fill = Color.YELLOW;
+            label = "C";
+        } else if (item instanceof model.item.ingredient.pizza.Chicken) {
+            fill = new Color(255, 220, 200);
+            label = "K"; // ayam (chicKen) biar beda
+        } else if (item instanceof model.item.ingredient.pizza.Sausage) {
+            fill = new Color(180, 90, 60);
+            label = "S";
+        } 
+        else if (item instanceof Plate plate) {
+            fill = Color.WHITE;
+            int count = plate.getContents().size();
+            label = (count == 0) ? "P" : "P" + count;
+        } 
+        else {
+            String simple = item.getClass().getSimpleName();
+            if (!simple.isEmpty()) {
+                label = simple.substring(0, 1).toUpperCase();
+            }
         }
+
+        // gambar bubble
+        g2.setColor(fill);
+        g2.fillOval(x, y, iconSize, iconSize);
+
+        g2.setColor(Color.BLACK);
+        g2.drawOval(x, y, iconSize, iconSize);
+
+        // tulis huruf di tengah
+        g2.setFont(g2.getFont().deriveFont(10f));
+        int textX = x + iconSize / 2 - 3;
+        int textY = y + iconSize / 2 + 4;
+        g2.drawString(label, textX, textY);
     }
 
-    // gambar bubble
-    g2.setColor(fill);
-    g2.fillOval(x, y, iconSize, iconSize);
+    // HELPER: gambar item yang dipegang chef di panel inventory bawah
+    private void drawInventoryHeldItemIcon(Graphics2D g2, Chef chef, int centerX, int baseY) {
+        Item item = chef.getHeldItem();
+        if (item == null) return;
 
-    g2.setColor(Color.BLACK);
-    g2.drawOval(x, y, iconSize, iconSize);
+        int iconSize = TILE_SIZE;
+        int drawX = centerX - iconSize / 2;
+        int drawY = baseY - iconSize;
 
-    // tulis huruf di tengah
-    g2.setFont(g2.getFont().deriveFont(10f));
-    int textX = x + iconSize / 2 - 3;
-    int textY = y + iconSize / 2 + 4;
-    g2.drawString(label, textX, textY);
-}
+        Color fill = new Color(255, 220, 200);
+        String label = "?";
 
+        if (item instanceof Plate plate) {
+            fill = Color.WHITE;
+            int count = plate.getContents().size();
+            label = (count == 0) ? "Plate" : "P" + count;
+        } else if (item instanceof Ingredient) {
+            label = item.getName();
+        } else if (item instanceof Dish) {
+            label = "P";
+        } else {
+            label = item.getName();
+        }
 
-    // ==========================================
-    // HANDLE ACTION (C & V)
-    // ==========================================
-private void handleActions() {
-    Chef activeChef = getActiveChef();
-    PlayerSprite activeSprite = getActiveSprite();
-    Station stationInFront = getStationInFrontOf(activeChef, activeSprite);
+        g2.setColor(fill);
+        g2.fillRoundRect(drawX, drawY, iconSize, iconSize, 8, 8);
+        g2.setColor(Color.BLACK);
+        g2.drawRoundRect(drawX, drawY, iconSize, iconSize, 8, 8);
 
-    // === PICK UP / DROP: tombol C ===
-    if (keyH.cPressed && !wasCPressed) {
-        System.out.println("[GUI] C pressed by " + activeChef.getName());
+        g2.setFont(g2.getFont().deriveFont(10f));
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int textWidth = fm.stringWidth(label);
+        int textX = drawX + (iconSize - textWidth) / 2;
+        int textY = drawY + (iconSize + fm.getAscent() - fm.getDescent()) / 2;
+        g2.drawString(label, textX, textY);
+    }
 
-        // Hitung posisi tile di depan (buat ground logic)
-        Position frontPos = getTileInFrontPos(activeChef, activeSprite);
+    private void handleActions() {
+        Chef activeChef = getActiveChef();
+        PlayerSprite activeSprite = getActiveSprite();
+        Station stationInFront = getStationInFrontOf(activeChef, activeSprite);
 
-        if (stationInFront != null) {
-            // === KHUSUS COOKING STATION (OVEN) → pakai CookingAction lewat tombol C ===
-            if (stationInFront instanceof CookingStation) {
-                System.out.println("[GUI] C pressed on CookingStation → delegasi ke CookingAction.");
-                boolean ok = new CookingAction().execute(activeChef, stationInFront);
-                if (!ok) {
-                    System.out.println("CookingAction (via C) gagal.");
+        // === PICK UP / DROP: tombol C ===
+        if (keyH.cPressed && !wasCPressed) {
+            System.out.println("[GUI] C pressed by " + activeChef.getName());
+
+            // Hitung posisi tile di depan (buat ground logic)
+            Position frontPos = getTileInFrontPos(activeChef, activeSprite);
+
+            if (stationInFront != null) {
+                // === KHUSUS COOKING STATION (OVEN) → pakai CookingAction lewat tombol C ===
+                if (stationInFront instanceof CookingStation) {
+                    System.out.println("[GUI] C pressed on CookingStation → delegasi ke CookingAction.");
+                    boolean ok = new CookingAction().execute(activeChef, stationInFront);
+                    if (!ok) {
+                        System.out.println("CookingAction (via C) gagal.");
+                    }
+                } else if (stationInFront instanceof AssemblyStation) {
+                    boolean ok = new AssemblyAction().execute(activeChef, stationInFront);
+                } else if (stationInFront instanceof PlateStorage) {
+                    System.out.println("[GUI] Untuk ambil / balikin plate, gunakan tombol V (Use Station).");
+                } else if (stationInFront instanceof ServingCounter sc) {
+                    boolean ok = sc.interact(activeChef);
+                    if (!ok) {
+                        System.out.println("[ServingCounter] Gagal serve (cek: pegang dish sesuai order & plate bersih).");
+                    }
+                } else if (stationInFront instanceof TrashStation ts) {
+                    boolean ok = ts.interact(activeChef);
+                    if (!ok) {
+                        System.out.println("[TrashStation] Gagal membuang item. (cek: jarak / jenis item / aturan trash)");
+                    }
+                } else {
+                    // Station lain tetap pakai PickUpDrop
+                    boolean ok = new PickUpDrop().execute(activeChef, stationInFront);
+                    if (!ok) {
+                        System.out.println("PickUpDrop gagal atau tidak ada station cocok.");
+                    }
                 }
-            } else if (stationInFront instanceof AssemblyStation) {
-                boolean ok = new AssemblyAction().execute(activeChef, stationInFront);
-            }else if (stationInFront instanceof PlateStorage) {
-                System.out.println("[GUI] Untuk ambil / balikin plate, gunakan tombol V (Use Station).");
-            }else if (stationInFront instanceof ServingCounter sc) {
-                boolean ok = sc.interact(activeChef);
-                if (!ok) {
-                    System.out.println("[ServingCounter] Gagal serve (cek: pegang dish sesuai order & plate bersih).");
-                }
-            } else if (stationInFront instanceof TrashStation ts) {
-                boolean ok = ts.interact(activeChef);
-                if (!ok) {
-                    System.out.println("[TrashStation] Gagal membuang item. (cek: jarak / jenis item / aturan trash)");
-                }
-            }else {
-                // Station lain tetap pakai PickUpDrop
-                boolean ok = new PickUpDrop().execute(activeChef, stationInFront);
-                if (!ok) {
-                    System.out.println("PickUpDrop gagal atau tidak ada station cocok.");
-                }
-            }
-        } else if (frontPos != null) {
-            // TIDAK ada station → coba drop / pick di LANTAI
-            int tx = frontPos.getX();
-            int ty = frontPos.getY();
+            } else if (frontPos != null) {
+                // TIDAK ada station → coba drop / pick di LANTAI
+                int tx = frontPos.getX();
+                int ty = frontPos.getY();
 
-            // Pastikan tile-nya WALKABLE (atau boleh juga SPAWN_CHEF kalau mau)
-            TileType tt = pizzaMap.getTileAt(tx, ty).getType();
-            if (tt != TileType.WALKABLE) {
-                System.out.println("[Ground] Tile depan bukan WALKABLE, tidak bisa drop di lantai.");
+                // Pastikan tile-nya WALKABLE (atau boleh juga SPAWN_CHEF kalau mau)
+                TileType tt = pizzaMap.getTileAt(tx, ty).getType();
+                if (tt != TileType.WALKABLE) {
+                    System.out.println("[Ground] Tile depan bukan WALKABLE, tidak bisa drop di lantai.");
+                } else {
+                    String key = groundKey(tx, ty);
+                    Item hand = activeChef.getHeldItem();
+                    Item ground = groundItems.get(key);
+
+                    // Tangan kosong + ada item di lantai → ambil
+                    if (hand == null && ground != null) {
+                        activeChef.setHeldItem(ground);
+                        groundItems.remove(key);
+                        System.out.println("[Ground] Chef mengambil " + ground.getName() +
+                                           " dari lantai (" + tx + "," + ty + ")");
+                    }
+                    // Tangan pegang item + lantai kosong → taruh
+                    else if (hand != null && ground == null) {
+                        groundItems.put(key, hand);
+                        activeChef.setHeldItem(null);
+                        System.out.println("[Ground] Chef meletakkan " + hand.getName() +
+                                           " di lantai (" + tx + "," + ty + ")");
+                    }
+                    else {
+                        // dua-duanya kosong atau dua-duanya isi
+                        System.out.println("[Ground] Tidak ada aksi cocok (hand=" +
+                                           (hand == null ? "null" : hand.getName()) +
+                                           ", ground=" + (ground == null ? "null" : ground.getName()) + ")");
+                    }
+                }
             } else {
-                String key = groundKey(tx, ty);
-                Item hand = activeChef.getHeldItem();
-                Item ground = groundItems.get(key);
-
-                // Tangan kosong + ada item di lantai → ambil
-                if (hand == null && ground != null) {
-                    activeChef.setHeldItem(ground);
-                    groundItems.remove(key);
-                    System.out.println("[Ground] Chef mengambil " + ground.getName() +
-                                       " dari lantai (" + tx + "," + ty + ")");
-                }
-                // Tangan pegang item + lantai kosong → taruh
-                else if (hand != null && ground == null) {
-                    groundItems.put(key, hand);
-                    activeChef.setHeldItem(null);
-                    System.out.println("[Ground] Chef meletakkan " + hand.getName() +
-                                       " di lantai (" + tx + "," + ty + ")");
-                }
-                else {
-                    // dua-duanya kosong atau dua-duanya isi
-                    System.out.println("[Ground] Tidak ada aksi cocok (hand=" +
-                                       (hand == null ? "null" : hand.getName()) +
-                                       ", ground=" + (ground == null ? "null" : ground.getName()) + ")");
-                }
-            }
-        } else {
-            System.out.println("[GUI] Tile depan di luar map.");
-        }
-    }
-    wasCPressed = keyH.cPressed;
-
-    // === USE STATION: tombol V ===
-    if (keyH.vPressed && !wasVPressed) {
-
-        if (stationInFront == null) {
-            System.out.println("Tidak ada station di depan chef.");
-        } else {
-            System.out.println(">> Station in front: "
-                    + stationInFront.getClass().getSimpleName()
-                    + " at (" + stationInFront.getPosX() + "," + stationInFront.getPosY() + ")");
-
-            if (stationInFront instanceof AssemblyStation) {
-                System.out.println("[GUI] Untuk plating di Assembly, gunakan tombol C"); 
-            }else if (stationInFront instanceof CookingStation) {
-                System.out.println("[GUI] Untuk menggunakan oven (masuk/keluar pizza), gunakan tombol C.");
-            }else if (stationInFront instanceof WashingStation) {
-                boolean ok = new WashingAction().execute(activeChef, stationInFront);
-                if (!ok) System.out.println("WashingAction gagal.");
-            }else if (stationInFront instanceof TrashStation) {
-                System.out.println("[GUI] Untuk membuang item, gunakan tombol C (Drop).");
-            }else if (stationInFront instanceof PlateStorage ps) {
-                boolean ok = ps.interact(activeChef);
-                if (!ok) System.out.println("[PlateStorage] Interaksi gagal (cek: plate bersih / jarak / stack kosong).");
-            } else if (stationInFront instanceof ServingCounter) {
-                System.out.println("[GUI] Untuk menyajikan hidangan, gunakan tombol C (Drop).");
-            }else {
-                boolean ok = stationInFront.interact(activeChef);
-                if (!ok) System.out.println("Interaksi dengan " 
-                        + stationInFront.getStationType() + " gagal.");
-                
+                System.out.println("[GUI] Tile depan di luar map.");
             }
         }
+        wasCPressed = keyH.cPressed;
+
+        // === USE STATION: tombol V ===
+        if (keyH.vPressed && !wasVPressed) {
+
+            if (stationInFront == null) {
+                System.out.println("Tidak ada station di depan chef.");
+            } else {
+                System.out.println(">> Station in front: "
+                        + stationInFront.getClass().getSimpleName()
+                        + " at (" + stationInFront.getPosX() + "," + stationInFront.getPosY() + ")");
+
+                if (stationInFront instanceof AssemblyStation) {
+                    System.out.println("[GUI] Untuk plating di Assembly, gunakan tombol C"); 
+                } else if (stationInFront instanceof CookingStation) {
+                    System.out.println("[GUI] Untuk menggunakan oven (masuk/keluar pizza), gunakan tombol C.");
+                } else if (stationInFront instanceof WashingStation) {
+                    boolean ok = new WashingAction().execute(activeChef, stationInFront);
+                    if (!ok) System.out.println("WashingAction gagal.");
+                } else if (stationInFront instanceof TrashStation) {
+                    System.out.println("[GUI] Untuk membuang item, gunakan tombol C (Drop).");
+                } else if (stationInFront instanceof PlateStorage ps) {
+                    boolean ok = ps.interact(activeChef);
+                    if (!ok) System.out.println("[PlateStorage] Interaksi gagal (cek: plate bersih / jarak / stack kosong).");
+                } else if (stationInFront instanceof ServingCounter) {
+                    System.out.println("[GUI] Untuk menyajikan hidangan, gunakan tombol C (Drop).");
+                } else {
+                    boolean ok = stationInFront.interact(activeChef);
+                    if (!ok) System.out.println("Interaksi dengan " 
+                            + stationInFront.getStationType() + " gagal.");
+                }
+            }
+        }
+        wasVPressed = keyH.vPressed;
     }
-    wasVPressed = keyH.vPressed;
-}
 
     // ==========================================
     // Gambar item di atas semua station
     // ==========================================
+    // ... (sisa kode tidak berubah)
     private void drawItemsOnStations(Graphics2D g2) {
         for (Station st : stationMap.values()) {
             Item item = st.getItemOnStation();
@@ -1049,13 +1082,13 @@ private void handleActions() {
         }
 
         int iconSize = TILE_SIZE;
-        int iconOffsetY = barY - iconSize / 2;
 
-        int chef1IconX = chef1InvX + inventoryWidth / 2 - iconSize / 2;
-        int chef2IconX = chef2InvX + inventoryWidth / 2 - iconSize / 2;
+        int chef1CenterX = chef1InvX + inventoryWidth / 2;
+        int chef2CenterX = chef2InvX + inventoryWidth / 2;
 
-        drawHeldItemIcon(g2, chef1, chef1IconX, iconOffsetY);
-        drawHeldItemIcon(g2, chef2, chef2IconX, iconOffsetY);
+        // gambar item yang dipegang chef di atas panel inventory bawah (pakai sprite)
+        drawInventoryHeldItemIcon(g2, chef1, chef1CenterX, barY + barHeight);
+        drawInventoryHeldItemIcon(g2, chef2, chef2CenterX, barY + barHeight);
 
         g2.setColor(Color.WHITE);
         g2.setFont(g2.getFont().deriveFont(12f));
