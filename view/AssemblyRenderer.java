@@ -19,6 +19,7 @@ public class AssemblyRenderer {
 
     /**
      * Key: "Dough_RAW", "Dough_COOKED", "Dough_BURNED", dst.
+     * Juga dipakai untuk Plate: "Plate_CLEAN", "Plate_DIRTY".
      */
     private final Map<String, BufferedImage> ingredientSprites = new HashMap<>();
 
@@ -30,6 +31,10 @@ public class AssemblyRenderer {
     // LOAD SPRITE
     // =========================
     private void loadAllSprites() {
+        // === PLATE ===
+        loadSprite("Plate_CLEAN", "/resources/item/plate/PiringBersih.png");
+        loadSprite("Plate_DIRTY", "/resources/item/plate/PiringKotor.png");
+
         // === DOUGH ===
         loadSprite("Dough_RAW",     "/resources/item/ingredients/Dough/DoughRaw.png");
         loadSprite("Dough_CHOPPED", "/resources/item/ingredients/Dough/DoughChopped.png");
@@ -80,6 +85,8 @@ public class AssemblyRenderer {
     // HELPER: GET SPRITE BY STATE
     // =========================
     private BufferedImage getSprite(Ingredient ing) {
+        if (ing == null) return null;
+
         IngredientState state = ing.getState();
         String className = ing.getClass().getSimpleName(); // Dough / Tomato / ...
 
@@ -106,11 +113,18 @@ public class AssemblyRenderer {
         return getSprite(ing);
     }
 
+    public BufferedImage getSpriteForPlate(Plate plate) {
+        String key = (plate != null && plate.isClean()) ? "Plate_CLEAN" : "Plate_DIRTY";
+        return ingredientSprites.get(key);
+    }
+
     // =========================
     // HELPER: KUMPULKAN INGREDIENT dari Preparable
     // (Dish / Dough / Ingredient)
     // =========================
     private void collectIngredientsRecursive(Preparable prep, java.util.List<Ingredient> out) {
+        if (prep == null) return;
+
         if (prep instanceof Ingredient ing) {
             out.add(ing);
 
@@ -124,8 +138,10 @@ public class AssemblyRenderer {
             }
 
         } else if (prep instanceof Dish dish) {
-            for (Preparable sub : dish.getComponents()) {
-                collectIngredientsRecursive(sub, out);
+            if (dish.getComponents() != null) {
+                for (Preparable sub : dish.getComponents()) {
+                    collectIngredientsRecursive(sub, out);
+                }
             }
         }
     }
@@ -137,33 +153,44 @@ public class AssemblyRenderer {
                                     int tileX, int tileY,
                                     int tileSize,
                                     Plate plate) {
+        if (plate == null) return;
+
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int centerX = tileX + tileSize / 2;
         int centerY = tileY + tileSize / 2;
 
-        // --- 1. Gambar piring ---
-        int plateRadius = (int) (tileSize * 0.40);
-        g2.setColor(new Color(245, 245, 250));
-        g2.fillOval(centerX - plateRadius, centerY - plateRadius,
-                    plateRadius * 2, plateRadius * 2);
-        g2.setColor(new Color(200, 200, 210));
-        g2.drawOval(centerX - plateRadius, centerY - plateRadius,
-                    plateRadius * 2, plateRadius * 2);
+        // --- 1. Gambar piring pakai sprite ---
+        BufferedImage plateSprite = getSpriteForPlate(plate);
+        int plateSize = (int) (tileSize * 0.9);
+        int plateX = centerX - plateSize / 2;
+        int plateY = centerY - plateSize / 2;
 
-        if (!plate.isClean()) {
-            g2.setColor(new Color(80, 80, 80, 120));
+        if (plateSprite != null) {
+            g2.drawImage(plateSprite, plateX, plateY, plateSize, plateSize, null);
+        } else {
+            // fallback: kalau sprite nggak ketemu, pakai lingkaran lama
+            int plateRadius = (int) (tileSize * 0.40);
+            g2.setColor(new Color(245, 245, 250));
             g2.fillOval(centerX - plateRadius, centerY - plateRadius,
                         plateRadius * 2, plateRadius * 2);
-            g2.setColor(Color.BLACK);
-            g2.drawString("Dirty", tileX + 4, tileY + tileSize - 4);
+            g2.setColor(new Color(200, 200, 210));
+            g2.drawOval(centerX - plateRadius, centerY - plateRadius,
+                        plateRadius * 2, plateRadius * 2);
+        }
+
+        // Kalau piring kotor → cukup pakai sprite piring kotor, tidak render isi
+        if (!plate.isClean()) {
             return;
         }
 
         // --- 2. Kumpulkan SEMUA Ingredient dari plate (langsung & nested) ---
         java.util.List<Ingredient> allIngredients = new java.util.ArrayList<>();
-        for (Preparable prep : plate.getContents()) {
-            collectIngredientsRecursive(prep, allIngredients);
+        java.util.Set<Preparable> contents = plate.getContents();
+        if (contents != null) {
+            for (Preparable prep : contents) {
+                collectIngredientsRecursive(prep, allIngredients);
+            }
         }
 
         // Pisahkan dough & topping
@@ -213,7 +240,8 @@ public class AssemblyRenderer {
 
         // --- 5. Info kecil jumlah isi plate ---
         g2.setColor(Color.BLACK);
-        g2.drawString("x" + plate.getContents().size(),
+        int count = (contents == null) ? 0 : contents.size();
+        g2.drawString("x" + count,
                       tileX + tileSize - 16,
                       tileY + tileSize - 4);
     }
@@ -225,6 +253,8 @@ public class AssemblyRenderer {
                                     int tileX, int tileY,
                                     int tileSize,
                                     Dough dough) {
+        if (dough == null) return;
+
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int centerX = tileX + tileSize / 2;
