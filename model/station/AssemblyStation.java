@@ -84,13 +84,6 @@ public class AssemblyStation extends Station {
 
         // Tangan pegang item, meja kosong → taruh
         if (hand != null && top == null) {
-
-            // plate kotor TIDAK boleh ditaruh di assembly
-            if (hand instanceof Plate p && !p.isClean()) {
-                System.out.println("[Assembly] Plate kotor tidak boleh ditaruh di assembly.");
-                return false;
-            }
-
             // selain itu (dough, ingredient, dish, plate bersih, dll) → boleh
             itemOnStation = hand;
             chef.setHeldItem(null);
@@ -177,11 +170,6 @@ public class AssemblyStation extends Station {
 
     public boolean placeItem(Item item) {
         if (itemOnStation != null || item == null) return false;
-
-        if (item instanceof Plate p && !p.isClean()) {
-            System.out.println("[Assembly] Plate kotor tidak boleh ditaruh di assembly (placeItem).");
-            return false;
-        }
 
         itemOnStation = item;
         return true;
