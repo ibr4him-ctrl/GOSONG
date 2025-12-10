@@ -12,6 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
@@ -63,6 +64,11 @@ public class GamePanel extends JPanel implements Runnable {
     private BufferedImage orderPaper1;
     private BufferedImage orderPaper2;
     private BufferedImage orderPaper3;
+
+    // Icon dan panel UI tambahan
+    private BufferedImage settingsIconImage;
+    private BufferedImage chefInventory1Image;
+    private BufferedImage chefInventory2Image;
 
     private Map<String, Station> stationMap = new HashMap<>();
 
@@ -164,6 +170,7 @@ public class GamePanel extends JPanel implements Runnable {
         
         loadOrderIndicatorImages();
         loadOrderPaperImages();
+        loadUiOverlayImages();
         
         SettingsEditor.setMusicPlayer(main.Main.getMusicPlayer());
     }
@@ -190,6 +197,30 @@ public class GamePanel extends JPanel implements Runnable {
         } catch (IOException e) {
             System.err.println("Failed to load order paper images: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void loadUiOverlayImages() {
+        try {
+            URL url = getClass().getResource("/resources/game/Pengaturan.png");
+            if (url != null) {
+                settingsIconImage = ImageIO.read(url);
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load Pengaturan.png: " + e.getMessage());
+        }
+
+        try {
+            URL inv1 = getClass().getResource("/resources/item/inventory/1.png");
+            URL inv2 = getClass().getResource("/resources/item/inventory/2.png");
+            if (inv1 != null) {
+                chefInventory1Image = ImageIO.read(inv1);
+            }
+            if (inv2 != null) {
+                chefInventory2Image = ImageIO.read(inv2);
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load chef inventory images: " + e.getMessage());
         }
     }
     
@@ -955,30 +986,15 @@ private void handleActions() {
         settingButtonY = 6 * TILE_SIZE;
         settingButtonWidth = buttonSize;
         settingButtonHeight = buttonSize;
-        
-        g2.setColor(new Color(250, 250, 250, 220));
-        g2.fillRoundRect(settingButtonX, settingButtonY, buttonSize, buttonSize, 8, 8);
-        g2.setColor(Color.BLACK);
-        g2.drawRoundRect(settingButtonX, settingButtonY, buttonSize, buttonSize, 8, 8);
 
-        String text = "Setting";
-        g2.setFont(g2.getFont().deriveFont(12f));
-        
-        java.awt.FontMetrics fm = g2.getFontMetrics();
-        int textX = settingButtonX + (buttonSize - fm.stringWidth(text)) / 2;
-        int textY = settingButtonY + (buttonSize + fm.getAscent() - fm.getDescent()) / 2;
-        
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                if (dx != 0 || dy != 0) {
-                    g2.setColor(new Color(0, 0, 0, 150));
-                    g2.drawString(text, textX + dx, textY + dy);
-                }
-            }
+        if (settingsIconImage != null) {
+            g2.drawImage(settingsIconImage, settingButtonX, settingButtonY, buttonSize, buttonSize, null);
+        } else {
+            g2.setColor(new Color(250, 250, 250, 220));
+            g2.fillRoundRect(settingButtonX, settingButtonY, buttonSize, buttonSize, 8, 8);
+            g2.setColor(Color.BLACK);
+            g2.drawRoundRect(settingButtonX, settingButtonY, buttonSize, buttonSize, 8, 8);
         }
-        
-        g2.setColor(Color.WHITE);
-        g2.drawString(text, textX, textY);
     }
 
     private String getChefHeldItemInfo(Chef chef) {
@@ -1011,29 +1027,43 @@ private void handleActions() {
     }
 
     private void drawBottomStatusBar(Graphics2D g2) {
-        int barHeight = 30;
+        int barHeight = 2 * TILE_SIZE;
         int barY = SCREEN_HEIGHT - barHeight;
-        
-        g2.setColor(new Color(0, 0, 0, 200));
+
+        g2.setColor(new Color(0, 0, 0, 220));
         g2.fillRect(0, barY, SCREEN_WIDTH, barHeight);
-        
+
+        int inventoryWidth = 4 * TILE_SIZE;
+        int inventoryHeight = barHeight;
+
+        int chef1InvX = TILE_SIZE / 2;
+        int chef1InvY = barY;
+        int chef2InvX = chef1InvX + inventoryWidth + TILE_SIZE / 2;
+        int chef2InvY = barY;
+
+        if (chefInventory1Image != null) {
+            g2.drawImage(chefInventory1Image, chef1InvX, chef1InvY, inventoryWidth, inventoryHeight, null);
+        }
+        if (chefInventory2Image != null) {
+            g2.drawImage(chefInventory2Image, chef2InvX, chef2InvY, inventoryWidth, inventoryHeight, null);
+        }
+
+        int iconSize = TILE_SIZE;
+        int iconOffsetY = barY - iconSize / 2;
+
+        int chef1IconX = chef1InvX + inventoryWidth / 2 - iconSize / 2;
+        int chef2IconX = chef2InvX + inventoryWidth / 2 - iconSize / 2;
+
+        drawHeldItemIcon(g2, chef1, chef1IconX, iconOffsetY);
+        drawHeldItemIcon(g2, chef2, chef2IconX, iconOffsetY);
+
         g2.setColor(Color.WHITE);
         g2.setFont(g2.getFont().deriveFont(12f));
-        
-        int spacing = SCREEN_WIDTH / 4;
-        int startX = spacing / 2;
-        
-        String chef1Info = "Chef 1: " + getChefHeldItemInfo(chef1);
-        String chef2Info = "Chef 2: " + getChefHeldItemInfo(chef2);
-        String logo = "LOGO";
-        
-        g2.drawString(chef1Info, startX, barY + 20);
-        g2.drawString(chef2Info, startX + spacing, barY + 20);
-        
+
         int countdownBoxWidth = 6 * TILE_SIZE;
-        int countdownBoxHeight = 2 * TILE_SIZE;
-        int countdownBoxX = startX + spacing * 2;
-        int countdownBoxY = SCREEN_HEIGHT - countdownBoxHeight;
+        int countdownBoxHeight = barHeight - TILE_SIZE / 3;
+        int countdownBoxX = chef2InvX + inventoryWidth + TILE_SIZE / 2;
+        int countdownBoxY = barY + (barHeight - countdownBoxHeight) / 2;
         
         Color woodBrown = new Color(101, 67, 33);
         Color burntWood = new Color(139, 69, 19);
@@ -1057,7 +1087,7 @@ private void handleActions() {
         g2.drawString(countdownText, textX, textY);
         
         g2.setFont(g2.getFont().deriveFont(12f));
-        g2.drawString(logo, startX + spacing * 3, barY + 20);
+        g2.drawString("LOGO", countdownBoxX + countdownBoxWidth + TILE_SIZE / 2, barY + barHeight / 2);
     }
 
     /**
@@ -1074,8 +1104,8 @@ private void handleActions() {
         int startX = SCREEN_WIDTH - blockSize; // tanpa margin kiri-kanan
         int startY = 0;                        // mentok ke atas
 
-        // Jarak antar blok secara vertikal
-        int blockSpacing = TILE_SIZE / 3; // sedikit jarak antar blok
+        // Jarak antar blok secara vertikal (diperkecil agar kertas tampak lebih rapat)
+        int blockSpacing = TILE_SIZE / 6;
 
         // Font dasar untuk text di dalam blok
         g2.setFont(g2.getFont().deriveFont(9f));
