@@ -3,6 +3,7 @@ package model.station;
 import java.util.ArrayList;
 import java.util.List;
 import model.chef.Chef;
+import model.enums.IngredientState;
 import model.enums.PizzaType;
 import model.item.Dish;
 import model.item.Item;
@@ -136,18 +137,32 @@ public class CookingStation extends Station {
                 return false;
             }
 
-            // RULE BARU: plate harus mengandung Dough
+            // RULE : plate harus mengandung Dough
             if (!plateHasDough(plate)) {
                 System.out.println("[CookingStation] Plate tanpa dough tidak boleh masuk oven.");
                 return false;
             }
 
+            //RULE : plate tidak boleh mengandung INGREDIENT RAW
+            if (plateHasRawIngredient(plate)) {
+                System.out.println("[CookingStation] Plate masih berisi ingredient RAW, tidak boleh masuk oven.");
+                return false;
+            }
+
+
             boolean movedAny = false;
             var contentsCopy = new ArrayList<>(plate.getContents());
 
             for (var p : contentsCopy) {
-                if (!(p instanceof Ingredient ing)) continue;   // cuma Ingredient
-                if (!oven.canAccept(ing)) continue;            // oven full / gak boleh
+                if (!(p instanceof Ingredient ing)) continue;
+
+                // (opsional, bisa tambah guard lagi di sini)
+                if (ing.getState() == IngredientState.RAW) {
+                    System.out.println("[CookingStation] Skip ingredient RAW: " + ing.getName());
+                    continue;
+                }
+
+                if (!oven.canAccept(ing)) continue;
 
                 oven.addIngredient(ing);
                 plate.removeIngredient(ing);
@@ -168,6 +183,12 @@ public class CookingStation extends Station {
         // 3) CHEF PEGANG INGREDIENT LANGSUNG → MASUKKAN KE OVEN
         // =========================
         if (hand instanceof Ingredient ing) {
+
+            if (ing.getState() == IngredientState.RAW) {
+                System.out.println("[CookingStation] Tidak boleh memasukkan ingredient RAW langsung ke oven.");
+                return false;
+            }
+
             if (!oven.canAccept(ing)) {
                 System.out.println("Oven menolak ingredient: " + ing.getName());
                 return false;
@@ -198,6 +219,16 @@ public class CookingStation extends Station {
         for (Preparable p : plate.getContents()) {
             if (p instanceof Ingredient ing && ing instanceof model.item.ingredient.pizza.Dough) {
                 return true;
+            }
+        }
+        return false;
+    }
+    private boolean plateHasRawIngredient(Plate plate) {
+        for (Preparable p : plate.getContents()) {
+            if (p instanceof Ingredient ing) {
+                if (ing.getState() == IngredientState.RAW) {
+                    return true;
+                }
             }
         }
         return false;
