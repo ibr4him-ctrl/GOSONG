@@ -43,17 +43,21 @@ public class Order {
     private final PizzaType pizzaType; //Recipe 
     private final int reward; //Reward 
     private final int penalty; //penalti jika gagal 
-    private final int timeLimit; //time limit 
-    private volatile int timeRemaining; //sisa waktu 
-    private final long createdAt; // Timestamp saat order dibuat, untuk FIFO kalau ada dua order sama
+    private final int timeLimit; // time limit dalam detik
+    private volatile int timeRemaining; // sisa waktu, dihitung dari waktu absolut
+    private final long createdAt; // Timestamp saat order dibuat, untuk FIFO & perhitungan waktu
     
     public Order(PizzaType pizzaType) {
+        this(pizzaType, 60);
+    }
+
+    public Order(PizzaType pizzaType, int timeLimitSeconds) {
         this.id = orderCounter.incrementAndGet();
         this.pizzaType = pizzaType;
         this.reward = pizzaType.getBaseReward();
         this.penalty = -50;
-        this.timeLimit = 60;
-        this.timeRemaining = this.timeLimit;
+        this.timeLimit = timeLimitSeconds;
+        this.timeRemaining = timeLimitSeconds;
         this.createdAt = System.currentTimeMillis();
     }
     
@@ -85,10 +89,11 @@ public class Order {
         return createdAt; 
     }
     
-    public synchronized int decrementTime() {
-        if (timeRemaining > 0) {
-            timeRemaining--;
-        }
+    public synchronized int recalculateTimeRemaining() {
+        long now = System.currentTimeMillis();
+        long elapsedSeconds = (now - createdAt) / 1000L;
+        int remaining = (int) (timeLimit - elapsedSeconds);
+        timeRemaining = Math.max(remaining, 0);
         return timeRemaining;
     }
     

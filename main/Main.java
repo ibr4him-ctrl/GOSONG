@@ -85,10 +85,9 @@ public class Main {
             window.dispose();
         }
         musicPlayer.stop();
-        model.manager.OrderManager.getInstance().stopAcceptingNewOrders();
+        model.manager.OrderManager.resetInstance();
         model.manager.ScoreManager.getInstance().reset();
         model.item.dish.Order.resetOrderCounter();
-        model.manager.OrderManager.getInstance().init();
         
         SwingUtilities.invokeLater(() -> {
             startGame();

@@ -16,15 +16,13 @@ public class OrderManager {
 
     private final Random random;
 
-    private double secondAccumulator = 0.0;
     private double sessionTimeElapsed = 0.0;
-    private double timeSinceLastSpawn = 0.0;
 
-    private static final int MAX_ORDERS = 5;
-    private static final int INITIAL_ORDERS = 1;
+    // Selalu target 3 order aktif dengan timeLimit berjenjang 60/120/180 detik
+    private static final int MAX_ORDERS = 3;
+    private static final int INITIAL_ORDERS = 3;
     private static final int MAX_TOTAL_ORDERS = 3;
     private static final double SESSION_LIMIT_SECONDS = 180.0;
-    private static final double SPAWN_INTERVAL_SECONDS = 30.0;
 
     private boolean acceptingNewOrders = true;
     private boolean sessionOver = false;
@@ -41,6 +39,10 @@ public class OrderManager {
         }
         return instance;
     }
+    
+    public static void resetInstance() {
+        instance = null;
+    }
 
     public void init() {
         activeOrders.clear();
@@ -48,10 +50,12 @@ public class OrderManager {
         acceptingNewOrders = true;
         sessionOver = false;
         sessionTimeElapsed = 0.0;
-        timeSinceLastSpawn = 0.0;
-        secondAccumulator = 0.0;
+
+        // Buat 3 order awal sekaligus dengan time limit berjenjang 60/120/180
+        // Urutan jenis pizza tetap random, tidak ada pola deterministik
         for (int i = 0; i < INITIAL_ORDERS; i++) {
-            spawnRandomOrder();
+            int baseTimeSeconds = 60 * (i + 1); // 60, 120, 180
+            spawnRandomOrderWithTimeLimit(baseTimeSeconds);
         }
     }
 
@@ -60,15 +64,11 @@ public class OrderManager {
             return;
         }
 
-        secondAccumulator += deltaSeconds;
         sessionTimeElapsed += deltaSeconds;
-        timeSinceLastSpawn += deltaSeconds;
 
-        if (secondAccumulator >= 1.0) {
-            for (Order order : activeOrders) {
-                order.decrementTime();
-            }
-            secondAccumulator -= 1.0;
+        // Recalculate timeRemaining semua order berbasis waktu absolut
+        for (Order order : activeOrders) {
+            order.recalculateTimeRemaining();
         }
 
         for (Order order : activeOrders) {
@@ -102,11 +102,15 @@ public class OrderManager {
     private void spawnOrderIfNeeded() {
         if (!acceptingNewOrders) return;
         if (activeOrders.size() >= MAX_ORDERS) return;
-        if (timeSinceLastSpawn < SPAWN_INTERVAL_SECONDS) return;
-        spawnRandomOrder();
+        if (totalSpawnedOrders >= MAX_TOTAL_ORDERS) return;
+
+        // Cari slot index berikutnya berdasarkan jumlah total order yang sudah pernah di-spawn
+        int index = totalSpawnedOrders; // 0,1,2
+        int baseTimeSeconds = 60 * (index + 1); // 60, 120, 180
+        spawnRandomOrderWithTimeLimit(baseTimeSeconds);
     }
 
-    private void spawnRandomOrder() {
+    private void spawnRandomOrderWithTimeLimit(int timeLimitSeconds) {
         if (totalSpawnedOrders >= MAX_TOTAL_ORDERS) {
             acceptingNewOrders = false;
             return;
@@ -115,10 +119,9 @@ public class OrderManager {
         PizzaType[] types = PizzaType.values();
         PizzaType randomType = types[random.nextInt(types.length)];
 
-        Order newOrder = new Order(randomType);
+        Order newOrder = new Order(randomType, timeLimitSeconds);
         activeOrders.add(newOrder);
         totalSpawnedOrders++;
-        timeSinceLastSpawn = 0.0;
 
         System.out.println("NEW ORDER: " + newOrder);
     }

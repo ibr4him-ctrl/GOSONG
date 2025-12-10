@@ -60,6 +60,11 @@ public class GamePanel extends JPanel implements Runnable {
     private BufferedImage ijo1Image;
     private BufferedImage ijo2Image;
 
+    // Background kertas order untuk 3 blok order
+    private BufferedImage orderPaper1;
+    private BufferedImage orderPaper2;
+    private BufferedImage orderPaper3;
+
     private Map<String, Station> stationMap = new HashMap<>();
 
     private Map<String, Item> groundItems = new HashMap<>();
@@ -159,6 +164,7 @@ public class GamePanel extends JPanel implements Runnable {
         model.manager.ScoreManager.getInstance().reset();
         
         loadOrderIndicatorImages();
+        loadOrderPaperImages();
         
         SettingsEditor.setMusicPlayer(main.Main.getMusicPlayer());
     }
@@ -172,6 +178,18 @@ public class GamePanel extends JPanel implements Runnable {
             System.out.println("Order indicator images loaded successfully");
         } catch (IOException e) {
             System.err.println("Failed to load order indicator images: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void loadOrderPaperImages() {
+        try {
+            orderPaper1 = ImageIO.read(getClass().getResource("/resources/game/KertasOrderan.png"));
+            orderPaper2 = ImageIO.read(getClass().getResource("/resources/game/KertasOrderan2.png"));
+            orderPaper3 = ImageIO.read(getClass().getResource("/resources/game/KertasOrderan3.png"));
+            System.out.println("Order paper images loaded successfully");
+        } catch (IOException e) {
+            System.err.println("Failed to load order paper images: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -878,60 +896,8 @@ private void handleActions() {
         int score = model.manager.ScoreManager.getInstance().getScore();
         g2.drawString("Score: " + score, 10, 60);
 
-        // ====== Gambar daftar Order aktif di pojok kanan atas ======
-        var orders = OrderManager.getInstance().getActiveOrders();
-        int imgWidth = 200;  // Lebar gambar indikator (proporsional)
-        int imgHeight = 50;  // Tinggi gambar indikator (proporsional)
-        int startX = SCREEN_WIDTH - imgWidth - 10;
-        int startY = 60;
-        int spacing = 8;  // Jarak antar order
-
-        g2.setFont(g2.getFont().deriveFont(14f));
-
-        int i = 0;
-        for (var order : orders) {
-            int x = startX;
-            int y = startY + i * (imgHeight + spacing);
-
-            // Draw order indicator image as background
-            BufferedImage indicatorImg = getOrderIndicatorImage(order.getTimeRemaining());
-            if (indicatorImg != null) {
-                g2.drawImage(indicatorImg, x, y, imgWidth, imgHeight, null);
-            } else {
-                // Fallback: kotak abu-abu jika gambar tidak ada
-                g2.setColor(new Color(200, 200, 200));
-                g2.fillRoundRect(x, y, imgWidth, imgHeight, 8, 8);
-            }
-
-            // Draw text on top of the image
-            String text = String.format(
-                "#%d %s  [%ds]",
-                order.getId(),
-                order.getPizzaType().getDisplayName(),
-                order.getTimeRemaining()
-            );
-            
-            // Calculate text position (centered vertically, with padding)
-            int textX = x + 10;
-            int textY = y + imgHeight / 2 + 5; // Centered vertically
-            
-            // Draw text with outline/shadow for better visibility
-            // Draw outline/shadow
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    if (dx != 0 || dy != 0) {
-                        g2.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
-                        g2.drawString(text, textX + dx, textY + dy);
-                    }
-                }
-            }
-            
-            // Draw main text in white
-            g2.setColor(Color.WHITE);
-            g2.drawString(text, textX, textY);
-
-            i++;
-        }
+        // ====== Gambar daftar Order aktif dengan template 2x2 blok di pojok kanan atas ======
+        drawOrderUI(g2);
 
         drawSettingButton(g2);
         drawBottomStatusBar(g2);
@@ -1048,6 +1014,161 @@ private void handleActions() {
         
         g2.setFont(g2.getFont().deriveFont(12f));
         g2.drawString(logo, startX + spacing * 3, barY + 20);
+    }
+
+    /**
+     * Menggambar tampilan order dengan template 2x2 blok di pojok kanan atas
+     * Setiap blok berukuran 2x2 tile, disusun vertikal ke bawah
+     */
+    private void drawOrderUI(Graphics2D g2) {
+        var orders = OrderManager.getInstance().getActiveOrders();
+
+        // Ukuran blok 2x2 tile
+        int blockSize = TILE_SIZE * 2;
+
+        // Posisi awal di pojok kanan atas, benar-benar menempel ke kanan
+        int startX = SCREEN_WIDTH - blockSize; // tanpa margin kiri-kanan
+        int startY = 0;                        // mentok ke atas
+
+        // Jarak antar blok secara vertikal
+        int blockSpacing = TILE_SIZE / 3; // sedikit jarak antar blok
+
+        // Font dasar untuk text di dalam blok
+        g2.setFont(g2.getFont().deriveFont(9f));
+
+        // Hanya tampilkan maksimal 3 order (3 blok 2x2)
+        int maxBlocks = Math.min(3, orders.size());
+        for (int i = 0; i < maxBlocks; i++) {
+            var order = orders.get(i);
+            int x = startX;
+            int y = startY + i * (blockSize + blockSpacing);
+
+            drawOrderBlock(g2, x, y, blockSize, order, i);
+        }
+    }
+    
+    /**
+     * Menggambar satu blok order berukuran 2x2 tile
+     */
+    private void drawOrderBlock(Graphics2D g2, int x, int y, int blockSize, model.item.dish.Order order, int index) {
+        // Pilih background kertas berdasarkan sisa waktu order:
+        // 60-40 detik  -> KertasOrderan.png
+        // 39-20 detik  -> KertasOrderan2.png
+        // 19-0 detik   -> KertasOrderan3.png
+        int time = order.getTimeRemaining();
+        BufferedImage bg;
+        if (time > 39) {
+            bg = orderPaper1;
+        } else if (time > 19) {
+            bg = orderPaper2;
+        } else {
+            bg = orderPaper3;
+        }
+
+        if (bg != null) {
+            g2.drawImage(bg, x, y, blockSize, blockSize, null);
+        } else {
+            g2.setColor(new Color(245, 245, 220));
+            g2.fillRoundRect(x, y, blockSize, blockSize, 12, 12);
+        }
+
+        g2.setColor(Color.BLACK);
+        g2.drawRoundRect(x, y, blockSize, blockSize, 12, 12);
+
+        drawOrderInfo(g2, x, y, blockSize, order);
+    }
+    
+    /**
+     * Menggambar informasi order di dalam blok, termasuk daftar ingredients
+     * dan penanda (chopped) jika perlu dipotong.
+     */
+    private void drawOrderInfo(Graphics2D g2, int x, int y, int blockSize, model.item.dish.Order order) {
+        String orderText = String.format("#%d", order.getId());
+        String pizzaText = order.getPizzaType().getDisplayName();
+        String timeText = String.format("%ds", order.getTimeRemaining());
+
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+
+        // Area dalam blok (beri sedikit padding dari border)
+        int padding = 6;
+        int innerX = x + padding;
+        int innerY = y + padding;
+        int innerWidth = blockSize - padding * 2;
+
+        int lineHeight = fm.getHeight();
+        int cursorY = innerY + lineHeight; // mulai dari baris pertama di dalam blok
+
+        // Order ID di baris pertama
+        int orderX = innerX + (innerWidth - fm.stringWidth(orderText)) / 2;
+        drawTextWithShadow(g2, orderText, orderX, cursorY, Color.BLACK, Color.LIGHT_GRAY);
+
+        // Nama pizza di baris kedua
+        cursorY += lineHeight;
+        int pizzaX = innerX + (innerWidth - fm.stringWidth(pizzaText)) / 2;
+        drawTextWithShadow(g2, pizzaText, pizzaX, cursorY, Color.BLACK, Color.LIGHT_GRAY);
+
+        // Daftar ingredients di bawah nama pizza
+        cursorY += lineHeight;
+        g2.setFont(g2.getFont().deriveFont(8f));
+        fm = g2.getFontMetrics();
+        lineHeight = fm.getHeight();
+
+        // Judul kecil "Ingredients:"
+        String ingTitle = "Ingredients:";
+        drawTextWithShadow(g2, ingTitle, innerX, cursorY, Color.BLACK, Color.LIGHT_GRAY);
+
+        // Tentukan ingredients berdasarkan jenis pizza
+        java.util.List<String> ingredientLines = new java.util.ArrayList<>();
+        switch (order.getPizzaType()) {
+            case MARGHERITA -> {
+                ingredientLines.add("Dough (chopped)");
+                ingredientLines.add("Tomato (chopped)");
+                ingredientLines.add("Cheese");
+            }
+            case SOSIS -> {
+                ingredientLines.add("Dough (chopped)");
+                ingredientLines.add("Tomato (chopped)");
+                ingredientLines.add("Cheese");
+                ingredientLines.add("Sausage (chopped)");
+            }
+            case AYAM -> {
+                ingredientLines.add("Dough (chopped)");
+                ingredientLines.add("Tomato (chopped)");
+                ingredientLines.add("Cheese");
+                ingredientLines.add("Chicken (chopped)");
+            }
+        }
+
+        // Gambar setiap baris ingredients, dibatasi supaya muat di dalam blok
+        for (String line : ingredientLines) {
+            cursorY += lineHeight;
+            if (cursorY > y + blockSize - lineHeight * 2) {
+                // Kalau sudah mau mentok bawah, berhenti supaya tidak keluar blok
+                break;
+            }
+            drawTextWithShadow(g2, "- " + line, innerX, cursorY, Color.BLACK, Color.LIGHT_GRAY);
+        }
+
+        // Waktu di baris terakhir, ditempatkan di bagian bawah blok
+        g2.setFont(g2.getFont().deriveFont(9f));
+        fm = g2.getFontMetrics();
+        timeText = String.format("Time: %ds", order.getTimeRemaining());
+        int timeX = innerX + (innerWidth - fm.stringWidth(timeText)) / 2;
+        int timeY = y + blockSize - padding;
+        drawTextWithShadow(g2, timeText, timeX, timeY, Color.BLACK, Color.LIGHT_GRAY);
+    }
+    
+    /**
+     * Menggambar text dengan shadow effect
+     */
+    private void drawTextWithShadow(Graphics2D g2, String text, int x, int y, Color textColor, Color shadowColor) {
+        // Shadow
+        g2.setColor(shadowColor);
+        g2.drawString(text, x + 1, y + 1);
+        
+        // Main text
+        g2.setColor(textColor);
+        g2.drawString(text, x, y);
     }
 }
 
