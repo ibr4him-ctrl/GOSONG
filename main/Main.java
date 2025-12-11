@@ -13,6 +13,9 @@ public class Main {
     private static int score = 0;
     private static JLabel scoreLabel;
     private static JTextArea orderLog;
+    
+    // Static reference ke GameResult untuk akses dari GameOver UI
+    private static model.manager.GameResult lastGameResult = null;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -72,9 +75,18 @@ public class Main {
         musicPlayer.stop();
         
         SwingUtilities.invokeLater(() -> {
-            view.GameOver gameOver = new view.GameOver();
+            view.GameOver gameOver = new view.GameOver(lastGameResult);
             gameOver.setVisible(true);
         });
+    }
+
+    /**
+     * Overload: showGameOver dengan GameResult.
+     * Disebut dari GameController saat game berakhir.
+     */
+    public static void showGameOver(model.manager.GameResult result) {
+        lastGameResult = result;
+        showGameOver();
     }
 
 
@@ -85,13 +97,29 @@ public class Main {
         }
         musicPlayer.stop();
         model.manager.OrderManager.resetInstance();
-        model.manager.ScoreManager.getInstance().reset();
+        model.manager.ScoreManager.getInstance().resetScore();
+        model.manager.OrderFailTracker.resetInstance();
+        model.manager.GameController.resetInstance();
         model.item.dish.Order.resetOrderCounter();
         
         SwingUtilities.invokeLater(() -> {
             startGame();
         });
     }
+
+    public static void showMainMenu() {
+        if (window != null) {
+            window.setVisible(false);
+            window.dispose();
+        }
+        musicPlayer.stop();
+
+        SwingUtilities.invokeLater(() -> {
+            MainMenu mainMenu = new MainMenu();
+            mainMenu.setVisible(true);
+        });
+    }
+
 
     public static void stopGame() {
         model.manager.OrderManager.getInstance().stopAcceptingNewOrders();
@@ -101,5 +129,9 @@ public class Main {
 
     public static MusicPlayer getMusicPlayer() {
         return musicPlayer;
+    }
+
+    public static model.manager.GameResult getLastGameResult() {
+        return lastGameResult;
     }
 }

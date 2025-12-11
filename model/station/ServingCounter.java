@@ -60,11 +60,17 @@ public class ServingCounter extends Station {
                 System.out.println("SUKSES: " + matchedOrder.getPizzaType().getDisplayName());
                 System.out.println("Reward: +" + matchedOrder.getReward());
                 ScoreManager.getInstance().add(matchedOrder.getReward());
+                
+                // Lapor ke GameController bahwa order berhasil
+                model.manager.GameController.getInstance().onOrderSuccess();
             } else {
                 System.out.println("GAGAL: Tidak ada pesanan untuk "
                         + dish.getPizzaType().getDisplayName());
                 System.out.println("Penalti -50 (pizza salah pesanan).");
                 ScoreManager.getInstance().add(-50);
+                
+                // Lapor ke GameController bahwa order gagal
+                model.manager.GameController.getInstance().onOrderFailed();
             }
         }
 

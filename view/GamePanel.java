@@ -166,7 +166,10 @@ public class GamePanel extends JPanel implements Runnable {
         OrderManager.getInstance().init();
 
         // RESET SCORE DI AWAL GAME
-        model.manager.ScoreManager.getInstance().reset();
+        model.manager.ScoreManager.getInstance().resetScore();
+        
+        // INIT GAME CONTROLLER (orchestrator pusat)
+        model.manager.GameController.getInstance().startGame();
         
         loadOrderIndicatorImages();
         loadOrderPaperImages();
@@ -379,8 +382,9 @@ public class GamePanel extends JPanel implements Runnable {
         updateWashingStations(deltaSeconds); 
 
         OrderManager.getInstance().update(deltaSeconds);
-
         
+        // Update GameController untuk orchestration game ending
+        model.manager.GameController.getInstance().update(deltaSeconds);
     }
 
     private Chef getActiveChef() {
