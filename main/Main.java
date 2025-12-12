@@ -87,6 +87,9 @@ public class Main {
         }
         
         if (window != null) {
+            if (gamePanel != null) {
+                gamePanel.stopGameThread();
+            }
             window.setVisible(false);
             window.dispose();
         }
@@ -157,6 +160,9 @@ public class Main {
             }
         }
         if (window != null) {
+            if (gamePanel != null) {
+                gamePanel.stopGameThread();
+            }
             window.setVisible(false);
             window.dispose();
         }

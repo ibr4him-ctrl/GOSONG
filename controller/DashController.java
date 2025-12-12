@@ -4,23 +4,18 @@ import model.chef.Chef;
 import model.map.Position;
 import model.map.tile.Tile;
 
-/**
- * DashController - Menghandle dash movement untuk chef
- * 
- * Fitur:
- * - Dash bergerak 3 tile ke arah yang dituju
- * - Cooldown 3 detik antar dash
- * - Dash akan berhenti jika bertemu tile yang tidak walkable
- */
 public class DashController {
     
-    private static final int DASH_DISTANCE = 3; // Bergerak 3 tile
-    private static final long DASH_COOLDOWN_NS = 3_000_000_000L; // 3 detik dalam nanoseconds
-    
+    private static final int DASH_DISTANCE = 3; 
+    private static final long DASH_COOLDOWN_NS = 3_000_000_000L; 
+
+    // Cooldown tracking per chef
     private long lastDashTimeChef1 = 0L;
     private long lastDashTimeChef2 = 0L;
     
-    private boolean wasShiftPressed = false;
+    // Edge detection per chef (FIX: separated state)
+    private boolean wasShiftPressedChef1 = false;
+    private boolean wasShiftPressedChef2 = false;
     
     /**
      * Execute dash untuk chef yang sedang aktif
@@ -30,31 +25,42 @@ public class DashController {
      * @param map Tile map untuk collision detection
      * @param isFirstChef Apakah ini chef 1 atau chef 2 (untuk tracking cooldown)
      * @param shiftPressed Apakah tombol Shift sedang ditekan
-     * @return true jika dash berhasil, false jika masih cooldown atau invalid
+     * @return DashResult dengan informasi hasil dash
      */
-    public boolean execute(Chef chef, char direction, Tile[][] map, 
-                          boolean isFirstChef, boolean shiftPressed) {
+    public DashResult execute(Chef chef, char direction, Tile[][] map, 
+                             boolean isFirstChef, boolean shiftPressed) {
         
         long now = System.nanoTime();
         long lastDashTime = isFirstChef ? lastDashTimeChef1 : lastDashTimeChef2;
+        boolean wasPressed = isFirstChef ? wasShiftPressedChef1 : wasShiftPressedChef2;
         
-        // Deteksi edge: dash hanya trigger saat Shift baru ditekan (bukan hold)
+        // Reset flag saat Shift dilepas
         if (!shiftPressed) {
-            wasShiftPressed = false;
-            return false;
+            if (isFirstChef) {
+                wasShiftPressedChef1 = false;
+            } else {
+                wasShiftPressedChef2 = false;
+            }
+            return new DashResult(false, 0, "Shift not pressed");
         }
         
-        if (wasShiftPressed) {
-            return false; // Masih hold, jangan dash lagi
-        }
-        
-        wasShiftPressed = true;
-        
+        // Deteksi edge: hanya trigger saat Shift BARU ditekan
+        // if (wasPressed) {
+        //     return new DashResult(false, 0, "Shift still held");
+        // }
+
         // Check cooldown
         if (now - lastDashTime < DASH_COOLDOWN_NS) {
             double remainingSeconds = (DASH_COOLDOWN_NS - (now - lastDashTime)) / 1_000_000_000.0;
-            System.out.println("[Dash] Cooldown: " + String.format("%.1f", remainingSeconds) + "s remaining");
-            return false;
+            String message = String.format("[Dash] Cooldown: %.1fs remaining", remainingSeconds);
+            return new DashResult(false, 0, message);
+        }
+
+        // Set flag bahwa Shift sudah ditekan untuk chef ini
+        if (isFirstChef) {
+            wasShiftPressedChef1 = true;
+        } else {
+            wasShiftPressedChef2 = true;
         }
         
         // Calculate dash direction
@@ -64,7 +70,7 @@ public class DashController {
             case 'S': dy = 1;  break; // Bawah
             case 'A': dx = -1; break; // Kiri
             case 'D': dx = 1;  break; // Kanan
-            default: return false;
+            default: return new DashResult(false, 0, "Invalid direction");
         }
         
         Position currentPos = chef.getPosition();
@@ -89,8 +95,9 @@ public class DashController {
         
         // Jika tidak bisa gerak sama sekali, dash gagal
         if (tilesMovedCount == 0) {
-            System.out.println("[Dash] Blocked! Cannot dash in that direction.");
-            return false;
+            String message = "[Dash] Blocked! Cannot dash in that direction.";
+            System.out.println(message);
+            return new DashResult(false, 0, message);
         }
         
         // Execute dash
@@ -105,15 +112,19 @@ public class DashController {
             lastDashTimeChef2 = now;
         }
         
-        System.out.println("[Dash] " + chef.getName() + " dashed " + 
-                          tilesMovedCount + " tiles!");
+        String message = String.format("[Dash] %s dashed %d tiles!", 
+                                      chef.getName(), tilesMovedCount);
+        System.out.println(message);
         
-        return true;
+        return new DashResult(true, tilesMovedCount, message);
     }
     
-    /**
-     * Validasi apakah posisi bisa dilalui
-     */
+    public boolean executeSimple(Chef chef, char direction, Tile[][] map, 
+                                 boolean isFirstChef, boolean shiftPressed) {
+        DashResult result = execute(chef, direction, map, isFirstChef, shiftPressed);
+        return result.success;
+    }
+    
     private boolean isValidPosition(Position pos, Tile[][] map) {
         int x = pos.getX();
         int y = pos.getY();
@@ -127,10 +138,6 @@ public class DashController {
         return tile.isWalkable();
     }
     
-    /**
-     * Get remaining cooldown untuk chef tertentu
-     * @return Sisa cooldown dalam detik, atau 0 jika sudah bisa dash
-     */
     public double getRemainingCooldown(boolean isFirstChef) {
         long now = System.nanoTime();
         long lastDashTime = isFirstChef ? lastDashTimeChef1 : lastDashTimeChef2;
@@ -143,19 +150,56 @@ public class DashController {
         return (DASH_COOLDOWN_NS - elapsed) / 1_000_000_000.0;
     }
     
-    /**
-     * Check apakah chef bisa dash (tidak dalam cooldown)
-     */
+    public String getRemainingCooldownString(boolean isFirstChef) {
+        double remaining = getRemainingCooldown(isFirstChef);
+        if (remaining <= 0.0) {
+            return "Ready!";
+        }
+        return String.format("%.1fs", remaining);
+    }
+    
     public boolean canDash(boolean isFirstChef) {
         return getRemainingCooldown(isFirstChef) <= 0.0;
     }
     
-    /**
-     * Reset dash state (untuk testing atau restart)
-     */
+    public void resetCooldown(boolean isFirstChef) {
+        if (isFirstChef) {
+            lastDashTimeChef1 = 0L;
+        } else {
+            lastDashTimeChef2 = 0L;
+        }
+    }
+    
     public void reset() {
         lastDashTimeChef1 = 0L;
         lastDashTimeChef2 = 0L;
-        wasShiftPressed = false;
+        wasShiftPressedChef1 = false;
+        wasShiftPressedChef2 = false;
+    }
+    
+    public int getDashDistance() {
+        return DASH_DISTANCE;
+    }
+    
+    public double getCooldownDuration() {
+        return DASH_COOLDOWN_NS / 1_000_000_000.0;
+    }
+    
+    public static class DashResult {
+        public final boolean success;
+        public final int tilesMovedCount;
+        public final String message;
+        
+        public DashResult(boolean success, int tiles, String message) {
+            this.success = success;
+            this.tilesMovedCount = tiles;
+            this.message = message;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("DashResult{success=%s, tiles=%d, message='%s'}", 
+                               success, tilesMovedCount, message);
+        }
     }
 }

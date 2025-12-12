@@ -65,6 +65,10 @@ public class PizzaMap {
         return HEIGHT;
     }
 
+    public Tile[][] getTiles() {
+        return tiles;
+    }
+
     /**
      * Untuk debug: print map ke console sesuai simbol aslinya.
      */

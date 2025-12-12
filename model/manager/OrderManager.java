@@ -18,11 +18,12 @@ public class OrderManager {
 
     private double sessionTimeElapsed = 0.0;
 
-    // Selalu target 3 order aktif dengan timeLimit berjenjang 60/120/180 detik
+    // Selalu target 3 order aktif dengan timeLimit 80/160/240 detik sesuai urutan
     private static final int MAX_ORDERS = 3;
     private static final int INITIAL_ORDERS = 3;
-    private static final int MAX_TOTAL_ORDERS = 1; // DIUBAH UNTUK TESTING
-    private static final double SESSION_LIMIT_SECONDS = 180.0;
+    private static final int MAX_TOTAL_ORDERS = 3;
+    // Total waktu sesi 4 menit (240 detik)
+    private static final double SESSION_LIMIT_SECONDS = 240.0;
 
     private boolean acceptingNewOrders = true;
     private boolean sessionOver = false;
@@ -51,10 +52,10 @@ public class OrderManager {
         sessionOver = false;
         sessionTimeElapsed = 0.0;
 
-        // Buat 3 order awal sekaligus dengan time limit berjenjang 60/120/180
-        // Urutan jenis pizza tetap random, tidak ada pola deterministik
+        // Buat 3 order awal sekaligus dengan time limit 80, 160, 240 detik
+        // berdasarkan urutan spawn
         for (int i = 0; i < INITIAL_ORDERS; i++) {
-            int baseTimeSeconds = 60 * (i + 1); // 60, 120, 180
+            int baseTimeSeconds = 80 * (i + 1); // 80, 160, 240
             spawnRandomOrderWithTimeLimit(baseTimeSeconds);
         }
     }
@@ -109,10 +110,7 @@ public class OrderManager {
         if (activeOrders.size() >= MAX_ORDERS) return;
         if (totalSpawnedOrders >= MAX_TOTAL_ORDERS) return;
 
-        // Cari slot index berikutnya berdasarkan jumlah total order yang sudah pernah di-spawn
-        int index = totalSpawnedOrders; // 0,1,2
-        int baseTimeSeconds = 60 * (index + 1); // 60, 120, 180
-        spawnRandomOrderWithTimeLimit(baseTimeSeconds);
+        // Tidak spawn order baru di luar 3 order pertama
     }
 
     private void spawnRandomOrderWithTimeLimit(int timeLimitSeconds) {
