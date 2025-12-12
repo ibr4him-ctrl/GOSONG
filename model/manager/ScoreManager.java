@@ -4,7 +4,14 @@ public class ScoreManager {
 
     private static ScoreManager instance;
 
+    //Konstanta Skor
+    public static final int POINTS_SUCCESS = 120; //kalo berhasil masukin ke serving
+    public static final int PENALTY_FAIL = -50;  //kalo waktu order udah habis
+
+    //State
     private int score = 0;
+    private int successCount = 0;
+    private int failCount = 0;
 
     private ScoreManager() {}
 
@@ -15,9 +22,20 @@ public class ScoreManager {
         return instance;
     }
 
+    public static void resetInstance() {
+        if (instance != null) {
+            instance.score = 0;
+            instance.successCount = 0;
+            instance.failCount = 0;
+        }
+        instance = null;
+    }
+
     /** Reset skor ke 0 (dipanggil di awal game / saat restart). */
-    public void reset() {
+    public void resetScore() {
         score = 0;
+        successCount = 0;
+        failCount = 0;
     }
 
     /** Tambah / kurangi skor. Boleh negatif. */
@@ -29,5 +47,25 @@ public class ScoreManager {
     /** Ambil skor sekarang. */
     public int getScore() {
         return score;
+    }
+
+    // === Metode Statistik ===
+
+    /** Catat satu order berhasil. */
+    public void recordSuccess() {
+        this.successCount++;
+    }
+
+    /** Catat satu order gagal. */
+    public void recordFail() {
+        this.failCount++;
+    }
+
+    public int getSuccessCount() {
+        return successCount;
+    }
+
+    public int getFailCount() {
+        return failCount;
     }
 }

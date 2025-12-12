@@ -77,7 +77,10 @@ public class OrderManager {
                 System.out.println("ORDER GAGAL (Waktu habis): "
                         + order.getPizzaType().getDisplayName());
 
-                model.manager.ScoreManager.getInstance().add(order.getPenalty());
+                ScoreManager.getInstance().add(ScoreManager.PENALTY_FAIL);
+                
+                // Lapor ke GameController bahwa order gagal
+                GameController.getInstance().onOrderFailed();
 
                 activeOrders.remove(order);
                 spawnOrderIfNeeded();
@@ -88,7 +91,8 @@ public class OrderManager {
             if (!sessionOver) {
                 sessionOver = true;
                 System.out.println("Semua order selesai! Game Over.");
-                Main.showGameOver();
+                // Delegate to GameController for centralized handling
+                model.manager.GameController.getInstance().handleAllOrdersCompleted();
             }
             return;
         }
@@ -96,7 +100,8 @@ public class OrderManager {
         if (sessionTimeElapsed >= SESSION_LIMIT_SECONDS) {
             sessionOver = true;
             acceptingNewOrders = false;
-            Main.showGameOver();
+            // Delegate to GameController for centralized handling
+            model.manager.GameController.getInstance().handleSessionTimeUp();
         }
     }
 
@@ -124,19 +129,27 @@ public class OrderManager {
         System.out.println("NEW ORDER: " + newOrder);
     }
 
-    public Order validateDish(Dish dish) {
-        if (dish == null) return null;
-
+    public boolean validateDish(Dish dish) {
+        if (dish == null) return false;
         for (Order order : activeOrders) {
             if (order.getPizzaType() == dish.getPizzaType()) {
+                // --- KASUS SUKSES ---
+                // Tambahkan skor untuk order yang berhasil
+                ScoreManager.getInstance().add(ScoreManager.POINTS_SUCCESS);
                 activeOrders.remove(order);
-
+                
+                // Lapor ke GameController bahwa order berhasil
+                GameController.getInstance().onOrderSuccess();
                 spawnOrderIfNeeded();
-                return order;
+                return true; // Berhasil
             }
         }
 
-        return null;
+        // --- KASUS GAGAL ---
+        // Jika loop selesai dan tidak ada order yang cocok
+        ScoreManager.getInstance().add(ScoreManager.PENALTY_FAIL);
+        GameController.getInstance().onOrderFailed();
+        return false; // Gagal
     }
 
     public List<Order> getActiveOrders() {
@@ -153,5 +166,18 @@ public class OrderManager {
 
     public static double getSessionLimitSeconds() {
         return SESSION_LIMIT_SECONDS;
+    }
+
+    // === GETTER TAMBAHAN UNTUK GAMECTROLLER ===
+    public boolean isAcceptingNewOrders() {
+        return acceptingNewOrders;
+    }
+
+    public int getTotalSpawnedOrders() {
+        return totalSpawnedOrders;
+    }
+
+    public static int getMaxTotalOrders() {
+        return MAX_TOTAL_ORDERS;
     }
 }

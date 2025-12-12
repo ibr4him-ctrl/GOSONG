@@ -19,6 +19,7 @@ public class MainMenu extends JFrame {
    private Image backgroundImage;
    private JButton mulaiButton;
    private JButton pengaturanButton;
+   private JButton keluarButton;
    private static final int WIDTH = 16 * 16 * 3;  
    private static final int HEIGHT = 12 * 16 * 3; 
 
@@ -74,6 +75,23 @@ public class MainMenu extends JFrame {
       int buttonWidthPengaturan = pengaturanIcon.getIconWidth();
       int buttonHeightPengaturan = pengaturanIcon.getIconHeight();
 
+      // Tombol Keluar (Exit) - dengan pengecekan null
+      java.net.URL keluarResource = getClass().getResource("/resources/game/Keluar.png");
+      ImageIcon keluarIcon = null;
+      if (keluarResource != null) {
+          ImageIcon keluarIconOriginal = new ImageIcon(keluarResource);
+          int keluarTargetWidth = targetButtonWidth;
+          int keluarTargetHeight = (int) (keluarTargetWidth * ((double) keluarIconOriginal.getIconHeight() / keluarIconOriginal.getIconWidth()));
+          Image keluarScaled = keluarIconOriginal.getImage().getScaledInstance(keluarTargetWidth, keluarTargetHeight, Image.SCALE_SMOOTH);
+          keluarIcon = new ImageIcon(keluarScaled);
+          
+          keluarButton = new JButton(keluarIcon);
+          keluarButton.setBorderPainted(false);
+          keluarButton.setContentAreaFilled(false);
+          keluarButton.setOpaque(false);
+          keluarButton.setFocusPainted(false);
+      }
+
       // Posisi Mulai
       int mulaiX = (WIDTH - buttonWidthMulai) / 2; 
       int mulaiY = (int) (HEIGHT * 0.25); 
@@ -88,6 +106,14 @@ public class MainMenu extends JFrame {
       backgroundPanel.add(mulaiButton);
       backgroundPanel.add(pengaturanButton);
 
+      if (keluarButton != null && keluarIcon != null) {
+          // Posisi Keluar
+          int keluarX = (WIDTH - keluarIcon.getIconWidth()) / 2;
+          int keluarY = pengaturanY + buttonHeightPengaturan + 20;
+          keluarButton.setBounds(keluarX, keluarY, keluarIcon.getIconWidth(), keluarIcon.getIconHeight());
+          backgroundPanel.add(keluarButton);
+      }
+
       mulaiButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -101,6 +127,15 @@ public class MainMenu extends JFrame {
             bukaPengaturan();
          }
       });
+
+      if (keluarButton != null) {
+          keluarButton.addActionListener(new ActionListener() {
+             @Override
+             public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+             }
+          });
+      }
 
       setContentPane(backgroundPanel);
    }

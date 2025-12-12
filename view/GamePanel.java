@@ -174,7 +174,10 @@ public class GamePanel extends JPanel implements Runnable {
         OrderManager.getInstance().init();
 
         // RESET SCORE DI AWAL GAME
-        model.manager.ScoreManager.getInstance().reset();
+        model.manager.ScoreManager.getInstance().resetScore();
+        
+        // INIT GAME CONTROLLER (orchestrator pusat)
+        model.manager.GameController.getInstance().startGame();
         
         loadOrderIndicatorImages();
         loadOrderPaperImages();
@@ -336,7 +339,11 @@ public class GamePanel extends JPanel implements Runnable {
     public void run() {
         double drawInterval = 1000000000.0 / 60.0;
         double nextDrawTime = System.nanoTime() + drawInterval;
-        while (gameThread != null) {
+        while (gameThread != null && !Thread.currentThread().isInterrupted()) {
+            // Cek apakah game sudah game over, jika ya hentikan loop
+            if (model.manager.GameController.getInstance().isGameOver()) {
+                break;
+            }
 
             update();
             repaint();
@@ -346,12 +353,14 @@ public class GamePanel extends JPanel implements Runnable {
                 remainingTime = remainingTime / 1_000_000.0;
 
                 if (remainingTime < 0) remainingTime = 0;
-                Thread.sleep((long) remainingTime);
-                nextDrawTime += drawInterval;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                    Thread.sleep((long) remainingTime);
+                    nextDrawTime += drawInterval;
+                } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+                }
             }
-        }
+        System.out.println("[GamePanel] Game loop stopped.");
     }
 
     private void updateCuttingStations(double deltaSeconds) {
@@ -380,22 +389,22 @@ public class GamePanel extends JPanel implements Runnable {
     // UPDATE LOOP
     // ==========================================
     public void update() {
-        long now = System.nanoTime();
-        double deltaSeconds = (now - lastUpdateNs) / 1_000_000_000.0;
-        if (deltaSeconds < 0) deltaSeconds = 0;
-        if (deltaSeconds > 0.1) deltaSeconds = 0.1; // clamp biar gak loncat kalo lag
-        lastUpdateNs = now;
+    long now = System.nanoTime();
+    double deltaSeconds = (now - lastUpdateNs) * 1e-9;
+    lastUpdateNs = now;
 
-        updateActivePlayer();
-        handleActions();
-        updateCuttingStations(deltaSeconds);
-        updateCookingStations(deltaSeconds);
-        updateWashingStations(deltaSeconds); 
+    // Safety clamp
+    if (deltaSeconds < 0) deltaSeconds = 0;
+    if (deltaSeconds > 0.2) deltaSeconds = 0.2;
 
-        OrderManager.getInstance().update(deltaSeconds);
-
-        
-    }
+    updateActivePlayer();
+    handleActions();
+    updateCuttingStations(deltaSeconds);
+    updateCookingStations(deltaSeconds);
+    updateWashingStations(deltaSeconds); 
+    OrderManager.getInstance().update(deltaSeconds);
+    model.manager.GameController.getInstance().update(deltaSeconds);
+}
 
     private Chef getActiveChef() {
         return isPlayer1Active ? chef1 : chef2;

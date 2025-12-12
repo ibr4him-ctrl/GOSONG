@@ -30,8 +30,6 @@ public class CookingStation extends Station {
     public Oven getOven() {
         return oven;
     }
-
-    //SUMPAH PLS KENAPA OVEN NYEBELIN WATDEFAK 
     
     @Override
     public boolean interact(Chef chef) {
@@ -81,32 +79,15 @@ public class CookingStation extends Station {
             Dish dish = PizzaRecipeChecker.createPizzaDish(type, cookedView);
 
             if (dish != null) {
-                // RESEP VALID
-                if (plate.canAccept(dish)) {
-                    // plate mau nerima Dish → oke, baru kosongin oven
-                    oven.takeOutAll();
-                    plate.addIngredient(dish);
-                    chef.setHeldItem(plate);
-                    System.out.println("[CookingStation] Pizza jadi: " + dish.getName());
-                    System.out.println("   Isi plate sekarang: " + plate.getContents().size() + " item");
-                    return true;
-                } else {
-                    // Resep valid tapi plate nolak Dish → fallback: pindahin cooked apa adanya
-                    System.out.println("[CookingStation] Dish final tidak bisa ditaruh ke plate (canAccept() = false).");
-                    System.out.println("   Fallback: pindahkan isi oven sebagai ingredient cooked.");
-
-                    List<Preparable> cooked = oven.takeOutAll();
-                    for (Preparable p : cooked) {
-                        if (!plate.canAccept(p)) {
-                            System.out.println("[CookingStation]   Tidak bisa menaruh " + p + " ke plate (canAccept = false).");
-                            continue;
-                        }
-                        plate.addIngredient(p);
-                    }
-                    chef.setHeldItem(plate);
-                    System.out.println("   Plate sekarang berisi " + plate.getContents().size() + " item (fallback cooked).");
-                    return true;
-                }
+                // ✅ RESEP VALID → SET DISH KE PLATE
+                oven.takeOutAll(); // Kosongkan oven
+                plate.setDish(dish); // ← FIX: Pakai setDish() bukan addIngredient()
+                chef.setHeldItem(plate);
+                
+                System.out.println("[CookingStation] ✅ Pizza jadi: " + dish.getName());
+                System.out.println("[CookingStation] Dish berhasil ditaruh di plate!");
+                System.out.println("[CookingStation] plate.getDish() = " + plate.getDish());
+                return true;
             }
 
             // ========== KASUS 3: RESEP TIDAK COCOK SAMA SEKALI ==========
@@ -148,7 +129,6 @@ public class CookingStation extends Station {
                 System.out.println("[CookingStation] Plate masih berisi ingredient RAW, tidak boleh masuk oven.");
                 return false;
             }
-
 
             boolean movedAny = false;
             var contentsCopy = new ArrayList<>(plate.getContents());
@@ -210,7 +190,6 @@ public class CookingStation extends Station {
         return false;
     }
 
-
     public void update(double deltaSeconds) {
         oven.update(deltaSeconds);
     }
@@ -223,6 +202,7 @@ public class CookingStation extends Station {
         }
         return false;
     }
+    
     private boolean plateHasRawIngredient(Plate plate) {
         for (Preparable p : plate.getContents()) {
             if (p instanceof Ingredient ing) {

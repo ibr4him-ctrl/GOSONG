@@ -9,33 +9,41 @@ import model.item.Item;
 import model.item.Preparable;
 
 public class Plate extends Item {
-// plate dipakai kalau plating jika bersih, kalau ssetgelah serving plate akan menjadi kotor dan harus dicuci sebelum bisa dipakai 
+    // Ingredients mentah/chopped
     private Set<Preparable> contents;
-    //ini yang ditambahin//
+    
+    // Dish final (pizza matang)
+    private Dish finalDish;
+    
     public Plate() {
         super("Plate", ItemType.PLATE, ItemLocation.KITCHEN_UTENSILS);
         this.contents = new HashSet<>();
+        this.finalDish = null;
         this.setClean(true);
     }
     
+    /**
+     * Set dish final (dipanggil setelah keluar dari oven).
+     */
+    public void setDish(Dish dish) {
+        this.finalDish = dish;
+        // Kosongkan contents karena sudah jadi dish final
+        this.contents.clear();
+    }
+    
+    /**
+     * Get dish final (untuk serving).
+     */
     public Dish getDish() {
-        if (contents.isEmpty()) return null;
-
-        // Cek satu per satu isi piring
-        for (Preparable item : contents) {
-            // Jika ketemu item yang merupakan Dish (Pizza Matang)
-            if (item instanceof Dish) {
-                return (Dish) item; 
-            }
-        }
-        return null; // Tidak ada Dish (mungkin cuma bahan mentah atau kosong)
+        return this.finalDish;
     }
 
     /**
      * Menghapus isi piring (Dish diambil/dimakan).
      */
     public void removeDish() {
-        contents.clear(); // Kosongkan isi piring
+        this.finalDish = null;
+        this.contents.clear();
     }
 
     public Set<Preparable> getContents() {
@@ -43,21 +51,28 @@ public class Plate extends Item {
     }
 
     public boolean isEmpty() {
-        return contents.isEmpty();
+        return contents.isEmpty() && finalDish == null;
     }
 
     public boolean addIngredient(Preparable ingredient) {
         if (!isClean()) return false;
         if (ingredient == null || !ingredient.canBePlacedOnPlate()) return false;
+        
+        // Jika sudah ada dish final, tidak bisa tambah ingredient lagi
+        if (finalDish != null) return false;
+        
         return contents.add(ingredient);
     }
 
     public boolean canAccept(Preparable ingredient) {
+        // Jika sudah ada dish final, tidak bisa terima ingredient lagi
+        if (finalDish != null) return false;
         return isClean() && ingredient != null && ingredient.canBePlacedOnPlate();
     }
 
     public void clear() {
         contents.clear();
+        finalDish = null;
     }
 
     @Override
@@ -74,8 +89,12 @@ public class Plate extends Item {
     @Override
     public String toString() {
         String status = isClean() ? "Clean" : "Dirty";
+        if (finalDish != null) {
+            return "Plate(" + status + ", dish=" + finalDish.getName() + ")";
+        }
         return "Plate(" + status + ", items=" + contents.size() + ")";
     }
+    
     public boolean removeIngredient(Preparable p) {
         return contents.remove(p);   
     }
