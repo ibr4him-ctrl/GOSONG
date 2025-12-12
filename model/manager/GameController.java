@@ -26,7 +26,7 @@ public class GameController {
     private final OrderFailTracker failTracker;
 
     // Konstanta durasi session (harus sama dengan OrderManager.SESSION_LIMIT_SECONDS)
-    private static final double SESSION_LIMIT_SECONDS = 180.0;
+    private static final double SESSION_LIMIT_SECONDS = 240.0;
 
     // Batas maksimal order gagal (total, bukan berurutan)
     private static final int MAX_TOTAL_FAILS = 2;
