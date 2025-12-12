@@ -1148,11 +1148,14 @@ public class GamePanel extends JPanel implements Runnable {
         drawHeldItemIcon(g2, chef2, chef2X, chef2Y); 
 
         g2.setColor(Color.WHITE);
-        g2.drawString("Active: " + (isPlayer1Active ? chef1.getName() : chef2.getName()) + " (WASD)", 10, 20);
-        g2.drawString("TAB: Switch | C: Drop / Serve / Trash | V: Use Station | E: Throw | Shift+WASD: Dash", 10, 40);
+        g2.drawString("Active: " + (isPlayer1Active ? chef1.getName() : chef2.getName()) + " (WASD)", 490, 410);
+        g2.drawString("TAB: Switch | V: Use Station", 490, 430);
+        g2.drawString("E: Throw | Shift+WASD: Dash", 490, 450);
+        g2.drawString("C: Drop / Serve / Trash", 490, 470);
 
         int score = model.manager.ScoreManager.getInstance().getScore();
-        g2.drawString("Score: " + score, 10, 60);
+        g2.drawString("Score: " + score, 690, 400);
+
 
         // ====== Gambar daftar Order aktif dengan template 2x2 blok di pojok kanan atas ======
         drawOrderUI(g2);
