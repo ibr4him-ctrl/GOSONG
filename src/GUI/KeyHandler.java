@@ -11,6 +11,8 @@ public class KeyHandler implements KeyListener {
     //action keys 
     public boolean cPressed; //ini utk pickup / drop 
     public boolean vPressed; //ini utk use station 
+    public boolean ePressed;      // Throw
+    public boolean shiftPressed; // dash
 
     @Override 
     public void keyTyped(KeyEvent e){
@@ -38,6 +40,10 @@ public class KeyHandler implements KeyListener {
             cPressed = true;
         } else if (code == KeyEvent.VK_V) {
             vPressed = true;
+        } else if (code == KeyEvent.VK_E) {
+            ePressed = true;
+        } else if (code == KeyEvent.VK_SHIFT) {
+            shiftPressed = true;
         }
     }
 
@@ -63,6 +69,10 @@ public class KeyHandler implements KeyListener {
             cPressed = false;
         } else if (code == KeyEvent.VK_V) {
             vPressed = false;
+        } else if (code == KeyEvent.VK_E) {
+            ePressed = false;
+        } else if (code == KeyEvent.VK_SHIFT) {
+            shiftPressed = false;
         }
 
     }
