@@ -13,7 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame; 
 import java.awt.Dimension;
 import main.Main;
-import view.Pengaturan;
+import view.SettingsDialog; 
 
 public class MainMenu extends JFrame {
    private Image backgroundImage;
