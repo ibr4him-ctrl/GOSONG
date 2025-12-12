@@ -1123,15 +1123,12 @@ public class GamePanel extends JPanel implements Runnable {
 
         // Display Throw Distance
         g2.setColor(Color.WHITE);
-        g2.drawString("Throw: " + selectedThrowDistance + " tiles", 10, dashY + 35);
-                
-        g2.dispose();
     }
 
     private void drawSettingButton(Graphics2D g2) {
         int buttonSize = 2 * TILE_SIZE;
         settingButtonX = SCREEN_WIDTH - buttonSize;
-        settingButtonY = 6 * TILE_SIZE;
+        settingButtonY = 6 * TILE_SIZE + 10; // diturunkan sedikit
         settingButtonWidth = buttonSize;
         settingButtonHeight = buttonSize;
 
@@ -1299,9 +1296,6 @@ public class GamePanel extends JPanel implements Runnable {
             g2.fillRoundRect(x, y, blockSize, blockSize, 12, 12);
         }
 
-        g2.setColor(Color.BLACK);
-        g2.drawRoundRect(x, y, blockSize, blockSize, 12, 12);
-
         drawOrderInfo(g2, x, y, blockSize, order);
     }
     
@@ -1348,29 +1342,30 @@ public class GamePanel extends JPanel implements Runnable {
         java.util.List<String> ingredientLines = new java.util.ArrayList<>();
         switch (order.getPizzaType()) {
             case MARGHERITA -> {
-                ingredientLines.add("Dough (chopped)");
-                ingredientLines.add("Tomato (chopped)");
-                ingredientLines.add("Cheese");
+                ingredientLines.add("Adonan (chopped)");
+                ingredientLines.add("Tomat (chopped)");
+                ingredientLines.add("Keju (chopped)");
             }
             case SOSIS -> {
-                ingredientLines.add("Dough (chopped)");
-                ingredientLines.add("Tomato (chopped)");
-                ingredientLines.add("Cheese");
-                ingredientLines.add("Sausage (chopped)");
+                ingredientLines.add("Adonan (chopped)");
+                ingredientLines.add("Tomat (chopped)");
+                ingredientLines.add("Keju (chopped)");
+                ingredientLines.add("Sosis (chopped)");
             }
             case AYAM -> {
-                ingredientLines.add("Dough (chopped)");
-                ingredientLines.add("Tomato (chopped)");
-                ingredientLines.add("Cheese");
-                ingredientLines.add("Chicken (chopped)");
+                ingredientLines.add("Adonan (chopped)");
+                ingredientLines.add("Tomat (chopped)");
+                ingredientLines.add("Keju (chopped)");
+                ingredientLines.add("Ayam (chopped)");
+                ingredientLines.add("Masak di Oven");
             }
         }
 
         // Gambar setiap baris ingredients, dibatasi supaya muat di dalam blok
         for (String line : ingredientLines) {
             cursorY += lineHeight;
-            if (cursorY > y + blockSize - lineHeight * 2) {
-                // Kalau sudah mau mentok bawah, berhenti supaya tidak keluar blok
+            // sisakan 1 baris untuk teks waktu di bawah
+            if (cursorY > y + blockSize - lineHeight * 1) {
                 break;
             }
             drawTextWithShadow(g2, "- " + line, innerX, cursorY, Color.BLACK, Color.LIGHT_GRAY);
@@ -1398,7 +1393,6 @@ public class GamePanel extends JPanel implements Runnable {
         g2.drawString(text, x, y);
     }
 }
-
 
 //WARNING KALO KALIAN MAU GANTI INI 
 //CEK DULU APAKAH FUNGSI KALIAN GANTI BEKERJA ATAU GAK
