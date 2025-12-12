@@ -191,13 +191,21 @@ public class CuttingStation extends Station {
         return sb.toString();
     }
 
-    // =====================================================
-    //  DIPANGGIL OLEH PickUpDrop (tombol C)
-    //  → PICK / DROP / PLATE / COMBINE (kayak Assembly)
-    // =====================================================
     public boolean handlePickUpDrop(Chef chef) {
         Item hand = chef.getHeldItem();
         Item top  = itemOnStation;
+
+        // =====================================================
+        // BLOCK: pizza base (dough chopped + topping) TIDAK boleh diambil tangan kosong
+        // =====================================================
+        if (!cutting && hand == null && top instanceof Dough dough) {
+            boolean hasTopping = dough.getToppings() != null && !dough.getToppings().isEmpty();
+            if (dough.isChopped() && hasTopping) {
+                System.out.println("[Cutting] Pizza (dough + topping) tidak boleh diambil tangan kosong. " +
+                                "Gunakan plate bersih untuk mengambilnya.");
+                return false;
+            }
+        }
 
         // 0) PRIORITAS: PLATE + PREPARABLE (PLATING) kalau tidak sedang cutting
         if (!cutting) {
@@ -224,14 +232,11 @@ public class CuttingStation extends Station {
                 }
 
                 boolean ok = doughOnBoard.addTopping(ingInHand);
-                if (!ok) {
-                    // Pesan detail sebaiknya sudah dicetak di Dough.addTopping(...)
-                    return false;
-                }
+                if (!ok) return false;
 
-                chef.setHeldItem(null); // topping “nempel” di dough, tangan jadi kosong
+                chef.setHeldItem(null);
                 System.out.println("[Cutting] " + ingInHand.getName() +
-                                   " ditambahkan ke Dough di CuttingStation.");
+                                " ditambahkan ke Dough di CuttingStation.");
                 return true;
             }
 
@@ -247,14 +252,11 @@ public class CuttingStation extends Station {
                 }
 
                 boolean ok = doughInHand.addTopping(ingOnBoard);
-                if (!ok) {
-                    return false;
-                }
+                if (!ok) return false;
 
-                // topping di papan habis (sudah “ke-attach” ke dough)
                 itemOnStation = null;
                 System.out.println("[Cutting] " + ingOnBoard.getName() +
-                                   " ditambahkan ke Dough yang dipegang chef.");
+                                " ditambahkan ke Dough yang dipegang chef.");
                 return true;
             }
         }
@@ -273,7 +275,7 @@ public class CuttingStation extends Station {
             chef.setHeldItem(null);
 
             System.out.println("[Cutting] (C) Menaruh " + ing.getName() +
-                               " (RAW) di CuttingStation (" + posX + "," + posY + ")");
+                            " (RAW) di CuttingStation (" + posX + "," + posY + ")");
             return true;
         }
 
@@ -289,11 +291,12 @@ public class CuttingStation extends Station {
             }
 
             System.out.println("[Cutting] (C) Mengambil " + ing2.getName() +
-                               " (" + ing2.getState() + ") dari CuttingStation.");
+                            " (" + ing2.getState() + ") dari CuttingStation.");
             return true;
         }
 
         System.out.println("[Cutting] (C) Tidak ada aksi valid di CuttingStation.");
         return false;
     }
+
 }

@@ -650,8 +650,6 @@ public class GamePanel extends JPanel implements Runnable {
         g2.drawRect(drawX, drawY, iconSize, iconSize);
     }
 
-
-
     private void handleActions() {
         Chef activeChef = getActiveChef();
         PlayerSprite activeSprite = getActiveSprite();
@@ -772,10 +770,15 @@ public class GamePanel extends JPanel implements Runnable {
                     }
                     // Tangan pegang item + lantai kosong → taruh
                     else if (hand != null && ground == null) {
+                        if (hand instanceof Plate) {
+                            System.out.println("[Ground] Plate tidak boleh ditaruh di lantai.");
+                            return;
+                        }
+
                         groundItems.put(key, hand);
                         activeChef.setHeldItem(null);
                         System.out.println("[Ground] Chef meletakkan " + hand.getName() +
-                                           " di lantai (" + tx + "," + ty + ")");
+                                        " di lantai (" + tx + "," + ty + ")");
                     }
                     else {
                         // dua-duanya kosong atau dua-duanya isi
@@ -827,16 +830,36 @@ public class GamePanel extends JPanel implements Runnable {
     // ==========================================
     // Gambar item di atas semua station
     // ==========================================
-    // ... (sisa kode tidak berubah)
     private void drawItemsOnStations(Graphics2D g2) {
         for (Station st : stationMap.values()) {
-            Item item = st.getItemOnStation();
-            if (item == null) continue; // station kosong → skip
-
             int px = st.getPosX() * TILE_SIZE - mapOffsetX;
             int py = st.getPosY() * TILE_SIZE - mapOffsetY;
 
-            // === CASE KHUSUS: AssemblyStation + Plate → pakai renderer pizza ===
+            Item item = st.getItemOnStation();
+
+            // =========================================
+            // (A) INGREDIENT STORAGE: walau item == null, tetap gambar icon ingredient
+            // =========================================
+            if (st instanceof IngredientStorage is && item == null) {
+                Ingredient proto = is.previewIngredientForUI();
+                if (proto != null) {
+                    BufferedImage sprite = assemblyRenderer.getSpriteForIngredient(proto);
+                    if (sprite != null) {
+                        int size  = (int) (TILE_SIZE * 0.65);
+                        int drawX = px + TILE_SIZE / 2 - size / 2;
+                        int drawY = py + TILE_SIZE / 2 - size / 2;
+                        g2.drawImage(sprite, drawX, drawY, size, size, null);
+                    }
+                }
+                continue;
+            }
+
+            // station kosong & bukan ingredient storage
+            if (item == null) continue;
+
+            // =========================================
+            // (B) ASSEMBLY STATION: sudah ada
+            // =========================================
             if (st instanceof AssemblyStation) {
                 if (item instanceof Plate plate) {
                     assemblyRenderer.drawPlateOnAssembly(g2, px, py, TILE_SIZE, plate);
@@ -847,7 +870,23 @@ public class GamePanel extends JPanel implements Runnable {
                 }
             }
 
-            // === INGREDIENT DI ATAS STATION (termasuk CuttingStation) → pakai sprite ===
+            // =========================================
+            // (C) CUTTING STATION: implement assembly renderer juga
+            // =========================================
+            if (st instanceof CuttingStation) {
+                if (item instanceof Plate plate) {
+                    assemblyRenderer.drawPlateOnAssembly(g2, px, py, TILE_SIZE, plate);
+                    continue;
+                } else if (item instanceof Dough dough) {
+                    assemblyRenderer.drawDoughOnAssembly(g2, px, py, TILE_SIZE, dough);
+                    continue;
+                }
+                // Ingredient tetap lewat sprite state (dibawah)
+            }
+
+            // =========================================
+            // (D) INGREDIENT di atas station mana pun → sprite state
+            // =========================================
             if (item instanceof Ingredient ing) {
                 BufferedImage sprite = assemblyRenderer.getSpriteForIngredient(ing);
                 if (sprite != null) {
@@ -855,11 +894,18 @@ public class GamePanel extends JPanel implements Runnable {
                     int drawX = px + TILE_SIZE / 2 - size / 2;
                     int drawY = py + TILE_SIZE / 2 - size / 2;
                     g2.drawImage(sprite, drawX, drawY, size, size, null);
-                    continue; // sudah digambar, lanjut station berikutnya
+                    continue;
                 }
             }
 
-            // === DEFAULT: kotak kecil seperti sebelumnya ===
+            if (item instanceof Plate plate) {
+                assemblyRenderer.drawPlateOnAssembly(g2, px, py, TILE_SIZE, plate, false);
+                continue;
+            }
+
+            // =========================================
+            // (E) DEFAULT fallback: kotak + label
+            // =========================================
             int size   = TILE_SIZE - 8;
             int offset = 4;
 
@@ -871,10 +917,6 @@ public class GamePanel extends JPanel implements Runnable {
                         ? new Color(245, 245, 255)
                         : new Color(200, 200, 220);
                 label = "Pl";
-            } else if (item instanceof Ingredient ing) {
-                fillColor = new Color(255, 230, 180);
-                String name = ing.getName();
-                label = name.isEmpty() ? "I" : name.substring(0, 1);
             } else if (item instanceof Dish) {
                 fillColor = new Color(255, 200, 200);
                 label = "D";
@@ -887,8 +929,19 @@ public class GamePanel extends JPanel implements Runnable {
             g2.fillRoundRect(px + offset, py + offset, size, size, 6, 6);
             g2.setColor(Color.BLACK);
             g2.drawRoundRect(px + offset, py + offset, size, size, 6, 6);
-
             g2.drawString(label, px + offset + 3, py + offset + 12);
+        }
+    }
+
+    private Ingredient buildPrototypeIngredient(IngredientStorage is) {
+        try {
+            // butuh getter class-nya (lihat patch IngredientStorage di bawah)
+            Class<? extends Ingredient> cls = is.getIngredientType();
+            if (cls == null) return null;
+            return cls.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            // kalau ga ada no-arg constructor, yaudah fallback null
+            return null;
         }
     }
 

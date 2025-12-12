@@ -260,4 +260,7 @@ public class IngredientStorage extends Station {
                 (ingredientType != null ? ingredientType.getSimpleName() : "null"),
                 itemOnStation != null ? itemOnStation.getName() : "empty");
     }
+    public Ingredient previewIngredientForUI() {
+        return spawnNewIngredient(); // pakai logic spawn yang udah aman (ctor kosong / ItemLocation)
+    }
 }
