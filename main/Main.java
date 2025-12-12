@@ -66,6 +66,9 @@ public class Main {
 
     public static void showGameOver() {
         if (window != null) {
+            if (gamePanel != null) {
+                gamePanel.stopGameThread();
+            }
             window.setVisible(false);
             window.dispose();
         }
@@ -80,6 +83,9 @@ public class Main {
 
     public static void restartGame() {
         if (window != null) {
+            if (gamePanel != null) {
+                gamePanel.stopGameThread();
+            }
             window.setVisible(false);
             window.dispose();
         }

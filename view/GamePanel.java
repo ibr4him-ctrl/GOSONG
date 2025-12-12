@@ -233,12 +233,13 @@ public class GamePanel extends JPanel implements Runnable {
     }
     
     private BufferedImage getOrderIndicatorImage(int timeRemaining) {
-        // 41-60 seconds (first 20 seconds): ijo0.png
-        // 21-40 seconds: ijo1.png
-        // 0-20 seconds (last 20 seconds): ijo2.png
-        if (timeRemaining > 40) {
+        // Untuk order dengan maksimal 80 detik:
+        // 80-53 detik : ijo0.png
+        // 52-27 detik : ijo1.png
+        // 26-0 detik  : ijo2.png
+        if (timeRemaining > 52) {
             return ijo0Image;
-        } else if (timeRemaining > 20) {
+        } else if (timeRemaining > 26) {
             return ijo1Image;
         } else {
             return ijo2Image;
@@ -324,6 +325,11 @@ public class GamePanel extends JPanel implements Runnable {
     public void startGameThread() {
         gameThread = new Thread(this);
         gameThread.start();
+    }
+
+    public synchronized void stopGameThread() {
+        // Menghentikan loop game dengan membuat kondisi while(gameThread != null) menjadi false
+        gameThread = null;
     }
 
     @Override
@@ -1158,7 +1164,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private String getRemainingTimeFormatted() {
-        int totalSeconds = (int) (model.manager.OrderManager.getSessionLimitSeconds() - 
+        int totalSeconds = (int) (model.manager.OrderManager.getSessionLimitSeconds() -
                                    model.manager.OrderManager.getInstance().getSessionTimeElapsed());
         if (totalSeconds < 0) totalSeconds = 0;
         
@@ -1267,18 +1273,23 @@ public class GamePanel extends JPanel implements Runnable {
      * Menggambar satu blok order berukuran 2x2 tile
      */
     private void drawOrderBlock(Graphics2D g2, int x, int y, int blockSize, model.item.dish.Order order, int index) {
-        // Pilih background kertas berdasarkan sisa waktu order:
-        // 60-40 detik  -> KertasOrderan.png
-        // 39-20 detik  -> KertasOrderan2.png
-        // 19-0 detik   -> KertasOrderan3.png
-        int time = order.getTimeRemaining();
+        // Pilih background kertas berdasarkan sisa waktu global sesi:
+        // 80-52 detik  -> KertasOrderan.png (order pertama)
+        // 51-26 detik  -> KertasOrderan2.png (order kedua)
+        // 25-0 detik   -> KertasOrderan3.png (order ketiga)
+        int globalRemaining = (int) (model.manager.OrderManager.getSessionLimitSeconds() -
+                                     model.manager.OrderManager.getInstance().getSessionTimeElapsed());
+        if (globalRemaining < 0) globalRemaining = 0;
+
         BufferedImage bg;
-        if (time > 39) {
+        if (globalRemaining <= 80 && globalRemaining >= 52) {
             bg = orderPaper1;
-        } else if (time > 19) {
+        } else if (globalRemaining <= 51 && globalRemaining >= 26) {
             bg = orderPaper2;
-        } else {
+        } else if (globalRemaining <= 25 && globalRemaining >= 0) {
             bg = orderPaper3;
+        } else {
+            bg = orderPaper1;
         }
 
         if (bg != null) {
