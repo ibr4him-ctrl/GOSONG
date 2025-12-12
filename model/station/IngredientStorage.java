@@ -10,11 +10,17 @@ import model.item.ingredient.Ingredient;
 import model.item.ingredient.pizza.Dough;
 import model.item.utensils.Plate;
 import model.logic.PlatingRules;
+import util.SoundEffectPlayer;
 
 public class IngredientStorage extends Station {
 
     private Class<? extends Ingredient> ingredientType;
     private String ingredientName;
+
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+    private static final String SFX_PICKUPDROP =
+            "/resources/game/sound_effect/pickupdrop.wav";
 
     public IngredientStorage(int x, int y) {
         super(x, y, "IngredientStorage");
@@ -88,6 +94,8 @@ public class IngredientStorage extends Station {
             itemOnStation = plate;
         }
 
+        SFX.playOnce(SFX_PICKUPDROP);
+
         return true;
     }
 
@@ -139,6 +147,7 @@ public class IngredientStorage extends Station {
             }
 
             chef.setHeldItem(null); // topping pindah ke dough
+            SFX.playOnce(SFX_PICKUPDROP);
             System.out.println("[IngredientStorage] " + ingInHand.getName() +
                                " ditambahkan ke Dough yang ada di storage.");
             return true;
@@ -163,6 +172,8 @@ public class IngredientStorage extends Station {
 
             // topping di meja sudah “ke-attach” ke dough → hilangkan dari meja
             itemOnStation = null;
+
+            SFX.playOnce(SFX_PICKUPDROP);
             System.out.println("[IngredientStorage] " + ingOnTable.getName() +
                                " ditambahkan ke Dough yang dipegang chef.");
             return true;
@@ -192,6 +203,7 @@ public class IngredientStorage extends Station {
                 // selain pizza base → boleh diambil biasa
                 chef.setHeldItem(top);
                 itemOnStation = null;
+                SFX.playOnce(SFX_PICKUPDROP);
                 System.out.println("[IngredientStorage] Chef " + chef.getName() +
                                 " mengambil " + top.getName() + " dari atas storage.");
                 return true;
@@ -204,6 +216,7 @@ public class IngredientStorage extends Station {
                 return false;
             }
             chef.setHeldItem(spawned);
+            SFX.playOnce(SFX_PICKUPDROP);
             System.out.println("[IngredientStorage] Chef " + chef.getName() +
                             " mengambil " + spawned.getName() + " (RAW) dari storage.");
             return true;
@@ -221,6 +234,7 @@ public class IngredientStorage extends Station {
             // selain itu (dough, ingredient apapun, dish, plate bersih, dll) → boleh ditaruh
             itemOnStation = hand;
             chef.setHeldItem(null);
+            SFX.playOnce(SFX_PICKUPDROP);
             System.out.println("[IngredientStorage] Chef " + chef.getName() +
                                " meletakkan " + itemOnStation.getName() +
                                " di atas ingredient storage.");

@@ -8,8 +8,14 @@ import model.item.ingredient.Ingredient;
 import model.item.ingredient.pizza.Dough;
 import model.item.utensils.Plate;
 import model.logic.PlatingRules;
+import util.SoundEffectPlayer;
 
 public class AssemblyStation extends Station {
+
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+    private static final String SFX_PICKUPDROP =
+            "/resources/game/sound_effect/pickupdrop.wav";
 
     public AssemblyStation(int x, int y) {
         super(x, y, "Assembly");
@@ -77,6 +83,7 @@ public class AssemblyStation extends Station {
             // selain case di atas → boleh diambil seperti biasa
             chef.setHeldItem(top);
             itemOnStation = null;
+            SFX.playOnce(SFX_PICKUPDROP);
             System.out.println("Chef " + chef.getName() + " mengambil "
                     + chef.getHeldItem().getName() + " dari assembly.");
             return true;
@@ -87,6 +94,7 @@ public class AssemblyStation extends Station {
             // selain itu (dough, ingredient, dish, plate bersih, dll) → boleh
             itemOnStation = hand;
             chef.setHeldItem(null);
+            SFX.playOnce(SFX_PICKUPDROP);
             System.out.println("Chef " + chef.getName() + " meletakkan "
                     + itemOnStation.getName() + " di assembly.");
             return true;
@@ -127,6 +135,8 @@ public class AssemblyStation extends Station {
             itemOnStation = plate;
         }
 
+        SFX.playOnce(SFX_PICKUPDROP);
+
         return true;
     }
 
@@ -154,6 +164,7 @@ public class AssemblyStation extends Station {
 
         // topping pindah dari tangan → “nempel” di dough
         chef.setHeldItem(null);
+        SFX.playOnce(SFX_PICKUPDROP);
         System.out.println("[Assembly] " + toppingInHand.getName()
                 + " ditambahkan ke Dough di assembly (tanpa plate).");
         return true;

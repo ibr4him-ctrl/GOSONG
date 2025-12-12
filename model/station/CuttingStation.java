@@ -7,6 +7,7 @@ import model.item.ingredient.Ingredient;
 import model.item.ingredient.pizza.Dough;
 import model.item.utensils.Plate;
 import model.logic.PlatingRules;
+import util.SoundEffectPlayer;
 
 public class CuttingStation extends Station {
 
@@ -17,6 +18,27 @@ public class CuttingStation extends Station {
 
     private static final double CUT_TIME = 3.0; // 3 detik
 
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+    private static final String SFX_CUTTING =
+            "/resources/game/sound_effect/cutting_sound.wav";
+    private static final String SFX_PICKUPDROP =
+            "/resources/game/sound_effect/pickupdrop.wav";
+
+    // key unik per station biar loop-nya bisa distop aman
+    private final String cuttingLoopKey = "CUTTING_" + System.identityHashCode(this);
+
+    private void startCuttingSound() {
+        SFX.playLoop(cuttingLoopKey, SFX_CUTTING);
+    }
+
+    private void stopCuttingSound() {
+        SFX.stopLoop(cuttingLoopKey);
+    }
+
+    private void playPickupDrop() {
+        SFX.playOnce(SFX_PICKUPDROP);
+    }
     public CuttingStation(int x, int y) {
         super(x, y, "Cutting");
         this.currentIngredient = null;
@@ -68,6 +90,7 @@ public class CuttingStation extends Station {
             currentIngredient = ingOnTop;
             currentChef = chef;
             chef.setBusy(true);
+            startCuttingSound();
             System.out.println("[Cutting] (V) Lanjut memotong " + ingOnTop.getName() +
                                ", progress = " + cutProgressSeconds + " detik");
             return true;
@@ -79,6 +102,7 @@ public class CuttingStation extends Station {
             currentIngredient = ingOnTop;
             currentChef = chef;
             chef.setBusy(true);
+            startCuttingSound();
             System.out.println("[Cutting] (V) Mulai memotong " + ingOnTop.getName() +
                                " di CuttingStation (" + posX + "," + posY + ")");
             return true;
@@ -109,12 +133,15 @@ public class CuttingStation extends Station {
             itemOnStation = plate;
         }
 
+        playPickupDrop();
+
         // Kalau ingredient ini kebetulan adalah currentIngredient yang sedang / pernah di-cut
         if (ingredient == currentIngredient) {
             currentIngredient = null;
             cutProgressSeconds = 0.0;
             cutting = false;
             currentChef = null;
+            stopCuttingSound();
         }
 
         return true;
@@ -140,6 +167,8 @@ public class CuttingStation extends Station {
             cutting = false;
             cutProgressSeconds = CUT_TIME;
 
+            stopCuttingSound();
+
             System.out.println("[Cutting] Selesai memotong " + currentIngredient.getName() +
                                " → state = " + currentIngredient.getState());
 
@@ -152,6 +181,10 @@ public class CuttingStation extends Station {
 
     public void pauseCutting() {
         cutting = false;
+
+        stopCuttingSound();
+
+
         if (currentChef != null) {
             currentChef.setBusy(false);
             currentChef = null;
@@ -235,6 +268,7 @@ public class CuttingStation extends Station {
                 if (!ok) return false;
 
                 chef.setHeldItem(null);
+                playPickupDrop();
                 System.out.println("[Cutting] " + ingInHand.getName() +
                                 " ditambahkan ke Dough di CuttingStation.");
                 return true;
@@ -255,6 +289,7 @@ public class CuttingStation extends Station {
                 if (!ok) return false;
 
                 itemOnStation = null;
+                playPickupDrop();
                 System.out.println("[Cutting] " + ingOnBoard.getName() +
                                 " ditambahkan ke Dough yang dipegang chef.");
                 return true;
@@ -273,6 +308,7 @@ public class CuttingStation extends Station {
             itemOnStation = ing;
             cutProgressSeconds = 0.0;
             chef.setHeldItem(null);
+            playPickupDrop();
 
             System.out.println("[Cutting] (C) Menaruh " + ing.getName() +
                             " (RAW) di CuttingStation (" + posX + "," + posY + ")");
@@ -289,6 +325,7 @@ public class CuttingStation extends Station {
                 cutProgressSeconds = 0.0;
                 currentChef = null;
             }
+            playPickupDrop();
 
             System.out.println("[Cutting] (C) Mengambil " + ing2.getName() +
                             " (" + ing2.getState() + ") dari CuttingStation.");

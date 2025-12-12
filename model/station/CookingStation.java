@@ -79,12 +79,12 @@ public class CookingStation extends Station {
             Dish dish = PizzaRecipeChecker.createPizzaDish(type, cookedView);
 
             if (dish != null) {
-                // ✅ RESEP VALID → SET DISH KE PLATE
+                //  RESEP VALID → SET DISH KE PLATE
                 oven.takeOutAll(); // Kosongkan oven
                 plate.setDish(dish); // ← FIX: Pakai setDish() bukan addIngredient()
                 chef.setHeldItem(plate);
                 
-                System.out.println("[CookingStation] ✅ Pizza jadi: " + dish.getName());
+                System.out.println("[CookingStation]  Pizza jadi: " + dish.getName());
                 System.out.println("[CookingStation] Dish berhasil ditaruh di plate!");
                 System.out.println("[CookingStation] plate.getDish() = " + plate.getDish());
                 return true;

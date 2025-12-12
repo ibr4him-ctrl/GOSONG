@@ -66,6 +66,11 @@ public class PickUpDrop implements Action {
                 return station.interact(chef);
             }
 
+            if (station instanceof IngredientStorage) {
+                System.out.println("[PickUpDrop] Delegasi ke IngredientStorage.interact untuk penempatan item.");
+                return station.interact(chef);
+            }
+
             // Contoh: jangan boleh taruh sembarang item di PlateStorage
             if (station instanceof PlateStorage) {
                 System.out.println("[PickUpDrop] Tidak bisa meletakkan item di PlateStorage.");

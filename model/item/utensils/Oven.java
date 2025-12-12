@@ -11,6 +11,7 @@ import model.item.Item;
 import model.item.Preparable; 
 import model.item.ingredient.Ingredient;
 import model.item.ingredient.pizza.Dough;
+import util.SoundEffectPlayer;
 
 public class Oven extends Item implements CookingDevice{
     //kapaitas maksimum ingredient yang bisa dipanggang 
@@ -30,6 +31,26 @@ public class Oven extends Item implements CookingDevice{
     //waktu referensi 
     private static final double COOK_TIME_DONE = 12.0; 
     private static final double COOK_TIME_BURNED = 24.0; 
+
+
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+
+    private static final String SFX_OVEN_3S =
+            "/resources/game/sound_effect/oven_timer_3secondsleft.wav";
+    private static final String SFX_OVEN_WORKING =
+            "/resources/game/sound_effect/oven_working.wav";
+    private static final String SFX_OVEN_BURN =
+            "/resources/game/sound_effect/warning_sound.wav";
+
+    // 3 detik sebelum DONE (DONE=12, jadi 9)
+    private static final double WARN_3S_AT = COOK_TIME_DONE - 3.0;
+
+    private boolean played3sWarning = false;
+    private boolean playedBurnWarning = false;
+
+    // key unik buat loop oven ini
+    private final String workingLoopKey = "OVEN_WORKING_" + System.identityHashCode(this);
 
     public Oven(){
         this(ItemLocation.KITCHEN_UTENSILS, 4); 
@@ -111,28 +132,47 @@ public class Oven extends Item implements CookingDevice{
         cooking = true; 
         cookTimeSeconds = 0.0; 
         burned = false; 
+
+        SFX.playLoop(workingLoopKey, SFX_OVEN_WORKING);
     }
 
     public void update(double deltaSeconds){
-        if (!cooking) return; 
+        if (!cooking) return;
 
-        cookTimeSeconds += deltaSeconds; 
+        double prevTime = cookTimeSeconds;
+        cookTimeSeconds += deltaSeconds;
 
-        if (cookTimeSeconds >= COOK_TIME_BURNED){
+        // bunyi pas masuk 3 detik terakhir sebelum COOKED (melewati 9 detik)
+        if (!played3sWarning && prevTime < WARN_3S_AT && cookTimeSeconds >= WARN_3S_AT) {
+            SFX.playOnce(SFX_OVEN_3S);
+            played3sWarning = true;
+        }
+
+        // burned (melewati 24 detik)
+        if (prevTime < COOK_TIME_BURNED && cookTimeSeconds >= COOK_TIME_BURNED){
             for (Preparable p : contents){
                 if (p instanceof Ingredient){
-                    ((Ingredient) p).burn(); 
+                    ((Ingredient) p).burn();
                 }
             }
-            burned = true; 
+            burned = true;
             cooking = false;
-            // Kosongkan oven saat overcook untuk mencegah pizza hilang
-            contents.clear();
-     
-        }else if (cookTimeSeconds >= COOK_TIME_DONE){
+
+            // stop working loop + bunyi warning burned sekali
+            SFX.stopLoop(workingLoopKey);
+            if (!playedBurnWarning) {
+                SFX.playOnce(SFX_OVEN_BURN);
+                playedBurnWarning = true;
+            }
+            return;
+        }
+
+        // cooked (>=12 detik). NOTE: kamu memang biarin tetap "cooking"
+        // supaya bisa lanjut sampai 24 detik dan burn kalau kelamaan.
+        if (cookTimeSeconds >= COOK_TIME_DONE){
             for (Preparable p : contents){
                 if (p instanceof Ingredient){
-                    Ingredient ing = (Ingredient) p; 
+                    Ingredient ing = (Ingredient) p;
                     if (ing.getState() != IngredientState.BURNED && ing.getState() != IngredientState.COOKED){
                         ing.cook();
                     }
@@ -180,7 +220,11 @@ public class Oven extends Item implements CookingDevice{
         cooking = false; 
         burned = false; 
         cookTimeSeconds = 0.0; 
-        return result; 
+        SFX.stopLoop(workingLoopKey);
+        played3sWarning = false;
+        playedBurnWarning = false;
+
+        return result;
     }
 
     public void clearContents(){
@@ -188,6 +232,10 @@ public class Oven extends Item implements CookingDevice{
         cooking = false; 
         burned = false; 
         cookTimeSeconds = 0.0; 
+
+        SFX.stopLoop(workingLoopKey);
+        played3sWarning = false;
+        playedBurnWarning = false;
     }
 
     // walaupun udah 12 detik, nilai tetap 1.0 meski bisa gosong di 24s 

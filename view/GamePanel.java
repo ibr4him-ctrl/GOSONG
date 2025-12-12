@@ -757,7 +757,7 @@ public class GamePanel extends JPanel implements Runnable {
 
                 // Pastikan tile-nya WALKABLE (atau boleh juga SPAWN_CHEF kalau mau)
                 TileType tt = pizzaMap.getTileAt(tx, ty).getType();
-                if (tt != TileType.WALKABLE) {
+                if (tt != TileType.WALKABLE && tt != TileType.SPAWN_CHEF) {
                     System.out.println("[Ground] Tile depan bukan WALKABLE, tidak bisa drop di lantai.");
                 } else {
                     String key = groundKey(tx, ty);

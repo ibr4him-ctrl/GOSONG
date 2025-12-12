@@ -5,6 +5,7 @@ import java.util.Deque;
 import model.chef.Chef;
 import model.enums.ItemType;
 import model.item.Item;
+import util.SoundEffectPlayer;
 
 public class PlateStorage extends Station {
 
@@ -12,7 +13,10 @@ public class PlateStorage extends Station {
     private static PlateStorage instance;
 
     private final Deque<Item> platestack;
-
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+    private static final String SFX_PLATE =
+            "/resources/game/sound_effect/putting_plates.wav";
     public PlateStorage(int x, int y) {
         super(x, y, "PlateStorage");
         this.platestack = new ArrayDeque<>();
@@ -78,6 +82,7 @@ public class PlateStorage extends Station {
         // ambil plate paling atas (bisa clean / dirty, tergantung kondisi stack)
         Item top = platestack.pop();
         chef.setHeldItem(top);
+        SFX.playOnce(SFX_PLATE);
         System.out.println("[PlateStorage] Chef mengambil plate dari PlateStorage ("
                 + (top.isClean() ? "clean" : "dirty") + ").");
         return true;

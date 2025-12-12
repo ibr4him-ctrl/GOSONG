@@ -5,19 +5,36 @@ import java.util.Deque;
 import model.chef.Chef;
 import model.item.Item;
 import model.item.utensils.Plate;
+import util.SoundEffectPlayer;
 
 public class WashingStation extends Station {
-    //plate ktoor yang sudah ditaruh di sink
+    // plate kotor yang sudah ditaruh di sink
     private final Deque<Plate> dirtyPlates = new ArrayDeque<>();
-    //plate bersih yang sudah dicuci (rak)
+    // plate bersih yang sudah dicuci (rak)
     private final Deque<Plate> cleanPlates = new ArrayDeque<>();
 
-    //state 
-    private boolean washing = false; 
+    // state
+    private boolean washing = false;
     private double washProgressSeconds;
     private static final double WASH_TIME = 3.0;
 
     private Chef currentChef;
+
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+    private static final String SFX_WASHING =
+            "/resources/game/sound_effect/washing_dishes.wav";
+    private static final String SFX_PUT_PLATE =
+        "/resources/game/sound_effect/putting_plates.wav";
+    private final String washingLoopKey = "WASHING_" + System.identityHashCode(this);
+
+    private void startWashingSound() {
+        SFX.playLoop(washingLoopKey, SFX_WASHING);
+    }
+
+    private void stopWashingSound() {
+        SFX.stopLoop(washingLoopKey);
+    }
 
     public WashingStation(int x, int y) {
         super(x, y, "Washing");
@@ -35,7 +52,7 @@ public class WashingStation extends Station {
         // 1) Kalau tangan TIDAK kosong → V TIDAK dipakai buat naruh plate.
         if (hand != null) {
             System.out.println("[Washing] (V) Gunakan tombol C untuk menaruh/mengambil plate. " +
-                            "V hanya untuk MEMULAI / MELANJUTKAN cuci.");
+                    "V hanya untuk MEMULAI / MELANJUTKAN cuci.");
             return false;
         }
 
@@ -45,6 +62,9 @@ public class WashingStation extends Station {
                 washing = true;
                 currentChef = chef;
                 currentChef.setBusy(true);
+
+                startWashingSound(); // start loop SFX
+
                 System.out.println("[Washing] (V) Mulai / lanjut mencuci. Progress saat ini = "
                         + washProgressSeconds + " detik");
             }
@@ -53,10 +73,9 @@ public class WashingStation extends Station {
 
         // 3) Tidak ada plate kotor → tidak ada yang bisa dicuci
         System.out.println("[Washing] (V) Tidak ada plate kotor di sink. " +
-                        "Taruh plate kotor dulu dengan tombol C.");
+                "Taruh plate kotor dulu dengan tombol C.");
         return false;
     }
-
 
     public void update(double deltaSeconds) {
         if (!washing || dirtyPlates.isEmpty()) return;
@@ -66,7 +85,7 @@ public class WashingStation extends Station {
             pauseWashing();
             return;
         }
-        
+
         washProgressSeconds += deltaSeconds;
 
         if (washProgressSeconds >= WASH_TIME) {
@@ -78,8 +97,11 @@ public class WashingStation extends Station {
             washProgressSeconds = 0.0;
 
             if (dirtyPlates.isEmpty()) {
-                //Tidk ada lagi yang dicuci 
+                // Tidak ada lagi yang dicuci
                 washing = false;
+
+                stopWashingSound(); // stop loop SFX
+
                 if (currentChef != null) {
                     currentChef.setBusy(false);
                     currentChef = null;
@@ -90,6 +112,9 @@ public class WashingStation extends Station {
 
     public void pauseWashing() {
         washing = false;
+
+        stopWashingSound(); // stop loop SFX
+
         if (currentChef != null) {
             currentChef.setBusy(false);
             currentChef = null;
@@ -137,6 +162,7 @@ public class WashingStation extends Station {
         if (hand instanceof Plate plate && !plate.isClean()) {
             dirtyPlates.addLast(plate);
             chef.setHeldItem(null);
+            SFX.playOnce(SFX_PUT_PLATE); 
             System.out.println("[Washing] (C) Menaruh plate kotor ke sink. Total kotor = " + dirtyPlates.size());
             return true;
         }
@@ -145,6 +171,7 @@ public class WashingStation extends Station {
         if (hand == null && !cleanPlates.isEmpty()) {
             Plate clean = cleanPlates.pollFirst();
             chef.setHeldItem(clean);
+            SFX.playOnce(SFX_PUT_PLATE);
             System.out.println("[Washing] (C) Mengambil plate bersih dari rak. Sisa bersih = " + cleanPlates.size());
             return true;
         }
@@ -154,5 +181,4 @@ public class WashingStation extends Station {
                 "Butuh plate kotor di tangan atau plate bersih di rak.");
         return false;
     }
-
 }

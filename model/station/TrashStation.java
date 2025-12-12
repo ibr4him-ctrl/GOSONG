@@ -5,10 +5,16 @@ import model.chef.Chef;
 import model.enums.ItemType;
 import model.item.Item;
 import model.item.utensils.Plate;
+import util.SoundEffectPlayer;
 
 public class TrashStation extends Station {
 
     private boolean hasTrash = false;
+
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+    private static final String SFX_TRASH =
+            "/resources/game/sound_effect/trashcan_sound.wav";
 
     public TrashStation(int x, int y) {
         super(x, y, "Trash");
@@ -44,7 +50,8 @@ public class TrashStation extends Station {
             }
             plate.clear();
             plate.setClean(false);
-            hasTrash = true; 
+            hasTrash = true;
+            SFX.playOnce(SFX_TRASH); 
             System.out.println("Isi piring dibuang. Piring tetap di tangan (kotor).");
             return true; 
         }
@@ -67,6 +74,7 @@ public class TrashStation extends Station {
         // ===== BUKAN kitchen utensil → item-nya dibuang =====
         chef.setHeldItem(null);
         hasTrash = true;
+        SFX.playOnce(SFX_TRASH);
         System.out.println(hand.getName() + " dibuang ke tempat sampah.");
         return true;
     }

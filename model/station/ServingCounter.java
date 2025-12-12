@@ -5,15 +5,24 @@ import java.util.TimerTask;
 import model.chef.Chef;
 import model.item.Dish;
 import model.item.Item;
-import model.item.dish.Order;
 import model.item.utensils.Plate;
+import model.manager.GameController;
 import model.manager.OrderManager;
 import model.manager.ScoreManager;
-import model.manager.GameController; 
+import util.SoundEffectPlayer;
 
 public class ServingCounter extends Station {
 
     private static final long PLATE_RETURN_DELAY_MS = 10_000L; // 10 detik
+    // ===== SFX =====
+    private static final SoundEffectPlayer SFX = new SoundEffectPlayer();
+    private static final String SFX_RIGHT =
+            "/resources/game/sound_effect/right_order.wav";
+    private static final String SFX_WRONG =
+            "/resources/game/sound_effect/wrong_order.wav";
+    private static final String SFX_PUT_PLATE =
+            "/resources/game/sound_effect/putting_plates.wav";
+
 
     public ServingCounter(int x, int y) {
         super(x, y, "Serving");
@@ -50,7 +59,8 @@ public class ServingCounter extends Station {
             System.out.println("[Serving] Plate belum berisi Dish final (pizza belum jadi).");
             System.out.println("Penalti -50 (serve pizza belum jadi).");
             ScoreManager.getInstance().add(-50);
-            GameController.getInstance().onOrderFailed(); // Tambahkan ini untuk konsistensi
+            GameController.getInstance().onOrderFailed();
+            SFX.playOnce(SFX_WRONG); 
         } else {
             // === KASUS: ada Dish, validasi ke OrderManager ===
             System.out.println("[Serving] Dish type: " + dish.getPizzaType());
@@ -61,10 +71,12 @@ public class ServingCounter extends Station {
             if (success) {
                 // SUKSES - scoring dan notifikasi sudah ditangani oleh OrderManager
                 System.out.println("[ServingCounter] SUKSES: Pesanan " + dish.getPizzaType().getDisplayName() + " berhasil disajikan!");
+                SFX.playOnce(SFX_RIGHT);
             } else {
                 // GAGAL - order tidak cocok
                 // Scoring dan notifikasi kegagalan sudah ditangani oleh OrderManager
                 System.out.println("[ServingCounter] GAGAL: Tidak ada pesanan untuk " + dish.getPizzaType().getDisplayName());
+                SFX.playOnce(SFX_WRONG);
             }
         }
 
@@ -92,6 +104,7 @@ public class ServingCounter extends Station {
             @Override
             public void run() {
                 target.pushDirtyPlate(dirtyPlate);
+                SFX.playOnce(SFX_PUT_PLATE);
                 System.out.println("[ServingCounter] Piring kotor kembali ke PlateStorage (delay 10 detik).");
             }
         }, PLATE_RETURN_DELAY_MS);
