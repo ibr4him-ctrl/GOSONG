@@ -45,23 +45,22 @@ public class DashController {
         }
         
         // Deteksi edge: hanya trigger saat Shift BARU ditekan
-        if (wasPressed) {
-            return new DashResult(false, 0, "Shift still held");
+        // if (wasPressed) {
+        //     return new DashResult(false, 0, "Shift still held");
+        // }
+
+        // Check cooldown
+        if (now - lastDashTime < DASH_COOLDOWN_NS) {
+            double remainingSeconds = (DASH_COOLDOWN_NS - (now - lastDashTime)) / 1_000_000_000.0;
+            String message = String.format("[Dash] Cooldown: %.1fs remaining", remainingSeconds);
+            return new DashResult(false, 0, message);
         }
-        
+
         // Set flag bahwa Shift sudah ditekan untuk chef ini
         if (isFirstChef) {
             wasShiftPressedChef1 = true;
         } else {
             wasShiftPressedChef2 = true;
-        }
-        
-        // Check cooldown
-        if (now - lastDashTime < DASH_COOLDOWN_NS) {
-            double remainingSeconds = (DASH_COOLDOWN_NS - (now - lastDashTime)) / 1_000_000_000.0;
-            String message = String.format("[Dash] Cooldown: %.1fs remaining", remainingSeconds);
-            System.out.println(message);
-            return new DashResult(false, 0, message);
         }
         
         // Calculate dash direction

@@ -490,10 +490,11 @@ public class GamePanel extends JPanel implements Runnable {
                 if (isFirstChef) lastMoveTimeChef1 = now;
                 else lastMoveTimeChef2 = now;
                 sprite.updateAnimation(true);
-            }
+            } 
             return;
         }
     }
+
 
         // batasi gerakan biar nggak tiap frame loncat
         if (now - lastMoveTime < MOVE_COOLDOWN_NS) {
