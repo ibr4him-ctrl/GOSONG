@@ -185,7 +185,19 @@ public class AssemblyRenderer {
             return;
         }
 
-        // --- 2. Kumpulkan SEMUA Ingredient dari plate (langsung & nested) ---
+        // --- 2. CEK APAKAH ADA PIZZA MATANG (finalDish) ---
+        Dish finalDish = plate.getDish();
+        if (finalDish != null) {
+            // Render pizza matang sebagai dish
+            renderDishOnPlate(g2, centerX, centerY, tileSize, finalDish);
+            
+            // Info kecil jumlah isi plate (untuk dish, tampilkan "1")
+            g2.setColor(Color.BLACK);
+            g2.drawString("x1", tileX + tileSize - 16, tileY + tileSize - 4);
+            return;
+        }
+
+        // --- 3. Kumpulkan SEMUA Ingredient dari plate (langsung & nested) ---
         java.util.List<Ingredient> allIngredients = new java.util.ArrayList<>();
         java.util.Set<Preparable> contents = plate.getContents();
         if (contents != null) {
@@ -282,7 +294,19 @@ public class AssemblyRenderer {
             return;
         }
 
-        // --- 2. Kumpulkan SEMUA Ingredient dari plate (langsung & nested) ---
+        // --- 2. CEK APAKAH ADA PIZZA MATANG (finalDish) ---
+        Dish finalDish = plate.getDish();
+        if (finalDish != null) {
+            // Render pizza matang sebagai dish
+            renderDishOnPlate(g2, centerX, centerY, tileSize, finalDish);
+            
+            // Info kecil jumlah isi plate (untuk dish, tampilkan "1")
+            g2.setColor(Color.BLACK);
+            g2.drawString("x1", tileX + tileSize - 16, tileY + tileSize - 4);
+            return;
+        }
+
+        // --- 3. Kumpulkan SEMUA Ingredient dari plate (langsung & nested) ---
         java.util.List<Ingredient> allIngredients = new java.util.ArrayList<>();
         java.util.Set<Preparable> contents = plate.getContents();
         if (contents != null) {
@@ -438,4 +462,57 @@ public class AssemblyRenderer {
         return canvas;
     }
 
+    /**
+     * Render pizza matang (Dish) di atas plate
+     */
+    private void renderDishOnPlate(Graphics2D g2, int centerX, int centerY, int tileSize, Dish dish) {
+        // Kumpulkan semua ingredient dari dish
+        java.util.List<Ingredient> allIngredients = new java.util.ArrayList<>();
+        collectIngredientsRecursive(dish, allIngredients);
+        
+        // Pisahkan dough & topping
+        Ingredient doughBase = null;
+        java.util.List<Ingredient> toppings = new java.util.ArrayList<>();
+        
+        for (Ingredient ing : allIngredients) {
+            if (ing instanceof Dough) {
+                doughBase = ing;
+            } else {
+                toppings.add(ing);
+            }
+        }
+        
+        // Gambar dough base
+        if (doughBase != null) {
+            BufferedImage doughSprite = getSprite(doughBase);
+            int size = (int) (tileSize * 0.70);
+            int x = centerX - size / 2;
+            int y = centerY - size / 2;
+            
+            if (doughSprite != null) {
+                g2.drawImage(doughSprite, x, y, size, size, null);
+            } else {
+                g2.setColor(new Color(210, 180, 120));
+                g2.fillOval(x, y, size, size);
+            }
+        }
+        
+        // Gambar topping ditumpuk di atas dough
+        if (!toppings.isEmpty()) {
+            int toppingSize = (int) (tileSize * 0.40);
+            int drawX = centerX - toppingSize / 2;
+            int drawY = centerY - toppingSize / 2;
+            
+            for (Ingredient ing : toppings) {
+                BufferedImage sprite = getSprite(ing);
+                
+                if (sprite != null) {
+                    g2.drawImage(sprite, drawX, drawY, toppingSize, toppingSize, null);
+                } else {
+                    g2.setColor(Color.RED);
+                    g2.fillOval(drawX, drawY, toppingSize, toppingSize);
+                }
+            }
+        }
+    }
 }

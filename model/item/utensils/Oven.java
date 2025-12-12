@@ -126,6 +126,8 @@ public class Oven extends Item implements CookingDevice{
             }
             burned = true; 
             cooking = false;
+            // Kosongkan oven saat overcook untuk mencegah pizza hilang
+            contents.clear();
      
         }else if (cookTimeSeconds >= COOK_TIME_DONE){
             for (Preparable p : contents){
