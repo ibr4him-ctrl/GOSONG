@@ -30,6 +30,7 @@ import model.item.utensils.Plate;
 import model.manager.OrderManager;
 import model.map.PizzaMap;
 import model.map.Position;
+import model.map.tile.Tile;
 import model.map.tile.TileType;
 import model.station.AssemblyStation;
 import model.station.CookingStation;
@@ -42,6 +43,8 @@ import model.station.TrashStation;
 import model.station.WashingStation;
 import src.GUI.KeyHandler;
 import view.PlayerSprite.Direction;
+import controller.DashController;
+import controller.ThrowController;
 
 
 public class GamePanel extends JPanel implements Runnable {
@@ -103,6 +106,11 @@ public class GamePanel extends JPanel implements Runnable {
     private long lastUpdateNs = System.nanoTime();
     
     private int settingButtonX, settingButtonY, settingButtonWidth, settingButtonHeight;
+
+    private DashController dashController = new DashController();
+    private ThrowController throwController = new ThrowController();
+    private boolean wasEPressed = false;
+    private int selectedThrowDistance = 3;
 
     public GamePanel() {
 
@@ -449,13 +457,6 @@ public class GamePanel extends JPanel implements Runnable {
         long now = System.nanoTime();
         long lastMoveTime = isFirstChef ? lastMoveTimeChef1 : lastMoveTimeChef2;
 
-        // batasi gerakan biar nggak tiap frame loncat
-        if (now - lastMoveTime < MOVE_COOLDOWN_NS) {
-            if (isFirstChef) chef1Sprite.updateAnimation(isAnyMoveKeyPressed());
-            else             chef2Sprite.updateAnimation(isAnyMoveKeyPressed());
-            return;
-        }
-
         int tileX = chef.getPosition().getX();
         int tileY = chef.getPosition().getY();
 
@@ -463,6 +464,44 @@ public class GamePanel extends JPanel implements Runnable {
         int newTileY = tileY;
 
         boolean moving = false;
+
+        if (keyH.shiftPressed) {
+        char dashDirection = ' ';
+        if (keyH.wPressed) dashDirection = 'W';
+        else if (keyH.sPressed) dashDirection = 'S';
+        else if (keyH.aPressed) dashDirection = 'A';
+        else if (keyH.dPressed) dashDirection = 'D';
+        
+        if (dashDirection != ' ') {
+            Tile[][] tileMap = pizzaMap.getTiles();
+            
+            DashController.DashResult dashResult = dashController.execute(
+                chef, dashDirection, tileMap, isFirstChef, keyH.shiftPressed
+            );
+            
+            if (dashResult.success) {
+                PlayerSprite sprite = isFirstChef ? chef1Sprite : chef2Sprite;
+                switch(dashDirection) {
+                    case 'W': sprite.setDirection(Direction.NORTH); break;
+                    case 'S': sprite.setDirection(Direction.SOUTH); break;
+                    case 'A': sprite.setDirection(Direction.WEST); break;
+                    case 'D': sprite.setDirection(Direction.EAST); break;
+                }
+                if (isFirstChef) lastMoveTimeChef1 = now;
+                else lastMoveTimeChef2 = now;
+                sprite.updateAnimation(true);
+            } 
+            return;
+        }
+    }
+
+
+        // batasi gerakan biar nggak tiap frame loncat
+        if (now - lastMoveTime < MOVE_COOLDOWN_NS) {
+            if (isFirstChef) chef1Sprite.updateAnimation(isAnyMoveKeyPressed());
+            else             chef2Sprite.updateAnimation(isAnyMoveKeyPressed());
+            return;
+        }
 
         // prioritas 1 arah dulu (biar nggak diagonal aneh2)
         if (keyH.wPressed) {
@@ -509,7 +548,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private boolean isAnyMoveKeyPressed() {
-        return keyH.wPressed || keyH.sPressed || keyH.aPressed || keyH.dPressed;
+        return keyH.wPressed || keyH.sPressed || keyH.aPressed || keyH.dPressed || keyH.shiftPressed;
     }
 
     private boolean isValidTile(int tileX, int tileY) {
@@ -617,6 +656,62 @@ public class GamePanel extends JPanel implements Runnable {
         Station stationInFront = getStationInFrontOf(activeChef, activeSprite);
 
         // === PICK UP / DROP: tombol C ===
+        if (keyH.ePressed && !wasEPressed) {
+        System.out.println(" ");
+        
+        // Tentukan arah throw
+        Direction dir = activeSprite.getDirection();
+        char throwDirection = 'S'; // default
+        switch(dir) {
+            case NORTH:     throwDirection = 'W'; break;
+            case SOUTH:     throwDirection = 'S'; break;
+            case WEST:      throwDirection = 'A'; break;
+            case EAST:      throwDirection = 'D'; break;
+            case NORTHEAST: throwDirection = 'W'; break;
+            case NORTHWEST: throwDirection = 'W'; break;
+            case SOUTHEAST: throwDirection = 'S'; break;
+            case SOUTHWEST: throwDirection = 'S'; break;
+        }
+        
+        // Get chef lain (untuk menangkap)
+        Chef otherChef = isPlayer1Active ? chef2 : chef1;
+        
+        // Convert map
+        Tile[][] tileMap = pizzaMap.getTiles();
+        
+        // Execute throw
+        ThrowController.ThrowResult throwResult = throwController.execute(
+            activeChef,
+            throwDirection,
+            selectedThrowDistance, // 2-4 tiles (default 3)
+            tileMap,
+            otherChef
+        );
+        
+        if (throwResult.success) {
+            if (throwResult.caught) {
+                System.out.println("[Throw] SUCCESS - Caught by " + otherChef.getName());
+            } else {
+                // Item jatuh ke lantai
+                int landX = throwResult.landingPosition.getX();
+                int landY = throwResult.landingPosition.getY();
+                String key = groundKey(landX, landY);
+                
+                // Cek apakah lantai sudah ada item
+                if (groundItems.containsKey(key)) {
+                    System.out.println("[Throw] Lantai sudah penuh! Kembalikan item.");
+                    activeChef.setHeldItem(throwResult.ingredient);
+                } else {
+                    groundItems.put(key, throwResult.ingredient);
+                    System.out.println("[Throw] Item jatuh di " + landX + "," + landY);
+                }
+            }
+        } else {
+            System.out.println("[Throw] FAILED - " + throwResult.message);
+        }
+    }
+    wasEPressed = keyH.ePressed;
+
         if (keyH.cPressed && !wasCPressed) {
             System.out.println("[GUI] C pressed by " + activeChef.getName());
 
@@ -999,7 +1094,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         g2.setColor(Color.WHITE);
         g2.drawString("Active: " + (isPlayer1Active ? chef1.getName() : chef2.getName()) + " (WASD)", 10, 20);
-        g2.drawString("TAB: Switch | C: Drop / Serve / Trash | V: Use Station", 10, 40);
+        g2.drawString("TAB: Switch | C: Drop / Serve / Trash | V: Use Station | E: Throw | Shift+WASD: Dash", 10, 40);
 
         int score = model.manager.ScoreManager.getInstance().getScore();
         g2.drawString("Score: " + score, 10, 60);
@@ -1009,7 +1104,21 @@ public class GamePanel extends JPanel implements Runnable {
 
         drawSettingButton(g2);
         drawBottomStatusBar(g2);
-        
+        int dashY = SCREEN_HEIGHT - 3 * TILE_SIZE - 10;
+        g2.setFont(g2.getFont().deriveFont(11f));
+
+        String chef1Dash = "Chef1 Dash: " + dashController.getRemainingCooldownString(true);
+        g2.setColor(dashController.canDash(true) ? Color.GREEN : Color.RED);
+        g2.drawString(chef1Dash, 10, dashY);
+
+        String chef2Dash = "Chef2 Dash: " + dashController.getRemainingCooldownString(false);
+        g2.setColor(dashController.canDash(false) ? Color.GREEN : Color.RED);
+        g2.drawString(chef2Dash, 10, dashY + 15);
+
+        // Display Throw Distance
+        g2.setColor(Color.WHITE);
+        g2.drawString("Throw: " + selectedThrowDistance + " tiles", 10, dashY + 35);
+                
         g2.dispose();
     }
 
