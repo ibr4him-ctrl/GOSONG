@@ -114,12 +114,12 @@ public class ThrowController {
             Position testPos = new Position(newX, newY);
             
             // Cek apakah posisi ini Tembok / Tidak Valid?
-            if (!isValidThrowPosition(testPos, map)) {
-                // SPESIFIKASI: "Apabila lemparan melewati tembok, maka item jatuh tepat DI SEBELUM tembok"
-                // Kita BREAK (berhenti) di sini. 
-                // validLandingPos masih berisi posisi tile SEBELUMNYA (i-1).
-                break; 
-            }
+            // if (!isValidThrowPosition(testPos, map)) {
+            //     // SPESIFIKASI: "Apabila lemparan melewati tembok, maka item jatuh tepat DI SEBELUM tembok"
+            //     // Kita BREAK (berhenti) di sini. 
+            //     // validLandingPos masih berisi posisi tile SEBELUMNYA (i-1).
+            //     break; 
+            // }
             
             // Jika valid (bukan tembok), simpan posisi ini sebagai kandidat jatuh
             path.add(testPos);
