@@ -3,7 +3,9 @@ package view;
 import actions.useStation.AssemblyAction;
 import actions.useStation.CookingAction;
 import actions.useStation.WashingAction;
+import controller.DashController;
 import controller.PickUpDrop;
+import controller.ThrowController;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -43,8 +45,6 @@ import model.station.TrashStation;
 import model.station.WashingStation;
 import src.GUI.KeyHandler;
 import view.PlayerSprite.Direction;
-import controller.DashController;
-import controller.ThrowController;
 
 
 public class GamePanel extends JPanel implements Runnable {
@@ -624,41 +624,25 @@ public class GamePanel extends JPanel implements Runnable {
 
     // HELPER: gambar item yang dipegang chef di panel inventory bawah
     private void drawInventoryHeldItemIcon(Graphics2D g2, Chef chef, int centerX, int baseY) {
-        Item item = chef.getHeldItem();
+        Item item = chef.getHeldItem(); // atau chef.getInventory().getHeldItem();
         if (item == null) return;
 
-        int iconSize = TILE_SIZE;
+        int iconSize = TILE_SIZE;                 // bisa kecilin kalau kepotong
         int drawX = centerX - iconSize / 2;
         int drawY = baseY - iconSize;
 
-        Color fill = new Color(255, 220, 200);
-        String label = "?";
-
-        if (item instanceof Plate plate) {
-            fill = Color.WHITE;
-            int count = plate.getContents().size();
-            label = (count == 0) ? "Plate" : "P" + count;
-        } else if (item instanceof Ingredient) {
-            label = item.getName();
-        } else if (item instanceof Dish) {
-            label = "P";
-        } else {
-            label = item.getName();
+        BufferedImage icon = assemblyRenderer.renderIconForItem(item, iconSize);
+        if (icon != null) {
+            g2.drawImage(icon, drawX, drawY, null);
+            return;
         }
 
-        g2.setColor(fill);
-        g2.fillRoundRect(drawX, drawY, iconSize, iconSize, 8, 8);
+        // fallback kalau item gak ke-render
+        g2.setColor(Color.WHITE);
+        g2.fillRect(drawX, drawY, iconSize, iconSize);
         g2.setColor(Color.BLACK);
-        g2.drawRoundRect(drawX, drawY, iconSize, iconSize, 8, 8);
-
-        g2.setFont(g2.getFont().deriveFont(10f));
-        java.awt.FontMetrics fm = g2.getFontMetrics();
-        int textWidth = fm.stringWidth(label);
-        int textX = drawX + (iconSize - textWidth) / 2;
-        int textY = drawY + (iconSize + fm.getAscent() - fm.getDescent()) / 2;
-        g2.drawString(label, textX, textY);
+        g2.drawRect(drawX, drawY, iconSize, iconSize);
     }
-
     private void handleActions() {
         Chef activeChef = getActiveChef();
         PlayerSprite activeSprite = getActiveSprite();
@@ -1126,15 +1110,12 @@ public class GamePanel extends JPanel implements Runnable {
 
         // Display Throw Distance
         g2.setColor(Color.WHITE);
-        g2.drawString("Throw: " + selectedThrowDistance + " tiles", 10, dashY + 35);
-                
-        g2.dispose();
     }
 
     private void drawSettingButton(Graphics2D g2) {
         int buttonSize = 2 * TILE_SIZE;
         settingButtonX = SCREEN_WIDTH - buttonSize;
-        settingButtonY = 6 * TILE_SIZE;
+        settingButtonY = 6 * TILE_SIZE + 10; // diturunkan sedikit
         settingButtonWidth = buttonSize;
         settingButtonHeight = buttonSize;
 
@@ -1302,9 +1283,6 @@ public class GamePanel extends JPanel implements Runnable {
             g2.fillRoundRect(x, y, blockSize, blockSize, 12, 12);
         }
 
-        g2.setColor(Color.BLACK);
-        g2.drawRoundRect(x, y, blockSize, blockSize, 12, 12);
-
         drawOrderInfo(g2, x, y, blockSize, order);
     }
     
@@ -1351,29 +1329,30 @@ public class GamePanel extends JPanel implements Runnable {
         java.util.List<String> ingredientLines = new java.util.ArrayList<>();
         switch (order.getPizzaType()) {
             case MARGHERITA -> {
-                ingredientLines.add("Dough (chopped)");
-                ingredientLines.add("Tomato (chopped)");
-                ingredientLines.add("Cheese");
+                ingredientLines.add("Adonan (chopped)");
+                ingredientLines.add("Tomat (chopped)");
+                ingredientLines.add("Keju (chopped)");
             }
             case SOSIS -> {
-                ingredientLines.add("Dough (chopped)");
-                ingredientLines.add("Tomato (chopped)");
-                ingredientLines.add("Cheese");
-                ingredientLines.add("Sausage (chopped)");
+                ingredientLines.add("Adonan (chopped)");
+                ingredientLines.add("Tomat (chopped)");
+                ingredientLines.add("Keju (chopped)");
+                ingredientLines.add("Sosis (chopped)");
             }
             case AYAM -> {
-                ingredientLines.add("Dough (chopped)");
-                ingredientLines.add("Tomato (chopped)");
-                ingredientLines.add("Cheese");
-                ingredientLines.add("Chicken (chopped)");
+                ingredientLines.add("Adonan (chopped)");
+                ingredientLines.add("Tomat (chopped)");
+                ingredientLines.add("Keju (chopped)");
+                ingredientLines.add("Ayam (chopped)");
+                ingredientLines.add("Masak di Oven");
             }
         }
 
         // Gambar setiap baris ingredients, dibatasi supaya muat di dalam blok
         for (String line : ingredientLines) {
             cursorY += lineHeight;
-            if (cursorY > y + blockSize - lineHeight * 2) {
-                // Kalau sudah mau mentok bawah, berhenti supaya tidak keluar blok
+            // sisakan 1 baris untuk teks waktu di bawah
+            if (cursorY > y + blockSize - lineHeight * 1) {
                 break;
             }
             drawTextWithShadow(g2, "- " + line, innerX, cursorY, Color.BLACK, Color.LIGHT_GRAY);
@@ -1401,7 +1380,6 @@ public class GamePanel extends JPanel implements Runnable {
         g2.drawString(text, x, y);
     }
 }
-
 
 //WARNING KALO KALIAN MAU GANTI INI 
 //CEK DULU APAKAH FUNGSI KALIAN GANTI BEKERJA ATAU GAK
