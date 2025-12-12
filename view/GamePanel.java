@@ -1154,7 +1154,7 @@ public class GamePanel extends JPanel implements Runnable {
         g2.drawString("C: Drop / Serve / Trash", 490, 470);
 
         int score = model.manager.ScoreManager.getInstance().getScore();
-        g2.drawString("Score: " + score, 690, 400);
+        g2.drawString("Score: " + score, 690, 410);
 
 
         // ====== Gambar daftar Order aktif dengan template 2x2 blok di pojok kanan atas ======
