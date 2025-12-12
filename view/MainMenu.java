@@ -111,8 +111,8 @@ public class MainMenu extends JFrame {
    }
 
    private void bukaPengaturan() {
-      Pengaturan pengaturan = new Pengaturan(this);
-      pengaturan.setVisible(true);
+      UnifiedSettingsDialog settings = new UnifiedSettingsDialog(this, false); // false = main menu
+      settings.setVisible(true);
    }
 
    private class BackgroundPanel extends JComponent {
