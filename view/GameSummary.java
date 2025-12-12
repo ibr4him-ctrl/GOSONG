@@ -41,9 +41,9 @@ public class GameSummary extends JFrame {
 
     private void loadContent() {
         try {
-            backgroundImage = ImageIO.read(getClass().getResource("/resources/game/GameSummary-PASS.png"));
+            backgroundImage = ImageIO.read(getClass().getResource("/resources/game/GameSummary.png"));
         } catch (IOException e) {
-            System.err.println("Error loading GameSummary-PASS.png: " + e.getMessage());
+            System.err.println("Error loading GameSummary.png: " + e.getMessage());
             backgroundImage = null;
         }
     }
