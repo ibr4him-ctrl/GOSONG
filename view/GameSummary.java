@@ -64,10 +64,10 @@ public class GameSummary extends JFrame {
 
     private class SummaryPanel extends JComponent {
         // Area klik untuk tombol "Selanjutnya"
-        private static final int NEXT_X = 300;
+        private static final int NEXT_X = 385;
         private static final int NEXT_Y = 480;
-        private static final int NEXT_W = 180;
-        private static final int NEXT_H = 70;
+        private static final int NEXT_W = 150;
+        private static final int NEXT_H = 60;
 
         public SummaryPanel() {
             addMouseListener(new MouseAdapter() {

@@ -10,6 +10,7 @@ import model.interfaces.CookingDevice;
 import model.item.Item;
 import model.item.Preparable; 
 import model.item.ingredient.Ingredient;
+import model.item.ingredient.pizza.Dough;
 
 public class Oven extends Item implements CookingDevice{
     //kapaitas maksimum ingredient yang bisa dipanggang 
@@ -84,9 +85,20 @@ public class Oven extends Item implements CookingDevice{
     // Masuk ke ingredient ke oven 
     public void addIngredient(Preparable ingredient){
         if (!canAccept(ingredient)){
-            throw new IllegalStateException("Oven tidak dapat menerimaa ingredient ini"); 
+            throw new IllegalStateException("Oven tidak dapat menerima ingredient ini");
         }
-        contents.add(ingredient); 
+
+        if (ingredient instanceof Dough) {
+            // optional: cegah 2 dough
+            for (Preparable p : contents) {
+                if (p instanceof Dough) {
+                    throw new IllegalStateException("Sudah ada Dough di oven");
+                }
+            }
+            contents.add(0, ingredient); // Dough selalu di depan
+        } else {
+            contents.add(ingredient);
+        }
     }
 
     @Override

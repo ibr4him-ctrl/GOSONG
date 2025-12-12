@@ -5,8 +5,8 @@ public class ScoreManager {
     private static ScoreManager instance;
 
     //Konstanta Skor
-    public static final int POINTS_SUCCESS = 120;
-    public static final int PENALTY_FAIL = -50;
+    public static final int POINTS_SUCCESS = 120; //kalo berhasil masukin ke serving
+    public static final int PENALTY_FAIL = -50;  //kalo waktu order udah habis
 
     //State
     private int score = 0;

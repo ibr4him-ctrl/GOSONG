@@ -9,6 +9,7 @@ import model.item.dish.Order;
 import model.item.utensils.Plate;
 import model.manager.OrderManager;
 import model.manager.ScoreManager;
+import model.manager.GameController; 
 
 public class ServingCounter extends Station {
 
@@ -42,7 +43,6 @@ public class ServingCounter extends Station {
             return false;
         }
 
-
         // plate harus berisi Dish final
         Dish dish = plate.getDish();   // method yang sudah kamu buat di Plate
         
@@ -50,27 +50,21 @@ public class ServingCounter extends Station {
             System.out.println("[Serving] Plate belum berisi Dish final (pizza belum jadi).");
             System.out.println("Penalti -50 (serve pizza belum jadi).");
             ScoreManager.getInstance().add(-50);
-        }else {
-            // === KASUS: ada Dish, cek ke OrderManager ===
+            GameController.getInstance().onOrderFailed(); // Tambahkan ini untuk konsistensi
+        } else {
+            // === KASUS: ada Dish, validasi ke OrderManager ===
             System.out.println("[Serving] Dish type: " + dish.getPizzaType());
 
-            Order matchedOrder = OrderManager.getInstance().validateDish(dish);
+            // validateDish() sudah handle scoring & GameController notification
+            boolean success = OrderManager.getInstance().validateDish(dish);
 
-            if (matchedOrder != null) {
-                System.out.println("SUKSES: " + matchedOrder.getPizzaType().getDisplayName());
-                System.out.println("Reward: +" + matchedOrder.getReward());
-                ScoreManager.getInstance().add(matchedOrder.getReward());
-                
-                // Lapor ke GameController bahwa order berhasil
-                model.manager.GameController.getInstance().onOrderSuccess();
+            if (success) {
+                // SUKSES - scoring dan notifikasi sudah ditangani oleh OrderManager
+                System.out.println("[ServingCounter] SUKSES: Pesanan " + dish.getPizzaType().getDisplayName() + " berhasil disajikan!");
             } else {
-                System.out.println("GAGAL: Tidak ada pesanan untuk "
-                        + dish.getPizzaType().getDisplayName());
-                System.out.println("Penalti -50 (pizza salah pesanan).");
-                ScoreManager.getInstance().add(-50);
-                
-                // Lapor ke GameController bahwa order gagal
-                model.manager.GameController.getInstance().onOrderFailed();
+                // GAGAL - order tidak cocok
+                // Scoring dan notifikasi kegagalan sudah ditangani oleh OrderManager
+                System.out.println("[ServingCounter] GAGAL: Tidak ada pesanan untuk " + dish.getPizzaType().getDisplayName());
             }
         }
 
@@ -82,7 +76,6 @@ public class ServingCounter extends Station {
 
         return true; // interaksi BERHASIL (meski hasilnya penalti)
     }
-
 
     /**
      * Mengembalikan plate ke PlateStorage terdekat 10 detik setelah serve,
@@ -99,7 +92,7 @@ public class ServingCounter extends Station {
             @Override
             public void run() {
                 target.pushDirtyPlate(dirtyPlate);
-                System.out.println("DEBUG: Piring kotor kembali ke PlateStorage (delay 10 detik).");
+                System.out.println("[ServingCounter] Piring kotor kembali ke PlateStorage (delay 10 detik).");
             }
         }, PLATE_RETURN_DELAY_MS);
     }
