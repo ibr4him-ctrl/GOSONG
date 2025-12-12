@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 import model.enums.IngredientState;
 import model.item.Dish;
+import model.item.Item;
 import model.item.Preparable;
 import model.item.ingredient.Ingredient;
 import model.item.ingredient.pizza.Dough;
@@ -246,6 +247,106 @@ public class AssemblyRenderer {
                       tileY + tileSize - 4);
     }
 
+    public void drawPlateOnAssembly(Graphics2D g2,
+                                    int tileX, int tileY,
+                                    int tileSize,
+                                    Plate plate,
+                                    boolean drawCountLabel) {
+        if (plate == null) return;
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int centerX = tileX + tileSize / 2;
+        int centerY = tileY + tileSize / 2;
+
+        // --- 1. Gambar piring pakai sprite ---
+        BufferedImage plateSprite = getSpriteForPlate(plate);
+        int plateSize = (int) (tileSize * 0.9);
+        int plateX = centerX - plateSize / 2;
+        int plateY = centerY - plateSize / 2;
+
+        if (plateSprite != null) {
+            g2.drawImage(plateSprite, plateX, plateY, plateSize, plateSize, null);
+        } else {
+            int plateRadius = (int) (tileSize * 0.40);
+            g2.setColor(new Color(245, 245, 250));
+            g2.fillOval(centerX - plateRadius, centerY - plateRadius,
+                    plateRadius * 2, plateRadius * 2);
+            g2.setColor(new Color(200, 200, 210));
+            g2.drawOval(centerX - plateRadius, centerY - plateRadius,
+                    plateRadius * 2, plateRadius * 2);
+        }
+
+        // Kalau piring kotor → cukup pakai sprite piring kotor, tidak render isi
+        if (!plate.isClean()) {
+            return;
+        }
+
+        // --- 2. Kumpulkan SEMUA Ingredient dari plate (langsung & nested) ---
+        java.util.List<Ingredient> allIngredients = new java.util.ArrayList<>();
+        java.util.Set<Preparable> contents = plate.getContents();
+        if (contents != null) {
+            for (Preparable prep : contents) {
+                collectIngredientsRecursive(prep, allIngredients);
+            }
+        }
+
+        // Pisahkan dough & topping
+        Ingredient doughBase = null;
+        java.util.List<Ingredient> toppings = new java.util.ArrayList<>();
+
+        for (Ingredient ing : allIngredients) {
+            if (ing instanceof Dough) {
+                doughBase = ing;
+            } else {
+                toppings.add(ing);
+            }
+        }
+
+        // --- 3. Gambar dough base ---
+        if (doughBase != null) {
+            BufferedImage doughSprite = getSprite(doughBase);
+            int size = (int) (tileSize * 0.70);
+            int x = centerX - size / 2;
+            int y = centerY - size / 2;
+
+            if (doughSprite != null) {
+                g2.drawImage(doughSprite, x, y, size, size, null);
+            } else {
+                g2.setColor(new Color(210, 180, 120));
+                g2.fillOval(x, y, size, size);
+            }
+        }
+
+        // --- 4. Gambar topping ditumpuk di atas dough ---
+        if (!toppings.isEmpty()) {
+            int toppingSize = (int) (tileSize * 0.40);
+            int drawX = centerX - toppingSize / 2;
+            int drawY = centerY - toppingSize / 2;
+
+            for (Ingredient ing : toppings) {
+                BufferedImage sprite = getSprite(ing);
+
+                if (sprite != null) {
+                    g2.drawImage(sprite, drawX, drawY, toppingSize, toppingSize, null);
+                } else {
+                    g2.setColor(Color.RED);
+                    g2.fillOval(drawX, drawY, toppingSize, toppingSize);
+                }
+            }
+        }
+
+        // --- 5. Label kecil jumlah isi plate (xN) ---
+        if (drawCountLabel) {
+            g2.setColor(Color.BLACK);
+            int count = (contents == null) ? 0 : contents.size();
+            g2.drawString("x" + count,
+                    tileX + tileSize - 16,
+                    tileY + tileSize - 4);
+        }
+    }
+
+
     // =========================
     // RENDER DOUGH LANGSUNG DI ASSEMBLY (TANPA PLATE)
     // =========================
@@ -291,4 +392,50 @@ public class AssemblyRenderer {
             }
         }
     }
+
+    public BufferedImage renderIconForItem(Item item, int size) {
+        if (item == null || size <= 0) return null;
+
+        BufferedImage canvas = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = canvas.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // transparan background
+        g2.setComposite(java.awt.AlphaComposite.SrcOver);
+
+        if (item instanceof Plate plate) {
+            // render plate + isi (tanpa tulisan "xN")
+            drawPlateOnAssembly(g2, 0, 0, size, plate, false);
+        }
+        else if (item instanceof Dough dough) {
+            drawDoughOnAssembly(g2, 0, 0, size, dough);
+        }
+        else if (item instanceof Ingredient ing) {
+            BufferedImage sp = getSpriteForIngredient(ing);
+            if (sp != null) {
+                int pad = (int)(size * 0.1);
+                g2.drawImage(sp, pad, pad, size - pad*2, size - pad*2, null);
+            }
+        }
+        else if (item instanceof Dish dish) {
+            // coba render isi dish (ambil dough+topping kalau ada)
+            java.util.List<Ingredient> all = new java.util.ArrayList<>();
+            collectIngredientsRecursive(dish, all);
+
+            Dough base = null;
+            java.util.List<Ingredient> tops = new java.util.ArrayList<>();
+            for (Ingredient ing : all) {
+                if (ing instanceof Dough d) base = d;
+                else tops.add(ing);
+            }
+
+            if (base != null) {
+                drawDoughOnAssembly(g2, 0, 0, size, base);
+            }
+        }
+
+        g2.dispose();
+        return canvas;
+    }
+
 }

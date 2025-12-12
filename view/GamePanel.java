@@ -3,7 +3,9 @@ package view;
 import actions.useStation.AssemblyAction;
 import actions.useStation.CookingAction;
 import actions.useStation.WashingAction;
+import controller.DashController;
 import controller.PickUpDrop;
+import controller.ThrowController;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -43,8 +45,6 @@ import model.station.TrashStation;
 import model.station.WashingStation;
 import src.GUI.KeyHandler;
 import view.PlayerSprite.Direction;
-import controller.DashController;
-import controller.ThrowController;
 
 
 public class GamePanel extends JPanel implements Runnable {
@@ -621,41 +621,25 @@ public class GamePanel extends JPanel implements Runnable {
 
     // HELPER: gambar item yang dipegang chef di panel inventory bawah
     private void drawInventoryHeldItemIcon(Graphics2D g2, Chef chef, int centerX, int baseY) {
-        Item item = chef.getHeldItem();
+        Item item = chef.getHeldItem(); // atau chef.getInventory().getHeldItem();
         if (item == null) return;
 
-        int iconSize = TILE_SIZE;
+        int iconSize = TILE_SIZE;                 // bisa kecilin kalau kepotong
         int drawX = centerX - iconSize / 2;
         int drawY = baseY - iconSize;
 
-        Color fill = new Color(255, 220, 200);
-        String label = "?";
-
-        if (item instanceof Plate plate) {
-            fill = Color.WHITE;
-            int count = plate.getContents().size();
-            label = (count == 0) ? "Plate" : "P" + count;
-        } else if (item instanceof Ingredient) {
-            label = item.getName();
-        } else if (item instanceof Dish) {
-            label = "P";
-        } else {
-            label = item.getName();
+        BufferedImage icon = assemblyRenderer.renderIconForItem(item, iconSize);
+        if (icon != null) {
+            g2.drawImage(icon, drawX, drawY, null);
+            return;
         }
 
-        g2.setColor(fill);
-        g2.fillRoundRect(drawX, drawY, iconSize, iconSize, 8, 8);
+        // fallback kalau item gak ke-render
+        g2.setColor(Color.WHITE);
+        g2.fillRect(drawX, drawY, iconSize, iconSize);
         g2.setColor(Color.BLACK);
-        g2.drawRoundRect(drawX, drawY, iconSize, iconSize, 8, 8);
-
-        g2.setFont(g2.getFont().deriveFont(10f));
-        java.awt.FontMetrics fm = g2.getFontMetrics();
-        int textWidth = fm.stringWidth(label);
-        int textX = drawX + (iconSize - textWidth) / 2;
-        int textY = drawY + (iconSize + fm.getAscent() - fm.getDescent()) / 2;
-        g2.drawString(label, textX, textY);
+        g2.drawRect(drawX, drawY, iconSize, iconSize);
     }
-
     private void handleActions() {
         Chef activeChef = getActiveChef();
         PlayerSprite activeSprite = getActiveSprite();
