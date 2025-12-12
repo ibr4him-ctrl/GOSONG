@@ -649,6 +649,9 @@ public class GamePanel extends JPanel implements Runnable {
         g2.setColor(Color.BLACK);
         g2.drawRect(drawX, drawY, iconSize, iconSize);
     }
+
+
+
     private void handleActions() {
         Chef activeChef = getActiveChef();
         PlayerSprite activeSprite = getActiveSprite();
