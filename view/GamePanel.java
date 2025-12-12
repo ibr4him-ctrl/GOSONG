@@ -156,7 +156,10 @@ public class GamePanel extends JPanel implements Runnable {
                 
                 if (mx >= settingButtonX && mx <= settingButtonX + settingButtonWidth &&
                     my >= settingButtonY && my <= settingButtonY + settingButtonHeight) {
-                    SettingsEditor settings = new SettingsEditor((javax.swing.JFrame) getTopLevelAncestor());
+                    UnifiedSettingsDialog settings = new UnifiedSettingsDialog(
+                        (javax.swing.JFrame) getTopLevelAncestor(), 
+                        true  // true = in-game mode
+                    );
                     settings.setVisible(true);
                 }
             }
@@ -172,7 +175,7 @@ public class GamePanel extends JPanel implements Runnable {
         loadOrderPaperImages();
         loadUiOverlayImages();
         
-        SettingsEditor.setMusicPlayer(main.Main.getMusicPlayer());
+        UnifiedSettingsDialog.setMusicPlayer(main.Main.getMusicPlayer());
     }
     
     
