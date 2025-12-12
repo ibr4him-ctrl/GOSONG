@@ -52,12 +52,18 @@ public class GameController {
      * Dipanggil saat awal game dimulai.
      */
     public void startGame() {
+        // Cegah multiple start calls
+        if (currentState == GameState.PLAYING) {
+            System.out.println("[GameController] Game already started, ignoring duplicate call.");
+            return;
+        }
+        
         System.out.println("[GameController] Game started.");
-        currentState = GameState.PLAYING;
         elapsedTime = 0.0;
         startTimeNs = System.nanoTime();
         lastResult = null;
-
+        currentState = GameState.PLAYING;
+        
         // Reset semua subsistem
         scoreManager.resetScore();
         failTracker.resetTracker();
@@ -73,10 +79,8 @@ public class GameController {
             return;
         }
 
-        // keep an approximate elapsedTime for in-loop checks, but authority is startTimeNs
-        elapsedTime += deltaSeconds;
-
-        // Biarkan OrderManager juga update (ini sudah terjadi di GamePanel.update → OrderManager.update)
+        // Hitung elapsed time secara akurat berdasarkan waktu mulai.
+        elapsedTime = (System.nanoTime() - startTimeNs) / 1_000_000_000.0;
         // Di sini kita hanya perlu check kondisi ending
 
         // === CEK KONDISI GAME OVER ===
@@ -120,7 +124,12 @@ public class GameController {
         System.out.println("[GameController] Game Over! " + lastResult);
 
         // Panggil Main untuk menampilkan UI game over dengan result
-        main.Main.showGameOver(lastResult);
+        // Bedakan antara menang (PASS) dan kalah (FAIL)
+        if (isPass) {
+            main.Main.showGameSummary(lastResult);
+        } else {
+            main.Main.showGameOver(lastResult);
+        }
     }
 
     /**

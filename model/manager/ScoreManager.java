@@ -4,11 +4,11 @@ public class ScoreManager {
 
     private static ScoreManager instance;
 
-    // --- Konstanta Skor ---
+    //Konstanta Skor
     public static final int POINTS_SUCCESS = 120;
     public static final int PENALTY_FAIL = -50;
 
-    // --- State ---
+    //State
     private int score = 0;
     private int successCount = 0;
     private int failCount = 0;
@@ -20,6 +20,15 @@ public class ScoreManager {
             instance = new ScoreManager();
         }
         return instance;
+    }
+
+    public static void resetInstance() {
+        if (instance != null) {
+            instance.score = 0;
+            instance.successCount = 0;
+            instance.failCount = 0;
+        }
+        instance = null;
     }
 
     /** Reset skor ke 0 (dipanggil di awal game / saat restart). */

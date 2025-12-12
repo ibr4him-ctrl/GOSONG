@@ -2,6 +2,8 @@ package main;
 import javax.swing.*;
 import view.GamePanel;
 import view.MainMenu;
+import view.GameSummary;
+import view.StageCleared;
 import util.MusicPlayer;
 
 public class Main {
@@ -28,6 +30,13 @@ public class Main {
     }
 
     public static void startGame() {
+        // Pastikan semua singleton direset sebelum memulai game baru
+        model.manager.GameController.resetInstance();
+        model.manager.OrderManager.resetInstance();
+        model.manager.ScoreManager.getInstance().resetScore();
+        model.manager.OrderFailTracker.resetInstance();
+        model.item.dish.Order.resetOrderCounter();
+        
         window = new JFrame("GOSONG - Pizza Chef");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
@@ -68,6 +77,15 @@ public class Main {
     }
 
     public static void showGameOver() {
+        // Stop game thread terlebih dahulu
+        if (gamePanel != null) {
+            try {
+                gamePanel.stopGameThread();
+            } catch (Exception e) {
+                System.err.println("Error stopping game thread: " + e.getMessage());
+            }
+        }
+        
         if (window != null) {
             window.setVisible(false);
             window.dispose();
@@ -89,18 +107,78 @@ public class Main {
         showGameOver();
     }
 
+    /**
+     * Menampilkan layar Game Summary (saat menang).
+     */
+    public static void showGameSummary(model.manager.GameResult result) {
+        lastGameResult = result;
 
-    public static void restartGame() {
+        // Stop game thread terlebih dahulu
+        if (gamePanel != null) {
+            try {
+                gamePanel.stopGameThread();
+            } catch (Exception e) {
+                System.err.println("Error stopping game thread: " + e.getMessage());
+            }
+        }
+        
         if (window != null) {
             window.setVisible(false);
             window.dispose();
         }
         musicPlayer.stop();
+        
+        SwingUtilities.invokeLater(() -> {
+            GameSummary summary = new GameSummary(lastGameResult);
+            summary.setVisible(true);
+        });
+    }
+
+    /**
+     * Menampilkan layar Stage Cleared.
+     */
+    public static void showStageCleared() {
+        // Tidak perlu stop apa-apa karena sudah di-handle oleh GameSummary
+        
+        SwingUtilities.invokeLater(() -> {
+            StageCleared cleared = new StageCleared();
+            cleared.setVisible(true);
+        });
+    }
+
+
+    public static void restartGame() {
+        // Stop game thread dan window terlebih dahulu
+        if (gamePanel != null) {
+            try {
+                gamePanel.stopGameThread();
+            } catch (Exception e) {
+                System.err.println("Error stopping game thread: " + e.getMessage());
+            }
+        }
+        if (window != null) {
+            window.setVisible(false);
+            window.dispose();
+        }
+        musicPlayer.stop();
+        
+        // Reset semua singleton dan state
+        model.manager.GameController.resetInstance();
         model.manager.OrderManager.resetInstance();
         model.manager.ScoreManager.getInstance().resetScore();
         model.manager.OrderFailTracker.resetInstance();
-        model.manager.GameController.resetInstance();
         model.item.dish.Order.resetOrderCounter();
+        
+        // Reset UI score dan lastGameResult
+        score = 0;
+        lastGameResult = null;
+        
+        // Beri sedikit delay sebelum start game baru untuk memastikan cleanup selesai
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         
         SwingUtilities.invokeLater(() -> {
             startGame();
@@ -119,7 +197,6 @@ public class Main {
             mainMenu.setVisible(true);
         });
     }
-
 
     public static void stopGame() {
         model.manager.OrderManager.getInstance().stopAcceptingNewOrders();

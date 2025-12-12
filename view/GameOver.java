@@ -90,18 +90,31 @@ public class GameOver extends JFrame {
       System.exit(0);
    }
 
-   private class GameOverPanel extends JComponent { // Kembali ke JComponent
+   private void onMainMenuClicked() {
+      if (musicPlayer != null) {
+         musicPlayer.stop();
+      }
+      this.dispose();
+      main.Main.showMainMenu();
+   }
+
+   private class GameOverPanel extends JComponent {
       // Region buttons
       private static final int RETRY_X = 200;
       private static final int RETRY_Y = 480;
       private static final int RETRY_W = 150;
       private static final int RETRY_H = 60;
 
-      private static final int EXIT_X = 420;
+      private static final int MAIN_MENU_X = 385;
+      private static final int MAIN_MENU_Y = 480;
+      private static final int MAIN_MENU_W = 150;
+      private static final int MAIN_MENU_H = 60;
+
+      private static final int EXIT_X = 570;
       private static final int EXIT_Y = 480;
       private static final int EXIT_W = 150;
       private static final int EXIT_H = 60;
-      
+
       // Variable timer untuk mencegah close tidak sengaja
       private long openTime;
 
@@ -130,6 +143,12 @@ public class GameOver extends JFrame {
             return;
          }
 
+         if (x >= MAIN_MENU_X && x <= MAIN_MENU_X + MAIN_MENU_W &&
+             y >= MAIN_MENU_Y && y <= MAIN_MENU_Y + MAIN_MENU_H) {
+            GameOver.this.onMainMenuClicked();
+            return;
+         }
+
          if (x >= EXIT_X && x <= EXIT_X + EXIT_W &&
              y >= EXIT_Y && y <= EXIT_Y + EXIT_H) {
             GameOver.this.onExitClicked();
@@ -142,17 +161,16 @@ public class GameOver extends JFrame {
          super.paintComponent(g);
          Graphics2D g2d = (Graphics2D) g.create();
 
-         // 2. Draw background image
+         // Draw background image
          if (backgroundImage != null) {
             g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
          } else {
             // Fallback: Jika background image gagal load, gambar warna hitam.
-            // Ini mencegah window menjadi transparan/bolong.
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, getWidth(), getHeight());
          }
 
-         // 3. Draw game result info
+         // Draw game result info
          if (gameResult != null) {
             drawGameResultInfo(g2d);
          }
@@ -186,7 +204,7 @@ public class GameOver extends JFrame {
             g2d.setFont(new Font("Lucida Console", Font.ITALIC, 18));
             String reasonText = gameResult.getFailReason();
             fm = g2d.getFontMetrics();
-            g2d.drawString(reasonText, centerX - fm.stringWidth(reasonText) / 2, startY + lineHeight * 2 + 6);
+            g2d.drawString(reasonText, centerX - fm.stringWidth(reasonText) / 2, startY + lineHeight + 70);
          }
 
          // Order Success/Fail
@@ -197,13 +215,6 @@ public class GameOver extends JFrame {
          g2d.setColor(Color.WHITE);
          fm = g2d.getFontMetrics();
          g2d.drawString(orderText, centerX - fm.stringWidth(orderText) / 2, startY + lineHeight + 40);
-
-         // PASS / FAIL Status
-         String statusText = (gameResult.isPass()) ? "PASS" : "FAIL";
-         g2d.setFont(new Font("Lucida Console", Font.BOLD, 28));
-         g2d.setColor(gameResult.isPass() ? Color.GREEN : Color.RED);
-         fm = g2d.getFontMetrics();
-         g2d.drawString(statusText, centerX - fm.stringWidth(statusText) / 2, startY + lineHeight * 3 + 80);
       }
    }
 }
