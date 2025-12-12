@@ -145,10 +145,10 @@ public class MainMenu extends JFrame {
       Main.startGame();
    }
 
-   private void bukaPengaturan() {
-      UnifiedSettingsDialog settings = new UnifiedSettingsDialog(this, false); // false = main menu
-      settings.setVisible(true);
-   }
+private void bukaPengaturan() {
+    UnifiedSettingsDialog settings = new UnifiedSettingsDialog(this, false); // false = main menu
+    settings.setVisible(true);
+}
 
    private class BackgroundPanel extends JComponent {
       @Override
