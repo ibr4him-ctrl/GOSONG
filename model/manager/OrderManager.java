@@ -87,7 +87,9 @@ public class OrderManager {
             }
         }
 
-        if (!acceptingNewOrders && activeOrders.isEmpty() && totalSpawnedOrders >= MAX_TOTAL_ORDERS) {
+        // Cek kondisi menang: jika sudah tidak menerima order baru DAN semua order aktif sudah selesai.
+        // `totalSpawnedOrders` tidak perlu dicek di sini karena `acceptingNewOrders` sudah jadi flag utamanya.
+        if (!acceptingNewOrders && activeOrders.isEmpty()) {
             if (!sessionOver) {
                 sessionOver = true;
                 System.out.println("Semua order selesai! Game Over.");
@@ -106,16 +108,13 @@ public class OrderManager {
     }
 
     private void spawnOrderIfNeeded() {
-        if (!acceptingNewOrders) return;
-        if (activeOrders.size() >= MAX_ORDERS) return;
-        if (totalSpawnedOrders >= MAX_TOTAL_ORDERS) return;
-
-        // Tidak spawn order baru di luar 3 order pertama
+        // Dalam desain saat ini, tidak ada order baru yang di-spawn setelah 3 order awal.
+        // Jadi, method ini bisa dibiarkan kosong atau digunakan untuk logika masa depan.
     }
 
     private void spawnRandomOrderWithTimeLimit(int timeLimitSeconds) {
+        // Langsung berhenti jika sudah mencapai batas total order.
         if (totalSpawnedOrders >= MAX_TOTAL_ORDERS) {
-            acceptingNewOrders = false;
             return;
         }
 
@@ -125,6 +124,11 @@ public class OrderManager {
         Order newOrder = new Order(randomType, timeLimitSeconds);
         activeOrders.add(newOrder);
         totalSpawnedOrders++;
+
+        // Setelah spawn order terakhir, langsung set flag untuk tidak menerima order baru.
+        if (totalSpawnedOrders >= MAX_TOTAL_ORDERS) {
+            acceptingNewOrders = false;
+        }
 
         System.out.println("NEW ORDER: " + newOrder);
     }

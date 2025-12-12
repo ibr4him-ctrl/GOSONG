@@ -25,8 +25,7 @@ public class GameController {
     private final ScoreManager scoreManager;
     private final OrderFailTracker failTracker;
 
-    // Konstanta durasi session (harus sama dengan OrderManager.SESSION_LIMIT_SECONDS)
-    private static final double SESSION_LIMIT_SECONDS = 180.0;
+    private static final double SESSION_LIMIT_SECONDS = 240.0;
 
     // Batas maksimal order gagal (total, bukan berurutan)
     private static final int MAX_TOTAL_FAILS = 2;
@@ -136,9 +135,8 @@ public class GameController {
      * Dipanggil oleh subsistem (OrderManager) ketika sesi waktu habis.
      */
     public void handleSessionTimeUp() {
-        if (currentState != GameState.PLAYING) return;
-        // ensure we stop accepting orders as OrderManager would
-        endGame(true, "Time's up!");
+        if (currentState != GameState.PLAYING) return;        
+        endGame(false, "Time's up!");
     }
 
     /**
