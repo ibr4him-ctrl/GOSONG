@@ -13,7 +13,7 @@ public class OrderFailTracker {
     private static OrderFailTracker instance;
 
     private int currentFailStreak = 0;
-    private static final int FAIL_THRESHOLD = 3; // game over FAIL jika 3 order gagal berturut-turut
+    private static final int FAIL_THRESHOLD = 2; // game over FAIL jika 2 order gagal berturut-turut
 
     private OrderFailTracker() {}
 

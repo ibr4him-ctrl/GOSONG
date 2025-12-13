@@ -4,14 +4,7 @@ import model.enums.GameState;
 
 /**
  * GameController adalah titik pusat orchestration untuk seluruh lifecycle game.
- * 
- * Tanggung jawab:
- * - Menyimpan dan mengelola GameState (PLAYING, PAUSED, GAME_OVER, MENU)
- * - Menghubungkan Timer, Score, OrderFailTracker
- * - Menentukan kondisi game ending (time up, fail threshold, semua order selesai)
- * - Membuat GameResult dan mengirimnya ke UI
- * - Menghentikan game loop saat game over
- */
+ **/
 public class GameController {
     private static GameController instance;
 
@@ -20,16 +13,11 @@ public class GameController {
     private GameResult lastResult = null;
     private long startTimeNs = 0L;
 
-    // Referensi ke subsistem
     private final OrderManager orderManager;
     private final ScoreManager scoreManager;
     private final OrderFailTracker failTracker;
-
-    // Konstanta durasi session (harus sama dengan OrderManager.SESSION_LIMIT_SECONDS)
-    private static final double SESSION_LIMIT_SECONDS = 240.0;
-
-    // Batas maksimal order gagal (total, bukan berurutan)
-    private static final int MAX_TOTAL_FAILS = 2;
+    private static final double SESSION_LIMIT_SECONDS = 240.0; //batas waktu timer
+    private static final int PASS_SCORE_THRESHOLD = 240; //batas skor untuk PASS
 
     private GameController() {
         this.orderManager = OrderManager.getInstance();
@@ -79,15 +67,21 @@ public class GameController {
             return;
         }
 
-        // Hitung elapsed time secara akurat berdasarkan waktu mulai.
+        // Hitung elapsed time secara akurat berdasarkan waktu mulai
         elapsedTime = (System.nanoTime() - startTimeNs) / 1_000_000_000.0;
-        // Di sini kita hanya perlu check kondisi ending
 
         // === CEK KONDISI GAME OVER ===
 
         // 1. Time limit tercapai
         if (elapsedTime >= SESSION_LIMIT_SECONDS) {
             handleSessionTimeUp();
+            return;
+        }
+
+        // 2. Cek apakah semua order sudah selesai (immediate check)
+        if (orderManager.getTotalSpawnedOrders() >= OrderManager.getMaxTotalOrders() 
+            && orderManager.getActiveOrders().isEmpty()) {
+            handleAllOrdersCompleted();
             return;
         }
     }
@@ -121,10 +115,10 @@ public class GameController {
             reason, 
             scoreManager.getSuccessCount(), 
             scoreManager.getFailCount());
+        
         System.out.println("[GameController] Game Over! " + lastResult);
+        System.out.println("[GameController] Reason: " + reason + " | Pass: " + isPass);
 
-        // Panggil Main untuk menampilkan UI game over dengan result
-        // Bedakan antara menang (PASS) dan kalah (FAIL)
         if (isPass) {
             main.Main.showGameSummary(lastResult);
         } else {
@@ -137,8 +131,17 @@ public class GameController {
      */
     public void handleSessionTimeUp() {
         if (currentState != GameState.PLAYING) return;
-        // ensure we stop accepting orders as OrderManager would
-        endGame(true, "Time's up!");
+
+        int finalScore = scoreManager.getScore();
+        boolean isPass = finalScore >= PASS_SCORE_THRESHOLD;
+
+        if (isPass) {
+            System.out.println("[GameController] Tme's up! Score: " + finalScore + ". Kamu PASS.");
+            endGame(true, "Time's up! Kamu PASS!");
+        } else {
+            System.out.println("[GameController] Time's up! Score " + finalScore + ". Kamu FAIL.");
+            endGame(false, "Time's up! Skor kamu dibawah " + PASS_SCORE_THRESHOLD);
+        }
     }
 
     /**
@@ -146,7 +149,17 @@ public class GameController {
      */
     public void handleAllOrdersCompleted() {
         if (currentState != GameState.PLAYING) return;
-        endGame(true, "All orders completed!");
+
+        int finalScore = scoreManager.getScore();
+        boolean isPass = finalScore >= PASS_SCORE_THRESHOLD;
+
+        if (isPass) {
+            System.out.println("[GameController] Semua order selesai! Score " + finalScore + ". Kamu PASS.");
+            endGame(true, "Semua order selesai!");
+        } else {
+            System.out.println("[GameController] Semua order selesai! Score " + finalScore + ". Kamu FAIL.");
+            endGame(false, "Skormu tidak cukup!");
+        }
     }
 
     /**
@@ -154,10 +167,19 @@ public class GameController {
      */
     public void onOrderFailed() {
         scoreManager.recordFail();
+        failTracker.recordFail(); // Catat kegagalan beruntun
         
-        // Cek apakah total order gagal sudah mencapai batas
-        if (scoreManager.getFailCount() >= MAX_TOTAL_FAILS) {
-            endGame(false, "Too many failed orders!");
+        System.out.println("[GameController] Order failed. Total fails: " + scoreManager.getFailCount());
+        
+        // Cek apakah kegagalan beruntun sudah mencapai batas
+        if (failTracker.isFailThresholdReached()) {
+            if (elapsedTime >= SESSION_LIMIT_SECONDS) {
+                System.out.println("[GameController] Kondisi FAIL terpenuhi, tapi waktu habis, pindah ke handleSessionTimeUp.");
+                return;
+            }
+
+            System.out.println("[GameController] Terlalu banyak order yang salah, kamu FAIL.");
+            endGame(false, "Terlalu banyak failed orders!");
         }
     }
 
@@ -167,6 +189,13 @@ public class GameController {
     public void onOrderSuccess() {
         scoreManager.recordSuccess();
         failTracker.resetStreak();
+        
+        System.out.println("[GameController] Order success! Total success: " + scoreManager.getSuccessCount());
+        if (orderManager.getTotalSpawnedOrders() >= OrderManager.getMaxTotalOrders() 
+            && orderManager.getActiveOrders().isEmpty()) {
+            System.out.println("[GameController] Last Order. Selesai game.");
+            handleAllOrdersCompleted();
+        }
     }
 
     /**
@@ -174,9 +203,10 @@ public class GameController {
      */
     public void restart() {
         System.out.println("[GameController] Restarting game.");
-        resetInstance();
-        instance = null;
-        startGame();
+        currentState = GameState.MENU;
+        elapsedTime = 0.0;
+        lastResult = null;
+        startTimeNs = 0L;
     }
 
     // === GETTER ===
@@ -199,5 +229,9 @@ public class GameController {
 
     public boolean isGamePlaying() {
         return currentState == GameState.PLAYING;
+    }
+
+    public static double getSessionLimitSeconds() {
+        return SESSION_LIMIT_SECONDS;
     }
 }

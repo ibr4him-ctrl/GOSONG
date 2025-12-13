@@ -194,7 +194,7 @@ public class GameOver extends JFrame {
          // Elapsed Time
          g2d.setColor(Color.CYAN);
          g2d.setFont(new Font("Lucida Console", Font.PLAIN, 24));
-         String timeText = String.format("Time: %.1f / 180.0 sec", gameResult.getElapsedTime());
+         String timeText = String.format("Time: %.1f / 240.0 sec", gameResult.getElapsedTime());
          fm = g2d.getFontMetrics();
          g2d.drawString(timeText, centerX - fm.stringWidth(timeText) / 2, startY + lineHeight);
 

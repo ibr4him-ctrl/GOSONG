@@ -63,7 +63,6 @@ public class GameSummary extends JFrame {
     }
 
     private class SummaryPanel extends JComponent {
-        // Area klik untuk tombol "Selanjutnya"
         private static final int NEXT_X = 385;
         private static final int NEXT_Y = 480;
         private static final int NEXT_W = 150;
@@ -77,6 +76,7 @@ public class GameSummary extends JFrame {
                     int y = e.getY();
                     if (x >= NEXT_X && x <= NEXT_X + NEXT_W && y >= NEXT_Y && y <= NEXT_Y + NEXT_H) {
                         onNextClicked();
+                        System.out.println("Clicked: " + x + ", " + y);
                     }
                 }
             });

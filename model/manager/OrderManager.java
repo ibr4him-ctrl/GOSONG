@@ -146,9 +146,8 @@ public class OrderManager {
         }
 
         // --- KASUS GAGAL ---
-        // Jika loop selesai dan tidak ada order yang cocok
         ScoreManager.getInstance().add(ScoreManager.PENALTY_FAIL);
-        GameController.getInstance().onOrderFailed();
+        // GameController.getInstance().onOrderFailed(); // DIHAPUS: Kegagalan penyajian tidak lagi memicu fail count.
         return false; // Gagal
     }
 
