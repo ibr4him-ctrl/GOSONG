@@ -52,6 +52,9 @@ public class PlateStorage extends Station {
 
         Item hand = chef.getHeldItem();
 
+        if (chef.getHeldItem() != null) {
+            return false;
+        }
         // ============================
         // 1. Chef lagi megang sesuatu
         // ============================
