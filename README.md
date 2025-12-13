@@ -90,9 +90,35 @@
 ---
 ## Setup Instructions
 
-1. Lakukan clone repository dari GitHub
-2. Masuk ke folder hasil clone repository
-3. Buka folder project tersebut menggunakan Visual Studio Code
-4. Buka terminal di dalam VS Code (`Ctrl + ``)
-5. Jalankan program Java (Run file Main.java)
-6. Program siap dimainkan.
+1. Clone Repository dari GitHub
+Buka terminal atau Command Prompt, lalu jalankan perintah berikut:
+```bash
+git clone https://github.com/ibr4him-ctrl/GOSONG.git
+```
+2. Masuk ke Folder Repository
+Setelah proses clone selesai, masuk ke folder project dengan perintah:
+```bash
+cd GOSONG
+```
+3. Buka Project Menggunakan Visual Studio Code
+- Jalankan Visual Studio Code
+- Pilih menu **File > Open Folder**
+- Pilih folder repository `GOSONG` yang telah di-clone
+- Tunggu hingga VS Code selesai memuat project
+
+4. Pastikan Java Development Kit (JDK) Terinstall
+Project ini menggunakan **JDK 24**. Pastikan JDK sudah terinstall di sistem Anda:
+```bash
+java --version
+```
+Jika belum terinstall, download dari [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) atau [OpenJDK](https://openjdk.org/).
+
+5. Install Extension Java di VS Code (Opsional)
+Untuk pengalaman development yang lebih baik, install extension:
+- **Extension Pack for Java** (dari Microsoft)
+- **Debugger for Java**
+
+6. Buka Terminal di VS Code
+Gunakan shortcut **Ctrl + `** (backtick) atau pilih menu **Terminal > New Terminal**.
+
+7. Jalankan Program Java
