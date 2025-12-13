@@ -1,6 +1,7 @@
 package model.item.dish;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import model.manager.GameController;
 
 public class Order {
     public enum PizzaType {
@@ -44,8 +45,8 @@ public class Order {
     private final int reward; //Reward 
     private final int penalty; //penalti jika gagal 
     private final int timeLimit; // time limit dalam detik
-    private volatile int timeRemaining; // sisa waktu, dihitung dari waktu absolut
-    private final long createdAt; // Timestamp saat order dibuat, untuk FIFO & perhitungan waktu
+    private volatile int timeRemaining; // sisa waktu, dihitung dari waktu session
+    private final double spawnElapsedSeconds; // waktu sesi (detik) saat order dibuat
     
     public Order(PizzaType pizzaType) {
         this(pizzaType, 60);
@@ -58,7 +59,8 @@ public class Order {
         this.penalty = -50;
         this.timeLimit = timeLimitSeconds;
         this.timeRemaining = timeLimitSeconds;
-        this.createdAt = System.currentTimeMillis();
+        // record spawn time relative to game session elapsed time
+        this.spawnElapsedSeconds = GameController.getInstance().getElapsedTime();
     }
     
     public int getId() { 
@@ -85,14 +87,14 @@ public class Order {
         return timeRemaining; 
     }
     
-    public long getCreatedAt() { 
-        return createdAt; 
+    public double getSpawnElapsedSeconds() {
+        return spawnElapsedSeconds;
     }
     
     public synchronized int recalculateTimeRemaining() {
-        long now = System.currentTimeMillis();
-        long elapsedSeconds = (now - createdAt) / 1000L;
-        int remaining = (int) (timeLimit - elapsedSeconds);
+        double nowElapsed = GameController.getInstance().getElapsedTime();
+        double elapsedSinceSpawn = nowElapsed - spawnElapsedSeconds;
+        int remaining = (int) (timeLimit - elapsedSinceSpawn);
         timeRemaining = Math.max(remaining, 0);
         return timeRemaining;
     }
@@ -108,7 +110,7 @@ public class Order {
     }
     
     public int compareByCreationTime(Order other) {
-        return Long.compare(this.createdAt, other.createdAt);
+        return Double.compare(this.spawnElapsedSeconds, other.spawnElapsedSeconds);
     }
     
     public static void resetOrderCounter() {

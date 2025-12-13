@@ -173,14 +173,14 @@ public class GamePanel extends JPanel implements Runnable {
             }
         });
 
+        // INIT GAME CONTROLLER (orchestrator pusat)
+        model.manager.GameController.getInstance().startGame();
+
         // INI ORDER SYSTEM 
         OrderManager.getInstance().init();
 
         // RESET SCORE DI AWAL GAME
         model.manager.ScoreManager.getInstance().resetScore();
-        
-        // INIT GAME CONTROLLER (orchestrator pusat)
-        model.manager.GameController.getInstance().startGame();
         
         loadOrderIndicatorImages();
         loadOrderPaperImages();
@@ -1216,8 +1216,8 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private String getRemainingTimeFormatted() {
-        int totalSeconds = (int) (model.manager.OrderManager.getSessionLimitSeconds() -
-                                   model.manager.OrderManager.getInstance().getSessionTimeElapsed());
+        int totalSeconds = (int) (model.manager.GameController.getSessionLimitSeconds() -
+                       model.manager.GameController.getInstance().getElapsedTime());
         if (totalSeconds < 0) totalSeconds = 0;
         
         int minutes = totalSeconds / 60;
@@ -1329,8 +1329,8 @@ public class GamePanel extends JPanel implements Runnable {
         // 80-52 detik  -> KertasOrderan.png (order pertama)
         // 51-26 detik  -> KertasOrderan2.png (order kedua)
         // 25-0 detik   -> KertasOrderan3.png (order ketiga)
-        int globalRemaining = (int) (model.manager.OrderManager.getSessionLimitSeconds() -
-                                     model.manager.OrderManager.getInstance().getSessionTimeElapsed());
+        int globalRemaining = (int) (model.manager.GameController.getSessionLimitSeconds() -
+                         model.manager.GameController.getInstance().getElapsedTime());
         if (globalRemaining < 0) globalRemaining = 0;
 
         BufferedImage bg;

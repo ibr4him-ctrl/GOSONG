@@ -3,7 +3,6 @@ package model.manager;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
-import main.Main;
 import model.item.Dish;
 import model.item.dish.Order;
 import model.item.dish.Order.PizzaType;
@@ -16,14 +15,12 @@ public class OrderManager {
 
     private final Random random;
 
-    private double sessionTimeElapsed = 0.0;
 
     // Selalu target 3 order aktif dengan timeLimit 80/160/240 detik sesuai urutan
     private static final int MAX_ORDERS = 3;
     private static final int INITIAL_ORDERS = 3;
     private static final int MAX_TOTAL_ORDERS = 3;
-    // Total waktu sesi 4 menit (240 detik)
-    private static final double SESSION_LIMIT_SECONDS = 240.0;
+    // session time is managed by GameController
 
     private boolean acceptingNewOrders = true;
     private boolean sessionOver = false;
@@ -50,7 +47,7 @@ public class OrderManager {
         totalSpawnedOrders = 0;
         acceptingNewOrders = true;
         sessionOver = false;
-        sessionTimeElapsed = 0.0;
+        // no-op: GameController handles session elapsed time
 
         // Buat 3 order awal sekaligus dengan time limit 80, 160, 240 detik
         // berdasarkan urutan spawn
@@ -65,7 +62,7 @@ public class OrderManager {
             return;
         }
 
-        sessionTimeElapsed += deltaSeconds;
+            // sessionTimeElapsed handled by GameController; nothing to reset here
 
         // Recalculate timeRemaining semua order berbasis waktu absolut
         for (Order order : activeOrders) {
@@ -97,12 +94,7 @@ public class OrderManager {
             return;
         }
 
-        if (sessionTimeElapsed >= SESSION_LIMIT_SECONDS) {
-            sessionOver = true;
-            acceptingNewOrders = false;
-            // Delegate to GameController for centralized handling
-            model.manager.GameController.getInstance().handleSessionTimeUp();
-        }
+            // Session expiration is handled centrally by GameController
     }
 
     private void spawnOrderIfNeeded() {
@@ -160,11 +152,11 @@ public class OrderManager {
     }
 
     public double getSessionTimeElapsed() {
-        return sessionTimeElapsed;
+           return model.manager.GameController.getInstance().getElapsedTime();
     }
 
     public static double getSessionLimitSeconds() {
-        return SESSION_LIMIT_SECONDS;
+           return model.manager.GameController.getSessionLimitSeconds();
     }
 
     // === GETTER TAMBAHAN UNTUK GAMECTROLLER ===

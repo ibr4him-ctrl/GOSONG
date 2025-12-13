@@ -91,6 +91,10 @@ public class GameController {
      * Buat GameResult dan ubah state ke GAME_OVER.
      */
     private void endGame(boolean isPass, String reason) {
+        endGame(isPass, reason, null);
+    }
+
+    private void endGame(boolean isPass, String reason, Double forcedElapsedSeconds) {
         if (currentState == GameState.GAME_OVER) {
             return; // sudah game over, jangan panggil berkali-kali
         }
@@ -100,7 +104,9 @@ public class GameController {
 
         // Hitung elapsed time berdasarkan wall-clock dari awal game untuk akurasi
         double finalElapsed;
-        if (startTimeNs > 0L) {
+        if (forcedElapsedSeconds != null) {
+            finalElapsed = Math.min(forcedElapsedSeconds, SESSION_LIMIT_SECONDS);
+        } else if (startTimeNs > 0L) {
             finalElapsed = (System.nanoTime() - startTimeNs) / 1_000_000_000.0;
             // Jangan melebihi session limit
             if (finalElapsed > SESSION_LIMIT_SECONDS) finalElapsed = SESSION_LIMIT_SECONDS;
@@ -109,13 +115,13 @@ public class GameController {
         }
 
         lastResult = new GameResult(
-            finalScore, 
-            finalElapsed, 
-            isPass, 
-            reason, 
-            scoreManager.getSuccessCount(), 
+            finalScore,
+            finalElapsed,
+            isPass,
+            reason,
+            scoreManager.getSuccessCount(),
             scoreManager.getFailCount());
-        
+
         System.out.println("[GameController] Game Over! " + lastResult);
         System.out.println("[GameController] Reason: " + reason + " | Pass: " + isPass);
 
@@ -137,10 +143,10 @@ public class GameController {
 
         if (isPass) {
             System.out.println("[GameController] Tme's up! Score: " + finalScore + ". Kamu PASS.");
-            endGame(true, "Time's up! Kamu PASS!");
+            endGame(true, "Time's up! Kamu PASS!", SESSION_LIMIT_SECONDS);
         } else {
             System.out.println("[GameController] Time's up! Score " + finalScore + ". Kamu FAIL.");
-            endGame(false, "Time's up! Skor kamu dibawah " + PASS_SCORE_THRESHOLD);
+            endGame(false, "Time's up! Skor kamu dibawah " + PASS_SCORE_THRESHOLD, SESSION_LIMIT_SECONDS);
         }
     }
 
